@@ -37,17 +37,19 @@ class Panel(val category: CategoryType, var x: Int, var y: Int) {
 
         if (filteredFeatures.isEmpty() && ClickGuiScreen.searchQuery.isNotEmpty()) return
 
-        openAnim.update(if (collapsed) 0f else 1f)
+        openAnim.update(if (collapsed && features.size == filteredFeatures.size) 0f else 1f)
 
         Render2D.drawRect(context, x, y, width, headerHeight, headerBg)
         Render2D.drawRect(context, x, y, width, 2, Style.accentColor)
 
+        /*
         val icon = if (collapsed) "+" else "-"
         Render2D.drawString(context, icon, x + width - 12, y + 7, Color.GRAY)
+        */
 
         Render2D.drawCenteredString(context, "§l${category.name}", x + width / 2, y + 7)
 
-        if (openAnim.value > 0.01f) {
+        if (openAnim.value > 0.01f || features.size != filteredFeatures.size) {
             var currentY = y + headerHeight
 
             val scissorHeight = (filteredFeatures.size * buttonHeight * openAnim.value).toInt()
@@ -99,17 +101,17 @@ class Panel(val category: CategoryType, var x: Int, var y: Int) {
             return
         }
 
-        if (collapsed) return
-
         var currentY = y + headerHeight
         val filteredFeatures = features.filter { it.name.contains(ClickGuiScreen.searchQuery, ignoreCase = true) }
+
+        if (collapsed && features.size == filteredFeatures.size) return
 
         filteredFeatures.forEach { feature ->
             if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + buttonHeight) {
                 if (button == 0) {
                     feature.toggle()
                 }
-                else if (button == 1) {
+                else if (button == 1 && feature.configSettings.isNotEmpty()) {
                     ClickGuiScreen.selectFeature(feature)
                 }
             }

@@ -1,6 +1,8 @@
 package com.github.noamm9.features
 
 import com.github.noamm9.NoammAddons
+import com.github.noamm9.NoammAddonsClient
+import com.github.noamm9.config.Savable
 import com.github.noamm9.event.Event
 import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.EventBus.EventContext
@@ -36,6 +38,7 @@ open class Feature(
 
     protected inline val mc get() = NoammAddons.mc
     protected inline val scope get() = NoammAddons.scope
+    protected inline val cacheData get() = NoammAddonsClient.cacheData
 
     fun initialize() {
         if (enabled || alwaysActive) onEnable() else onDisable()
@@ -77,13 +80,14 @@ open class Feature(
     ): HudElement {
         return object: HudElement() {
             override val name = name
-            override val enabled: Boolean get() = this@Feature.enabled && enabled.invoke()
+            override val toggle: Boolean get() = this@Feature.enabled
+            override val shouldDraw: Boolean get() = enabled.invoke()
             override fun draw(ctx: GuiGraphics, example: Boolean): Pair<Float, Float> = render(ctx, example)
         }.also(hudElements::add)
     }
 
     fun getSettingByName(key: String?): Setting<*>? {
-        return configSettings.find { it.name == key }
+        return configSettings.find { it.name == key && it is Savable }
     }
 
     private fun initCategory(): CategoryType {

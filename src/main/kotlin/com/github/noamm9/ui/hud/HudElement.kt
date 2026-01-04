@@ -8,8 +8,8 @@ import kotlin.reflect.jvm.jvmName
 
 abstract class HudElement {
     open val name = this::class.simpleName ?: this::class.jvmName
-
-    abstract val enabled: Boolean
+    abstract val toggle: Boolean
+    open val shouldDraw = true
     var width = 0f
     var height = 0f
 
@@ -23,7 +23,7 @@ abstract class HudElement {
     private var dragY = 0f
 
     fun renderElement(ctx: GuiGraphics, example: Boolean) {
-        if (!enabled) return
+        if (! toggle) return
 
         ctx.pose().pushMatrix()
         ctx.pose().translate(x, y)
@@ -40,7 +40,7 @@ abstract class HudElement {
     abstract fun draw(ctx: GuiGraphics, example: Boolean): Pair<Float, Float>
 
     fun drawEditor(ctx: GuiGraphics, mx: Int, my: Int) {
-        if (!enabled) return
+        if (! toggle) return
 
         if (isDragging) {
             x = mx - dragX

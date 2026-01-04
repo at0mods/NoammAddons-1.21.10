@@ -19,7 +19,7 @@ object ClickGui: Feature("A feature used to change the ClickGui configiration.",
     val accsentColor by ColorSetting("Accent Color", Color.CYAN, false)
         .withDescription("The Accent Color used by the whole ClickGui.")
 
-    val editGuiButton by ButtonSetting("Open GUD Editor") {
+    val editGuiButton by ButtonSetting("Open HUD Editor") {
         NoammAddonsClient.screen = HudEditorScreen
         ClickGuiScreen.onClose()
     }.withDescription("Opens the HUD Editor Screen where u can change you HUD elements size and position")

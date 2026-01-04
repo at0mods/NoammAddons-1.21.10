@@ -68,7 +68,7 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
 
         val visibleSettings = feature.configSettings.filter { it.isVisible }
 
-        val totalContentHeight = visibleSettings.sumOf { it.height + 5 }.toFloat()
+        val totalContentHeight = visibleSettings.sumOf { it.height + 5 }.toFloat() + 10
         val viewportHeight = 195f
         val maxScroll = if (totalContentHeight > viewportHeight) totalContentHeight - viewportHeight else 0f
 
@@ -83,7 +83,7 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
             setting.width = 180
 
             setting.draw(context, mx, my)
-            
+
             val isHovered = mx >= setting.x && mx <= setting.x + setting.width &&
                 my >= setting.y && my <= setting.y + setting.height &&
                 my > y + 30 && my < y + 225

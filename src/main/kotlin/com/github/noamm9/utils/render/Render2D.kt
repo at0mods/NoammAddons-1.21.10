@@ -2,7 +2,6 @@ package com.github.noamm9.utils.render
 
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.utils.ChatUtils.addColor
-import com.github.noamm9.utils.NumbersUtils.minus
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.PlayerFaceRenderer
 import net.minecraft.client.renderer.RenderPipelines
@@ -52,18 +51,22 @@ object Render2D {
     @JvmOverloads
     fun drawString(ctx: GuiGraphics, str: String, x: Number, y: Number, color: Color = Color.WHITE, scale: Number = 1, shadow: Boolean = true) {
         val pose = ctx.pose()
+        val fx = x.toFloat()
+        val fy = y.toFloat()
+        val fScale = scale.toFloat()
 
-        pose.translate(x.toFloat(), y.toFloat())
-        if (scale != 1f) pose.scale(scale.toFloat(), scale.toFloat())
-
+        pose.translate(fx, fy)
+        if (fScale != 1f) pose.scale(fScale, fScale)
         ctx.drawString(mc.font, str.addColor(), 0, 0, color.rgb, shadow)
-
-        if (scale != 1f) pose.scale(1f / scale.toFloat(), 1f / scale.toFloat())
-        pose.translate(- x.toFloat(), - y.toFloat())
+        if (fScale != 1f) pose.scale(1f / fScale, 1f / fScale)
+        pose.translate(- fx, - fy)
     }
 
     fun drawCenteredString(ctx: GuiGraphics, str: String, x: Number, y: Number, color: Color = Color.WHITE, scale: Number = 1, shadow: Boolean = true) {
-        drawString(ctx, str, x - str.width() / 2, y, color, scale, shadow)
+        val fScale = scale.toFloat()
+        val totalScaledWidth = with(Render2D) { str.width() } * fScale
+        val centerX = x.toFloat() - (totalScaledWidth / 2f)
+        drawString(ctx, str, centerX, y, color, scale, shadow)
     }
 
     fun renderItem(context: GuiGraphics, item: ItemStack, x: Float, y: Float, scale: Float) {
@@ -103,7 +106,7 @@ object Render2D {
 
     fun String.width(): Int {
         val lines = split('\n')
-        return lines.maxOf { mc.font.width(it) }
+        return lines.maxOf { mc.font.width(it.addColor()) }
     }
 
     fun String.height(): Int {

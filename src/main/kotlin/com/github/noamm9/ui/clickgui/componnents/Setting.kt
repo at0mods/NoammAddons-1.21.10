@@ -58,7 +58,9 @@ fun <T: Setting<*>> T.hideIf(condition: () -> Boolean): T {
 
 operator fun <T, S: Setting<T>> S.provideDelegate(thisRef: Feature, prop: KProperty<*>): S {
     this.headerName?.let { name ->
-        thisRef.configSettings.add(SeparatorSetting())
+        if (thisRef.configSettings.isNotEmpty()) {
+            thisRef.configSettings.add(SeparatorSetting())
+        }
         thisRef.configSettings.add(CategorySetting(name))
     }
 

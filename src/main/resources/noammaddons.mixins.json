@@ -15,8 +15,15 @@
     "requireAnnotations": true
   },
   "client": [
-    "AccessorPlayerTabOverlay",
+    "IKeyMapping",
+    "IPlayerTabOverlay",
+    "MixinAbstractContainerScreen",
+    "MixinBlindnessFogEnvironment",
+    "MixinCamera",
     "MixinEntityRenderDispatcher",
-    "MixinGui"
+    "MixinGameRenderer",
+    "MixinGui",
+    "MixinLightTexture",
+    "MixinScreenEffectRenderer"
   ]
 }

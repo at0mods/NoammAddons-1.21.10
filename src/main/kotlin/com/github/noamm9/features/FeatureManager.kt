@@ -7,6 +7,11 @@ import com.github.noamm9.event.impl.RenderOverlayEvent
 import com.github.noamm9.features.impl.dev.ClickGui
 import com.github.noamm9.features.impl.dev.CompTest
 import com.github.noamm9.features.impl.dungeon.StarMobEsp
+import com.github.noamm9.features.impl.general.AutoClicker
+import com.github.noamm9.features.impl.general.CakeNumbers
+import com.github.noamm9.features.impl.misc.PvpBlink
+import com.github.noamm9.features.impl.tweaks.Camera
+import com.github.noamm9.features.impl.visual.*
 import com.github.noamm9.ui.clickgui.CategoryType
 import com.github.noamm9.ui.hud.HudEditorScreen
 import com.github.noamm9.ui.hud.HudElement
@@ -16,7 +21,9 @@ object FeatureManager {
     val hudElements = mutableListOf<HudElement>()
 
     val features = mutableSetOf(
-        StarMobEsp,
+        StarMobEsp, AutoClicker, CakeNumbers,
+        ClockDisplay, FpsDisplay, TpsDisplay,
+        WarpCooldown, PetDisplay, Camera, PvpBlink,
 
         CompTest, ClickGui
     ).sortedBy { it.name }
@@ -33,7 +40,7 @@ object FeatureManager {
             if (mc.screen == HudEditorScreen) return@register
             Resolution.refresh()
             Resolution.apply(event.context)
-            hudElements.forEach { it.renderElement(event.context, false) }
+            hudElements.forEach { if (it.shouldDraw) it.renderElement(event.context, false) }
             Resolution.restore(event.context)
         }
     }
@@ -44,5 +51,9 @@ object FeatureManager {
 
     fun getFeatureByName(name: String): Feature? {
         return features.find { it.name == name }
+    }
+
+    fun getHudByName(name: String): HudElement? {
+        return hudElements.find { it.name == name }
     }
 }

@@ -32,7 +32,9 @@ public class MixinGui {
     @Inject(method = "render", at = @At("TAIL"))
     public void onRenderHud(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         if (this.minecraft.options.hideGui) return;
+        if (this.minecraft.getDebugOverlay().showDebugScreen()) return;
         EventBus.post(new RenderOverlayEvent(guiGraphics, deltaTracker));
+
         DungeonDebugHUD.render(guiGraphics);
     }
 

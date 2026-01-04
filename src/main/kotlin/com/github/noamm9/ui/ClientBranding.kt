@@ -2,7 +2,7 @@ package com.github.noamm9.ui
 
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.features.impl.dev.ClickGui
-import com.github.noamm9.interfaces.ITabList
+import com.github.noamm9.mixin.IPlayerTabOverlay
 import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
@@ -59,7 +59,7 @@ object ClientBranding {
         val players = connection.listedOnlinePlayers.sortedWith(compareBy({ it.team?.name }, { it.profile.name }))
         if (players.isEmpty()) return
 
-        val tablist = mc.gui.tabList as ITabList
+        val tablist = mc.gui.tabList as IPlayerTabOverlay
         val font = mc.font
 
         val playersPerColumn = 20

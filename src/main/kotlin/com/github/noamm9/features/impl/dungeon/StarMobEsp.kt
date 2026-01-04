@@ -25,7 +25,7 @@ import net.minecraft.world.entity.monster.EnderMan
 import net.minecraft.world.entity.player.Player
 import java.awt.Color
 
-object StarMobEsp: Feature() {
+object StarMobEsp: Feature("Hightlights all starred mobs in a dungeon.") {
     private val dungeonMobRegex = Regex("^.+❤$")
 
     @JvmStatic

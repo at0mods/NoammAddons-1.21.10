@@ -11,7 +11,7 @@ import com.google.gson.JsonPrimitive
 import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
 
-class ToggleSetting(name: String, value: Boolean): Setting<Boolean>(name, value), Savable {
+class ToggleSetting(name: String, value: Boolean = false): Setting<Boolean>(name, value), Savable {
     private val toggleAnim = Animation(200, if (value) 1f else 0f)
     private val hoverAnim = Animation(200, 0f)
 

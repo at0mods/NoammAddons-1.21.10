@@ -20,26 +20,33 @@ object Config {
         }
     }
 
+    @Suppress("DEPRECATION")
     fun load() {
         runCatching {
-            with(configFile.bufferedReader().use { it.readText() }) {
-                if (isEmpty()) return
+            val fileContent = configFile.bufferedReader().use { it.readText() }.takeUnless { it.isEmpty() } ?: return
+            val jsonObject = parser.parse(fileContent).asJsonObject ?: return
 
-                val jsonArray = parser.parse(this).asJsonArray ?: return
-                for (features in jsonArray) {
-                    val featureObj = features?.asJsonObject ?: continue
-                    val feature = FeatureManager.getFeatureByName(featureObj.get("name").asString) ?: continue
-                    if (featureObj.get("enabled").asBoolean != feature.enabled) {
-                        feature.toggle()
-                    }
+            for (featureElement in jsonObject.getAsJsonArray("config") ?: return) {
+                val featureObj = featureElement.asJsonObject
+                val feature = FeatureManager.getFeatureByName(featureObj.get("name").asString) ?: continue
+                if (featureObj.get("enabled").asBoolean != feature.enabled) feature.toggle()
 
-                    for (j in featureObj.get("configSettings").asJsonArray) {
-                        val settingObj = j?.asJsonObject?.entrySet() ?: continue
-                        val setting = feature.getSettingByName(settingObj.firstOrNull()?.key) ?: continue
-                        if (setting is Savable) setting.read(settingObj.first().value)
-                    }
+                featureObj.getAsJsonArray("configSettings")?.forEach { settingElement ->
+                    val settingEntry = settingElement.asJsonObject.entrySet().firstOrNull() ?: return@forEach
+                    val setting = feature.getSettingByName(settingEntry.key)
+                    if (setting is Savable) setting.read(settingEntry.value)
                 }
             }
+
+            jsonObject.getAsJsonArray("hud")?.forEach { hudElement ->
+                val hudObj = hudElement.asJsonObject
+                val hudInstance = FeatureManager.getHudByName(hudObj.get("name").asString) ?: return@forEach
+
+                hudObj.get("x")?.let { hudInstance.x = it.asFloat }
+                hudObj.get("y")?.let { hudInstance.y = it.asFloat }
+                hudObj.get("scale")?.let { hudInstance.scale = it.asFloat }
+            }
+
         }.apply {
             onFailure { logger.error("Error loading config", it) }
             onSuccess { logger.info("Successfully loaded config") }
@@ -48,22 +55,35 @@ object Config {
 
     fun save() {
         runCatching {
-            val jsonArray = JsonArray().apply {
-                for (feature in FeatureManager.features) {
-                    add(JsonObject().apply {
-                        add("name", JsonPrimitive(feature.name))
-                        add("enabled", JsonPrimitive(feature.enabled))
-                        add("configSettings", JsonArray().apply {
-                            for (setting in feature.configSettings) {
-                                if (setting is Savable) {
-                                    add(JsonObject().apply { add(setting.name, setting.write()) })
+            val jsonObject = JsonObject().apply {
+                add("config", JsonArray().apply {
+                    for (feature in FeatureManager.features) {
+                        add(JsonObject().apply {
+                            add("name", JsonPrimitive(feature.name))
+                            add("enabled", JsonPrimitive(feature.enabled))
+                            add("configSettings", JsonArray().apply {
+                                for (setting in feature.configSettings) {
+                                    if (setting is Savable) {
+                                        add(JsonObject().apply { add(setting.name, setting.write()) })
+                                    }
                                 }
-                            }
+                            })
                         })
-                    })
-                }
+                    }
+                })
+                add("hud", JsonArray().apply {
+                    for (hud in FeatureManager.hudElements) {
+                        add(JsonObject().apply {
+                            add("name", JsonPrimitive(hud.name))
+                            add("x", JsonPrimitive(hud.x))
+                            add("y", JsonPrimitive(hud.y))
+                            add("scale", JsonPrimitive(hud.scale))
+                        })
+                    }
+                })
             }
-            configFile.bufferedWriter().use { it.write(gson.toJson(jsonArray)) }
+
+            configFile.bufferedWriter().use { it.write(gson.toJson(jsonObject)) }
         }.apply {
             onFailure { logger.error("Error on saving config", it) }
             onSuccess { logger.info("Successfully saved config") }

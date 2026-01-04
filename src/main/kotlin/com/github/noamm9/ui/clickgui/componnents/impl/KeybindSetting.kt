@@ -1,5 +1,6 @@
 package com.github.noamm9.ui.clickgui.componnents.impl
 
+import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.config.Savable
 import com.github.noamm9.ui.clickgui.componnents.Setting
 import com.github.noamm9.ui.clickgui.componnents.Style
@@ -13,7 +14,7 @@ import net.minecraft.client.gui.GuiGraphics
 import org.lwjgl.glfw.GLFW
 import java.awt.Color
 
-class KeybindSetting(name: String, value: Int): Setting<Int>(name, value), Savable {
+class KeybindSetting(name: String, value: Int = InputConstants.UNKNOWN.value): Setting<Int>(name, value), Savable {
     var listening = false
     private val hoverAnim = Animation(200)
 
@@ -55,5 +56,17 @@ class KeybindSetting(name: String, value: Int): Setting<Int>(name, value), Savab
     override fun write(): JsonElement = JsonPrimitive(value)
     override fun read(element: JsonElement?) {
         element?.asInt?.let { value = it }
+    }
+
+    fun isDown(): Boolean {
+        return InputConstants.isKeyDown(mc.window, value)
+    }
+
+    private var previousState = false
+    fun isPressed(): Boolean {
+        val currentState = isDown()
+        val wasPressed = ! previousState && currentState
+        previousState = currentState
+        return wasPressed
     }
 }
