@@ -3,14 +3,8 @@ package com.github.noamm9.utils.location
 import com.github.noamm9.NoammAddons
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.EventBus
-import com.github.noamm9.event.EventDispatcher
-import com.github.noamm9.event.impl.DungeonEvent
-import com.github.noamm9.event.impl.MainThreadPacketRecivedEvent
-import com.github.noamm9.event.impl.ServerEvent
-import com.github.noamm9.event.impl.TickEvent
-import com.github.noamm9.event.impl.WorldChangeEvent
-import com.github.noamm9.utils.ChatUtils
-import com.github.noamm9.utils.ChatUtils.removeFormatting
+import com.github.noamm9.event.EventPriority
+import com.github.noamm9.event.impl.*
 import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.Utils.remove
 import com.github.noamm9.utils.Utils.startsWithOneOf
@@ -52,10 +46,15 @@ object LocationUtils {
     @JvmField
     var F7Phase: Int? = null
 
+    var lobbyId: String? = null
+        private set
+
+    private val lobbyRegex = Regex("\\d\\d/\\d\\d/\\d\\d (\\w{0,6}) *")
+
     init {
-        EventBus.register<MainThreadPacketRecivedEvent.Post> {
+        EventBus.register<MainThreadPacketRecivedEvent.Post>(EventPriority.HIGHEST) {
             // if (DevOptions.devMode) return setDevModeValues()
-            if (!onHypixel) return@register
+            if (! onHypixel) return@register
 
             if (event.packet is ClientboundPlayerInfoUpdatePacket) {
                 val actions = event.packet.actions()
@@ -63,21 +62,24 @@ object LocationUtils {
                     val area = event.packet.entries().find { it.displayName()?.string?.startsWithOneOf("Area: ", "Dungeon: ") == true }?.displayName?.string ?: return@register
                     world = WorldType.entries.firstOrNull { area.remove("Area: ", "Dungeon: ") == it.tabName }
                 }
-            } else if (event.packet is ClientboundSetPlayerTeamPacket) {
+            }
+            else if (event.packet is ClientboundSetPlayerTeamPacket) {
                 val prams = event.packet.parameters.getOrNull() ?: return@register
                 val text = prams.playerPrefix.string + prams.playerSuffix.string
+                lobbyRegex.find(text)?.groupValues?.get(1)?.let { lobbyId = it }
 
-                if (!inDungeon && text.contains("The Catacombs (") && !text.contains("Queue")) {
+                if (! inDungeon && text.contains("The Catacombs (") && ! text.contains("Queue")) {
                     inDungeon = true
                     dungeonFloor = text.substringAfter("(").substringBefore(")")
                     dungeonFloorNumber = dungeonFloor?.lastOrNull()?.digitToIntOrNull() ?: 0
                 }
-            } else if (event.packet is ClientboundSetObjectivePacket) {
-                if (!inSkyblock) inSkyblock = onHypixel && event.packet.objectiveName == "SBScoreboard"
+            }
+            else if (event.packet is ClientboundSetObjectivePacket) {
+                if (! inSkyblock) inSkyblock = onHypixel && event.packet.objectiveName == "SBScoreboard"
             }
         }
 
-        EventBus.register<TickEvent.Server> {
+        EventBus.register<TickEvent.Server>(EventPriority.HIGHEST) {
             inBoss = isInBossRoom().also {
                 if (it && DungeonListener.bossEntryTime == null) {
                     DungeonListener.bossEntryTime = DungeonListener.currentTime
@@ -88,8 +90,8 @@ object LocationUtils {
             P3Section = findP3Section()
         }
 
-        EventBus.register<WorldChangeEvent> { reset() }
-        EventBus.register<ServerEvent.Disconnect> { reset() }
+        EventBus.register<WorldChangeEvent>(EventPriority.HIGHEST) { reset() }
+        EventBus.register<ServerEvent.Disconnect>(EventPriority.HIGHEST) { reset() }
     }
 
     private fun reset() {
@@ -129,8 +131,8 @@ object LocationUtils {
     private val P3Sections = arrayOf(
         Pair(BlockPos(90, 158, 123), BlockPos(111, 105, 32)),  //  1
         Pair(BlockPos(16, 158, 122), BlockPos(111, 105, 143)), //  2
-        Pair(BlockPos(19, 158, 48), BlockPos(-3, 106, 142)),  //  3
-        Pair(BlockPos(91, 158, 50), BlockPos(-3, 106, 30))    //  4
+        Pair(BlockPos(19, 158, 48), BlockPos(- 3, 106, 142)),  //  3
+        Pair(BlockPos(91, 158, 50), BlockPos(- 3, 106, 30))    //  4
     )
 
     private fun findP3Section(): Int? {
@@ -147,13 +149,13 @@ object LocationUtils {
     }
 
     private val bossRoomCorners = mapOf(
-        7 to Pair(BlockPos(-8, 0, -8), BlockPos(134, 254, 147)),
-        6 to Pair(BlockPos(-40, 51, -8), BlockPos(22, 110, 134)),
-        5 to Pair(BlockPos(-40, 112, -8), BlockPos(50, 53, 118)),
-        4 to Pair(BlockPos(-40, 112, -40), BlockPos(50, 53, 47)),
-        3 to Pair(BlockPos(-40, 118, -40), BlockPos(42, 64, 31)),
-        2 to Pair(BlockPos(-40, 99, -40), BlockPos(24, 54, 59)),
-        1 to Pair(BlockPos(-14, 55, 49), BlockPos(-72, 146, -40))
+        7 to Pair(BlockPos(- 8, 0, - 8), BlockPos(134, 254, 147)),
+        6 to Pair(BlockPos(- 40, 51, - 8), BlockPos(22, 110, 134)),
+        5 to Pair(BlockPos(- 40, 112, - 8), BlockPos(50, 53, 118)),
+        4 to Pair(BlockPos(- 40, 112, - 40), BlockPos(50, 53, 47)),
+        3 to Pair(BlockPos(- 40, 118, - 40), BlockPos(42, 64, 31)),
+        2 to Pair(BlockPos(- 40, 99, - 40), BlockPos(24, 54, 59)),
+        1 to Pair(BlockPos(- 14, 55, 49), BlockPos(- 72, 146, - 40))
     )
 
     private fun isInBossRoom(): Boolean {

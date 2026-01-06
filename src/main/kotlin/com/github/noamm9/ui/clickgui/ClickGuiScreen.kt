@@ -5,6 +5,7 @@ import com.github.noamm9.features.Feature
 import com.github.noamm9.ui.clickgui.componnents.Style
 import com.github.noamm9.ui.utils.Animation
 import com.github.noamm9.ui.utils.Resolution
+import com.github.noamm9.ui.utils.TextInputHandler
 import com.github.noamm9.utils.ColorUtils.withAlpha
 import com.github.noamm9.utils.render.Render2D
 import com.mojang.blaze3d.platform.InputConstants
@@ -14,16 +15,20 @@ import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.network.chat.Component
+import org.lwjgl.glfw.GLFW
 import java.awt.Color
 
 
 object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
     private val panels = mutableListOf<Panel>()
     var searchQuery = ""
-    private var isSearchFocused = true
+
+    private val searchHandler = TextInputHandler(
+        textProvider = { searchQuery },
+        textSetter = { searchQuery = it }
+    )
 
     var selectedFeature: Feature? = null
-
     private var scrollTarget = 0f
     private val scrollAnim = Animation(200L)
 
@@ -36,16 +41,15 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         Resolution.refresh()
         Resolution.apply(context)
-
-        val mX = Resolution.getMouseX(mouseX)
-        val mY = Resolution.getMouseY(mouseY)
+        val mX = Resolution.getMouseX(mouseX.toDouble())
+        val mY = Resolution.getMouseY(mouseY.toDouble())
 
         TooltipManager.reset()
-
         context.fillGradient(0, 0, Resolution.width.toInt(), Resolution.height.toInt(), Color(0, 0, 0, 100).rgb, Color(0, 0, 0, 150).rgb)
 
         panels.forEach { it.render(context, mX, mY) }
-        drawSearchBar(context)
+
+        drawSearchBar(context, mX.toFloat(), mY.toFloat())
 
         selectedFeature?.let { feature ->
             drawSettingsMenu(context, feature, mX, mY)
@@ -114,15 +118,26 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
         Render2D.drawCenteredString(context, "§7Click outside to close", Resolution.width / 2, y + 235)
     }
 
-    private fun drawSearchBar(context: GuiGraphics) {
-        val x = (Resolution.width / 2) - 75
-        val y = Resolution.height - 40
-        Render2D.drawRect(context, x, y, 150f, 22f, Color(15, 15, 15, 200))
-        val borderColor = if (isSearchFocused) Style.accentColor else Color(255, 255, 255, 30)
-        Render2D.drawRect(context, x, y + 20, 150f, 2f, borderColor)
+    private fun drawSearchBar(context: GuiGraphics, mX: Float, mY: Float) {
+        val bw = 150f
+        val bh = 22f
+        val bx = (Resolution.width / 2) - (bw / 2)
+        val by = Resolution.height - 40
 
-        if (searchQuery.isEmpty()) Render2D.drawCenteredString(context, "§8Search...", Resolution.width / 2, y + 7, Color.GRAY, shadow = false)
-        else Render2D.drawCenteredString(context, "§f$searchQuery", Resolution.width / 2, y + 7, Color.WHITE)
+        Render2D.drawRect(context, bx, by, bw, bh, Color(15, 15, 15, 200))
+
+        val borderColor = if (searchHandler.listening) Style.accentColor else Color(255, 255, 255, 30)
+        Render2D.drawRect(context, bx, by + bh - 2, bw, 2f, borderColor)
+
+        searchHandler.x = bx
+        searchHandler.y = by
+        searchHandler.width = bw
+        searchHandler.height = bh
+
+        if (searchQuery.isEmpty() && ! searchHandler.listening) {
+            Render2D.drawCenteredString(context, "§8Search...", Resolution.width / 2, by + 7, Color.GRAY, shadow = false)
+        }
+        else searchHandler.draw(context, mX, mY)
     }
 
     override fun mouseClicked(mouseButtonEvent: MouseButtonEvent, bl: Boolean): Boolean {
@@ -151,14 +166,14 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
             panels.add(clickedPanel)
 
             clickedPanel.mouseClicked(mx.toDouble(), my.toDouble(), button)
-            isSearchFocused = false
+            searchHandler.listening = false
 
             return true
         }
 
-        val barX = (Resolution.width / 2) - 75
-        val barY = Resolution.height - 40
-        isSearchFocused = mx >= barX && mx <= barX + 150 && my >= barY && my <= barY + 22
+        if (searchHandler.mouseClicked(mx.toFloat(), my.toFloat(), mouseButtonEvent)) {
+            return true
+        }
 
         panels.forEach { it.mouseClicked(mx.toDouble(), my.toDouble(), button) }
         return super.mouseClicked(mouseButtonEvent, bl)
@@ -167,6 +182,7 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
     override fun mouseReleased(mouseButtonEvent: MouseButtonEvent): Boolean {
         val mx = Resolution.getMouseX(mouseButtonEvent.x)
         val my = Resolution.getMouseY(mouseButtonEvent.y)
+        searchHandler.mouseReleased()
         selectedFeature?.configSettings?.forEach { it.mouseReleased(mouseButtonEvent.button()) }
         panels.forEach { it.mouseReleased(mx.toDouble(), my.toDouble(), mouseButtonEvent.button()) }
         return super.mouseReleased(mouseButtonEvent)
@@ -181,19 +197,20 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
     }
 
     override fun charTyped(characterEvent: CharacterEvent): Boolean {
-        selectedFeature?.configSettings?.forEach { it.charTyped(characterEvent.codepoint.toChar()) }?.also { return true }
-
-        if (isSearchFocused) {
-            searchQuery += characterEvent.codepoint.toChar()
-            return true
+        selectedFeature?.configSettings?.forEach {
+            if (it.isVisible && it.charTyped(characterEvent.codepoint.toChar(), characterEvent.modifiers)) {
+                return true
+            }
         }
+
+        if (searchHandler.keyTyped(characterEvent)) return true
         return super.charTyped(characterEvent)
     }
 
     override fun keyPressed(keyEvent: KeyEvent): Boolean {
         if (selectedFeature != null) {
             selectedFeature?.configSettings?.forEach {
-                if (it.keyPressed(keyEvent.key)) {
+                if (it.isVisible && it.keyPressed(keyEvent.key, keyEvent.scancode, keyEvent.modifiers)) {
                     return true
                 }
             }
@@ -206,18 +223,12 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
             }
         }
 
-        if (isSearchFocused) {
-            if (keyEvent.key == InputConstants.KEY_BACKSPACE && searchQuery.isNotEmpty()) {
-                searchQuery = searchQuery.dropLast(1)
-                return true
-            }
-            if (keyEvent.key == InputConstants.KEY_ESCAPE) {
-                if (searchQuery.isNotEmpty()) {
-                    searchQuery = ""
-                    return true
-                }
-            }
+        if (searchHandler.keyPressed(keyEvent)) return true
+        if (keyEvent.hasControlDown() && keyEvent.input() == GLFW.GLFW_KEY_F) {
+            searchHandler.listening = ! searchHandler.listening
+            return true
         }
+
         return super.keyPressed(keyEvent)
     }
 
@@ -234,4 +245,6 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
     }
 
     override fun isPauseScreen(): Boolean = false
+
+    val isTyping: Boolean get() = searchHandler.listening
 }

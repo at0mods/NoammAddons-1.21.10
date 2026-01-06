@@ -4,11 +4,8 @@ import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.NoammAddons.scope
 import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.EventBus.register
-import com.github.noamm9.event.impl.ChatMessageEvent
-import com.github.noamm9.event.impl.DungeonEvent
-import com.github.noamm9.event.impl.MainThreadPacketRecivedEvent
-import com.github.noamm9.event.impl.TickEvent
-import com.github.noamm9.event.impl.WorldChangeEvent
+import com.github.noamm9.event.EventPriority
+import com.github.noamm9.event.impl.*
 import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.ChatUtils.removeFormatting
 import com.github.noamm9.utils.ItemUtils.skyblockId
@@ -19,14 +16,10 @@ import com.github.noamm9.utils.location.LocationUtils.inDungeon
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.minecraft.client.multiplayer.PlayerInfo
-import net.minecraft.core.BlockPos
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundTabListPacket
 import net.minecraft.world.entity.player.PlayerSkin
-import net.minecraft.world.level.block.Blocks
-import net.minecraft.world.level.block.SkullBlock
-import net.minecraft.world.level.block.entity.SkullBlockEntity
 
 
 object DungeonListener {
@@ -66,8 +59,8 @@ object DungeonListener {
     var doorKeys = 0
 
     fun init() {
-        register<MainThreadPacketRecivedEvent.Post> {
-           if (!inDungeon) return@register
+        register<MainThreadPacketRecivedEvent.Post>(EventPriority.HIGH) {
+            if (! inDungeon) return@register
 
             when (val packet = event.packet) {
                 is ClientboundPlayerInfoUpdatePacket -> {
@@ -100,8 +93,8 @@ object DungeonListener {
             }
         }
 
-        register<ChatMessageEvent> {
-            if (!inDungeon) return@register
+        register<ChatMessageEvent>(EventPriority.HIGHEST) {
+            if (! inDungeon) return@register
             val text = event.formattedText
             val unformatted = event.unformattedText
 
@@ -119,7 +112,7 @@ object DungeonListener {
                     scope.launch { EventBus.post(DungeonEvent.RunEndedEvent()) }
                 }
 
-                text == "§cThe §c§lBLOOD DOOR§c has been opened!" -> doorKeys--
+                text == "§cThe §c§lBLOOD DOOR§c has been opened!" -> doorKeys --
 
                 "§r§c ☠" in text && "reconnected" !in unformatted -> {
                     val match = deathRegex.find(unformatted) ?: return@register
@@ -133,12 +126,12 @@ object DungeonListener {
                 }
 
                 unformatted == "[BOSS] The Watcher: You have proven yourself. You may pass." -> {
-                   // DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.GREEN
+                    // DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.GREEN
                     watcherClearTime = currentTime
                 }
 
                 unformatted == "[BOSS] The Watcher: That will be enough for now." -> {
-                  //  DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.CLEARED
+                    //  DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.CLEARED
                     watcherFinishSpawnTime = currentTime
                 }
 
@@ -155,7 +148,7 @@ object DungeonListener {
                 else -> {
                     witherDoorOpenedRegex.find(unformatted)?.destructured?.let { (name) ->
                         lastDoorOpenner = dungeonTeammates.find { it.name == name }
-                        doorKeys--
+                        doorKeys --
                         return@register
                     }
 
@@ -167,12 +160,12 @@ object DungeonListener {
             }
         }
 
-        register<TickEvent.Server> {
-            if (!inDungeon) return@register
-            currentTime++
+        register<TickEvent.Server>(EventPriority.HIGHEST) {
+            if (! inDungeon) return@register
+            currentTime ++
         }
 
-        register<WorldChangeEvent> {
+        register<WorldChangeEvent>(EventPriority.HIGHEST) {
             runPlayersNames.clear()
             dungeonTeammates = mutableListOf()
             dungeonTeammatesNoSelf = mutableListOf()
@@ -223,28 +216,28 @@ object DungeonListener {
         }*/
 
 
-            var (_, name, clazz, clazzLevel) = tablistRegex.find(tabName.removeFormatting())?.destructured ?: return
-            if (runPlayersNames.isEmpty()) name = mc.user.name
-            val skin = (if (runPlayersNames.isEmpty()) mc.player?.skin else playerInfo.skin) ?: return
-            runPlayersNames[name] = skin
-            if (clazz == "EMPTY") return
+        var (_, name, clazz, clazzLevel) = tablistRegex.find(tabName.removeFormatting())?.destructured ?: return
+        if (runPlayersNames.isEmpty()) name = mc.user.name
+        val skin = (if (runPlayersNames.isEmpty()) mc.player?.skin else playerInfo.skin) ?: return
+        runPlayersNames[name] = skin
+        if (clazz == "EMPTY") return
 
-            dungeonTeammates.find { it.name == name }?.let { currentTeammate ->
-                currentTeammate.clazz = if (clazz != "DEAD") Classes.getByName(clazz) else currentTeammate.clazz
-                currentTeammate.clazzLvl = clazzLevel.romanToDecimal()
-                currentTeammate.skin = skin
-                currentTeammate.isDead = clazz == "DEAD"
-            } ?: run {
-                dungeonTeammates.add(
-                    DungeonPlayer(
-                        name,
-                        Classes.getByName(clazz),
-                        clazzLevel.romanToDecimal(),
-                        skin,
-                        clazz == "DEAD",
-                    )
+        dungeonTeammates.find { it.name == name }?.let { currentTeammate ->
+            currentTeammate.clazz = if (clazz != "DEAD") Classes.getByName(clazz) else currentTeammate.clazz
+            currentTeammate.clazzLvl = clazzLevel.romanToDecimal()
+            currentTeammate.skin = skin
+            currentTeammate.isDead = clazz == "DEAD"
+        } ?: run {
+            dungeonTeammates.add(
+                DungeonPlayer(
+                    name,
+                    Classes.getByName(clazz),
+                    clazzLevel.romanToDecimal(),
+                    skin,
+                    clazz == "DEAD",
                 )
-            }
+            )
+        }
 
 
         thePlayer = dungeonTeammates.find { it.name == mc.user.name }

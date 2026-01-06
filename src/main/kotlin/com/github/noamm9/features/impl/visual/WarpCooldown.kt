@@ -8,7 +8,7 @@ import com.github.noamm9.utils.render.Render2D.height
 import com.github.noamm9.utils.render.Render2D.width
 import kotlin.math.roundToInt
 
-object WarpCooldown: Feature("Displays the game's fps on screen.") {
+object WarpCooldown: Feature("Displays on screen how long until u can start another dungeon run.") {
     private val floorEnterRegex = Regex("-+\\s.+ entered.+The Catacombs, Floor [IVX]+!\\s-+")
     private var startTime = System.currentTimeMillis()
     private var onCd = false

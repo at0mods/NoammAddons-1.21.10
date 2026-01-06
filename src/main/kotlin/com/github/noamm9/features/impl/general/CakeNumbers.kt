@@ -1,6 +1,6 @@
 package com.github.noamm9.features.impl.general
 
-import com.github.noamm9.event.impl.RenderSlotEvent
+import com.github.noamm9.event.impl.ContainerEvent
 import com.github.noamm9.features.Feature
 import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.location.LocationUtils
@@ -11,7 +11,7 @@ object CakeNumbers: Feature("Displays the year of a the cake in the New Year Cak
     private val cakeRegex = Regex("New Year Cake \\(Year (\\d+)\\)")
 
     override fun init() {
-        register<RenderSlotEvent.Post> {
+        register<ContainerEvent.Render.Slot.Post> {
             if (! LocationUtils.inSkyblock) return@register
             if (event.slot.item.item != Items.CAKE) return@register
             val year = cakeRegex.find(event.slot.item.displayName.unformattedText)?.destructured?.component1() ?: return@register

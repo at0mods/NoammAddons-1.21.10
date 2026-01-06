@@ -1,14 +1,19 @@
 package com.github.noamm9.mixin;
 
 import com.github.noamm9.event.EventBus;
+import com.github.noamm9.event.impl.ActionBarMessageEvent;
 import com.github.noamm9.event.impl.RenderOverlayEvent;
+import com.github.noamm9.features.impl.tweaks.Camera;
+import com.github.noamm9.features.impl.visual.PlayerHud;
 import com.github.noamm9.ui.ClientBranding;
-import com.github.noamm9.utils.dungeons.DungeonDebugHUD;
+import com.github.noamm9.utils.DebugHUD;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
@@ -17,6 +22,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Gui.class)
@@ -29,36 +35,46 @@ public class MixinGui {
     @Final
     private PlayerTabOverlay tabList;
 
+    @Inject(method = "renderArmor", at = @At("HEAD"), cancellable = true)
+    private static void renderArmor(GuiGraphics guiGraphics, Player player, int i, int j, int k, int l, CallbackInfo ci) {
+        if (PlayerHud.INSTANCE.getHideArmorbar().getValue()) {
+            ci.cancel();
+        }
+    }
+
     @Inject(method = "render", at = @At("TAIL"))
     public void onRenderHud(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         if (this.minecraft.options.hideGui) return;
         if (this.minecraft.getDebugOverlay().showDebugScreen()) return;
         EventBus.post(new RenderOverlayEvent(guiGraphics, deltaTracker));
 
-        DungeonDebugHUD.render(guiGraphics);
+        DebugHUD.renderDungeonDebug(guiGraphics);
+        DebugHUD.renderLocationDebug(guiGraphics);
     }
 
     @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)
     public void onRenderPortalOverlay(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
-        ci.cancel();
+        if (Camera.INSTANCE.enabled && Camera.getHidePortalOverlay().getValue()) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "renderConfusionOverlay", at = @At("HEAD"), cancellable = true)
     public void onRenderConfusionOverlay(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
-        ci.cancel();
+        if (Camera.INSTANCE.enabled && Camera.getDisableNausea().getValue()) {
+            ci.cancel();
+        }
     }
 
-
     @Inject(method = "displayScoreboardSidebar", at = @At("HEAD"), cancellable = true)
-    public void a(GuiGraphics guiGraphics, Objective objective, CallbackInfo ci) {
+    public void renderScoreboardSidebar(GuiGraphics guiGraphics, Objective objective, CallbackInfo ci) {
         ci.cancel();
 
         ClientBranding.drawScoreboard(guiGraphics, objective);
     }
 
-
     @Inject(method = "renderTabList", at = @At("HEAD"), cancellable = true)
-    public void aa(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+    public void renderTabList(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         ci.cancel();
 
         Scoreboard scoreboard = this.minecraft.level.getScoreboard();
@@ -70,6 +86,27 @@ public class MixinGui {
             this.tabList.setVisible(true);
             guiGraphics.nextStratum();
             ClientBranding.drawTablist(guiGraphics);
+        }
+    }
+
+    @ModifyVariable(method = "setOverlayMessage", at = @At("HEAD"), argsOnly = true)
+    private Component onSetOverlayMessage(Component component) {
+        var event = new ActionBarMessageEvent(component);
+        if (EventBus.post(event)) return Component.empty();
+        return Component.literal(event.getMessage());
+    }
+
+    @Inject(method = "renderPlayerHealth", at = @At("HEAD"), cancellable = true)
+    public void renderPlayerHealth(GuiGraphics guiGraphics, CallbackInfo ci) {
+        if (PlayerHud.INSTANCE.getHideHealthbar().getValue()) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderFood", at = @At("HEAD"), cancellable = true)
+    public void renderFood(GuiGraphics guiGraphics, Player player, int i, int j, CallbackInfo ci) {
+        if (PlayerHud.INSTANCE.getHideFoodbar().getValue()) {
+            ci.cancel();
         }
     }
 }

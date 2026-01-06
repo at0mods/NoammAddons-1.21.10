@@ -2,26 +2,15 @@ package com.github.noamm9.event
 
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.EventBus.register
-import com.github.noamm9.event.impl.ChatMessageEvent
-import com.github.noamm9.event.impl.EntityDeathEvent
-import com.github.noamm9.event.impl.PacketEvent
-import com.github.noamm9.event.impl.RenderWorldEvent
-import com.github.noamm9.event.impl.ServerEvent
-import com.github.noamm9.event.impl.TickEvent
-import com.github.noamm9.event.impl.WorldChangeEvent
-import com.github.noamm9.utils.ChatUtils
-import com.github.noamm9.utils.ChatUtils.formattedText
+import com.github.noamm9.event.impl.*
 import com.github.noamm9.utils.render.RenderContext
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents
-import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.network.protocol.common.ClientboundPingPacket
-import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket
-import net.minecraft.world.entity.Entity
 
 object EventDispatcher {
     fun init() {
@@ -64,8 +53,8 @@ object EventDispatcher {
                 event.isCanceled = true
 
                 mc.execute {
-                    if (!EventBus.post(ChatMessageEvent(event.packet.content))) {
-                        event.packet.handle(mc.connection)
+                    if (! EventBus.post(ChatMessageEvent(event.packet.content))) {
+                        mc.connection?.let { event.packet.handle(it) }
                     }
                 }
             }

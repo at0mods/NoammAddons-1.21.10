@@ -1,5 +1,6 @@
 package com.github.noamm9.mixin;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -11,4 +12,7 @@ public interface IKeyMapping {
 
     @Accessor("clickCount")
     void setClickCount(int count);
+
+    @Accessor("key")
+    InputConstants.Key getKey();
 }

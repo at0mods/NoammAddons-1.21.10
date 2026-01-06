@@ -4,8 +4,7 @@ import com.github.noamm9.NoammAddons
 import java.awt.Color
 import java.awt.Desktop
 import java.net.URI
-import java.util.EnumSet
-import kotlin.collections.forEach
+import java.util.*
 import kotlin.reflect.KClass
 
 object Utils {
@@ -33,9 +32,9 @@ object Utils {
     fun String.startsWithOneOf(vararg prefixes: String): Boolean = prefixes.any { startsWith(it) }
     fun String.spaceCaps(): String {
         return this
-                .replace(Regex("(?<=[a-z])(?=[A-Z])"), " ")
-                .replace(Regex("(?<=[A-Z])(?=[A-Z][a-z])"), " ")
-                .trim()
+            .replace(Regex("(?<=[a-z])(?=[A-Z])"), " ")
+            .replace(Regex("(?<=[A-Z])(?=[A-Z][a-z])"), " ")
+            .trim()
     }
 
     fun String.uppercaseFirst() = this[0].uppercase() + substring(1)
@@ -55,13 +54,13 @@ object Utils {
     fun String.remove(vararg patterns: String): String = patterns.fold(this) { acc, s -> acc.replace(s, "") }
     fun String.remove(vararg patterns: Regex): String = patterns.fold(this) { acc, r -> acc.replace(r, "") }
     fun String.remove(vararg patterns: Any): String =
-            patterns.fold(this) { acc, p ->
-                when (p) {
-                    is String -> acc.replace(p, "")
-                    is Regex -> acc.replace(p, "")
-                    else -> acc
-                }
+        patterns.fold(this) { acc, p ->
+            when (p) {
+                is String -> acc.replace(p, "")
+                is Regex -> acc.replace(p, "")
+                else -> acc
             }
+        }
 
     fun String.removeSpace() = replace("\\s".toRegex(), "")
 

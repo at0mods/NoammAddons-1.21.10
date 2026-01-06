@@ -11,6 +11,8 @@ import net.minecraft.world.entity.player.PlayerSkin
 import net.minecraft.world.item.ItemStack
 import java.awt.Color
 import java.util.*
+import kotlin.math.atan2
+import kotlin.math.sqrt
 
 object Render2D {
     fun drawImage(ctx: GuiGraphics, image: ResourceLocation, x: Int, y: Int, width: Int, height: Int) {
@@ -40,12 +42,33 @@ object Render2D {
         )
     }
 
-    @JvmOverloads
     fun drawRect(ctx: GuiGraphics, x: Number, y: Number, width: Number, height: Number, color: Color = Color.WHITE) {
         val pose = ctx.pose()
         pose.translate(x.toFloat(), y.toFloat())
         ctx.fill(0, 0, width.toInt(), height.toInt(), color.rgb)
         pose.translate(- x.toFloat(), - y.toFloat())
+    }
+
+    fun drawLine(ctx: GuiGraphics, x1: Number, y1: Number, x2: Number, y2: Number, color: Color, thickness: Number = 1) {
+        val pose = ctx.pose()
+        val fx1 = x1.toFloat()
+        val fy1 = y1.toFloat()
+        val fx2 = x2.toFloat()
+        val fy2 = y2.toFloat()
+        val iThick = thickness.toInt()
+
+        val dx = fx2 - fx1
+        val dy = fy2 - fy1
+        val distance = sqrt(dx * dx + dy * dy).toInt()
+        val angle = atan2(dy, dx)
+
+        pose.translate(fx1, fy1)
+        pose.rotate(angle)
+
+        ctx.fill(0, 0, distance, iThick, color.rgb)
+
+        pose.rotate(- angle)
+        pose.translate(- fx1, - fy1)
     }
 
     @JvmOverloads

@@ -4,14 +4,9 @@ import com.github.noamm9.NoammAddons.MOD_NAME
 import com.github.noamm9.NoammAddons.logger
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.EventBus.register
+import com.github.noamm9.event.EventPriority
 import com.github.noamm9.event.impl.TickEvent
-import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.decoration.ArmorStand
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 object ThreadUtils {
     private data class TickTask(var ticks: Int, val action: () -> Unit)
@@ -61,7 +56,7 @@ object ThreadUtils {
     }
 
     fun init() {
-        register<TickEvent.Start> {
+        register<TickEvent.Start>(EventPriority.HIGHEST) {
             if (tickTasks.isEmpty()) return@register
 
             tickTasks.removeIf { entry ->
@@ -87,3 +82,4 @@ object ThreadUtils {
         }
     }
 }
+

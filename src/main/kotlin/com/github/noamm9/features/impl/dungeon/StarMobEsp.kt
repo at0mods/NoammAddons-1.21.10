@@ -40,7 +40,7 @@ object StarMobEsp: Feature("Hightlights all starred mobs in a dungeon.") {
     private val batColor by ColorSetting("Bat Color", Color.GREEN, false).withDescription("The color used for highlighted bats.").showIf { espBats.value }
     private val felColor by ColorSetting("Fel Color", Color.PINK, false).withDescription("The color used for fels.").showIf { espFels.value }
 
-    private val shadowAssassinColor by ColorSetting("Shadow Assassin", Color.BLACK, false).section("Mini-Boss Colors").showIf { customMinibossesColors.value }
+    private val shadowAssassinColor by ColorSetting("Shadow Assassin", Color.BLACK, false).section("Mini-Boss Colors") { customMinibossesColors.value }.showIf { customMinibossesColors.value }
     private val angryArchaeologistColor by ColorSetting("Angry Archaeologist", Color.RED, false).showIf { customMinibossesColors.value }
     private val frozenAdventurerColor by ColorSetting("Frozen Adventurer", Color.CYAN, false).showIf { customMinibossesColors.value }
     private val superiorDragonColor by ColorSetting("Superior Dragon", Color.YELLOW, false).showIf { customMinibossesColors.value }

@@ -2,56 +2,87 @@ package com.github.noamm9.utils
 
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.EventBus.register
+import com.github.noamm9.event.EventPriority
 import com.github.noamm9.event.impl.PacketEvent
+import com.github.noamm9.event.impl.TickEvent
 import com.github.noamm9.event.impl.WorldChangeEvent
 import net.minecraft.Util
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket
 import net.minecraft.network.protocol.ping.ClientboundPongResponsePacket
+import net.minecraft.network.protocol.ping.ServerboundPingRequestPacket
 import kotlin.math.min
-
 
 object ServerUtils {
     var averageTps = 20f
         private set
 
-    var currentPing: Int = 0
+    var currentPing = 0L
         private set
 
-    var averagePing: Int = 0
+    var averagePing = 0L
         private set
 
     private var lastTimePacket = 0L
+    private var pingStartTime = 0L
+    private var isPinging = false
+    private var tickCounter = 0
 
     fun init() {
-        register<WorldChangeEvent> {
+        register<WorldChangeEvent>(EventPriority.HIGHEST) {
             averageTps = 20f
             currentPing = 0
             averagePing = 0
             lastTimePacket = 0L
+            isPinging = false
         }
 
-        register<PacketEvent.Received> {
-            if (event.packet is ClientboundSetTimePacket) {
-                if (lastTimePacket != 0L) averageTps = (20000f / (System.currentTimeMillis() - lastTimePacket + 1)).coerceIn(0f, 20f)
-                lastTimePacket = System.currentTimeMillis()
+        register<TickEvent.Start>(EventPriority.HIGHEST) {
+            if (isPinging && Util.getNanos() - pingStartTime > 10_000_000_000L) {
+                isPinging = false
             }
-            else if (event.packet is ClientboundPongResponsePacket) {
-                currentPing = (Util.getMillis() - event.packet.time).toInt().coerceAtLeast(0)
+
+            tickCounter ++
+            if (tickCounter >= 80) {
+                tickCounter = 0
+                sendPingRequest()
+            }
+        }
+
+        register<PacketEvent.Received>(EventPriority.HIGHEST) {
+            val packet = event.packet
+
+            if (event.packet is ClientboundSetTimePacket) {
+                val now = System.currentTimeMillis()
+                if (lastTimePacket != 0L) {
+                    val diff = now - lastTimePacket
+                    val instantTps = (20000f / diff).coerceIn(0f, 20f)
+                    averageTps = (averageTps * 0.8f) + (instantTps * 0.2f)
+                }
+                lastTimePacket = now
+            }
+            else if (packet is ClientboundPongResponsePacket) {
+                currentPing = (Util.getMillis() - packet.time).coerceAtLeast(0)
+                isPinging = false
+
                 val pingLog = mc.debugOverlay.pingLogger
                 val sampleSize = min(pingLog.size(), 10)
 
-                if (sampleSize == 0) {
-                    averagePing = currentPing
-                    return@register
+                if (sampleSize > 0) {
+                    var total = 0L
+                    for (i in 0 until sampleSize) total += pingLog.get(i)
+                    averagePing = total / sampleSize
                 }
-
-                var total = 0L
-                for (i in 0 until sampleSize) {
-                    total += pingLog.get(i)
-                }
-
-                averagePing = (total / sampleSize).toInt()
+                else averagePing = currentPing
             }
         }
+    }
+
+    private fun sendPingRequest() {
+        if (isPinging || mc.player == null) return
+
+        val connection = mc.connection ?: return
+        isPinging = true
+        pingStartTime = Util.getNanos()
+        connection.send(ServerboundPingRequestPacket(Util.getMillis()))
     }
 }

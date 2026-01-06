@@ -39,7 +39,7 @@ class KeybindSetting(name: String, value: Int = InputConstants.UNKNOWN.value): S
         return false
     }
 
-    override fun keyPressed(keyCode: Int): Boolean {
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (listening) {
             if (keyCode == InputConstants.KEY_ESCAPE) {
                 listening = false

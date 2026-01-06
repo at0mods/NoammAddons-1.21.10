@@ -1,6 +1,5 @@
 package com.github.noamm9
 
-import com.github.noamm9.config.Config
 import com.github.noamm9.config.PogObject
 import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.EventDispatcher
@@ -8,9 +7,7 @@ import com.github.noamm9.event.impl.ChatMessageEvent
 import com.github.noamm9.features.FeatureManager
 import com.github.noamm9.ui.clickgui.ClickGuiScreen
 import com.github.noamm9.ui.hud.HudEditorScreen
-import com.github.noamm9.utils.ChatUtils
-import com.github.noamm9.utils.ServerUtils
-import com.github.noamm9.utils.ThreadUtils
+import com.github.noamm9.utils.*
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.fabricmc.api.ClientModInitializer
@@ -31,6 +28,9 @@ object NoammAddonsClient: ClientModInitializer {
         ThreadUtils.init()
         DungeonListener.init()
         ServerUtils.init()
+        ActionBarParser.init()
+        PartyUtils.init()
+        ChatUtils.init()
 
         FeatureManager.registerFeatures()
 
@@ -104,7 +104,6 @@ object NoammAddonsClient: ClientModInitializer {
                         ChatUtils.modMessage("hi")
                     }
 
-                    Config.load()
                     1
                 }
             )

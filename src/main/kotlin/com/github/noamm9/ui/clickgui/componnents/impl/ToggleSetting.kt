@@ -22,9 +22,7 @@ class ToggleSetting(name: String, value: Boolean = false): Setting<Boolean>(name
 
         Style.drawBackground(ctx, x, y, width, height)
         Style.drawHoverBar(ctx, x, y, height, hoverAnim.value)
-
-        val textColor = Style.textDim.lerp(Color.WHITE, toggleAnim.value)
-        Style.drawNudgedText(ctx, name, x + 8f, y + 6f, hoverAnim.value, textColor)
+        Style.drawNudgedText(ctx, name, x + 8f, y + 6f, hoverAnim.value)
 
         val sw = 18f;
         val sh = 6f

@@ -1,39 +1,50 @@
 package com.github.noamm9.features
 
+import com.github.noamm9.NoammAddons
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.config.Config
 import com.github.noamm9.event.EventBus.register
 import com.github.noamm9.event.impl.RenderOverlayEvent
-import com.github.noamm9.features.impl.dev.ClickGui
-import com.github.noamm9.features.impl.dev.CompTest
-import com.github.noamm9.features.impl.dungeon.StarMobEsp
-import com.github.noamm9.features.impl.general.AutoClicker
-import com.github.noamm9.features.impl.general.CakeNumbers
-import com.github.noamm9.features.impl.misc.PvpBlink
-import com.github.noamm9.features.impl.tweaks.Camera
-import com.github.noamm9.features.impl.visual.*
 import com.github.noamm9.ui.clickgui.CategoryType
 import com.github.noamm9.ui.hud.HudEditorScreen
 import com.github.noamm9.ui.hud.HudElement
 import com.github.noamm9.ui.utils.Resolution
+import io.github.classgraph.ClassGraph
 
 object FeatureManager {
     val hudElements = mutableListOf<HudElement>()
-
-    val features = mutableSetOf(
-        StarMobEsp, AutoClicker, CakeNumbers,
-        ClockDisplay, FpsDisplay, TpsDisplay,
-        WarpCooldown, PetDisplay, Camera, PvpBlink,
-
-        CompTest, ClickGui
-    ).sortedBy { it.name }
-
+    val features = mutableSetOf<Feature>()
 
     fun registerFeatures() {
-        features.forEach {
-            it.initialize()
-            hudElements.addAll(it.hudElements)
+        val scanResult = ClassGraph()
+            .enableAllInfo()
+            .acceptPackages("com.github.noamm9")
+            .ignoreClassVisibility()
+            .overrideClassLoaders(Thread.currentThread().contextClassLoader)
+            .scan()
+
+        scanResult.use { result ->
+            val featureClasses = result.getSubclasses("com.github.noamm9.features.Feature")
+            NoammAddons.logger.debug("ClassGraph found ${featureClasses.size} subclasses of Feature")
+
+            featureClasses.forEach { classInfo ->
+                try {
+                    val clazz = classInfo.loadClass()
+                    val instance = clazz.getDeclaredField("INSTANCE").get(null) as? Feature
+
+                    instance?.let { feature ->
+                        feature.initialize()
+                        hudElements.addAll(feature.hudElements)
+                        features.add(feature)
+                        NoammAddons.logger.info("Successfully loaded feature: ${feature::class.simpleName}")
+                    }
+                }
+                catch (e: Exception) {
+                    NoammAddons.logger.error("Failed to load feature class: ${classInfo.name}", e)
+                }
+            }
         }
+
         Config.load()
 
         register<RenderOverlayEvent> {

@@ -5,31 +5,63 @@ package com.github.noamm9.event
 import com.github.noamm9.NoammAddons
 import com.github.noamm9.utils.ChatUtils
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
 
 object EventBus {
-    val listeners = ConcurrentHashMap<Class<out Event>, CopyOnWriteArraySet<EventListener>>()
+    class EventContext<T: Event>(val event: T, val listener: EventListener<T>)
+
+    val listeners = ConcurrentHashMap<Class<out Event>, List<EventListener<*>>>()
 
     @JvmStatic
     fun post(event: Event): Boolean {
-        listeners[event.javaClass]?.forEach {
-            runCatching {
-                it.listener.invoke(EventContext(event))
-            }.onFailure { exception ->
-                NoammAddons.logger.error("EventBus", exception)
-                ChatUtils.modMessage("§c§lError in event: ${event.javaClass.name}. Error: ${exception.message}")
+        val list = listeners[event.javaClass] ?: return event.isCanceled
+
+        for (i in list.indices) {
+            val handler = list[i]
+            try {
+                val callback = handler.callback as EventContext<Event>.() -> Unit
+                callback.invoke(EventContext(event, handler as EventListener<Event>))
+            }
+            catch (e: Exception) {
+                NoammAddons.logger.error("EventBus Error in ${event.javaClass.name}", e)
+                ChatUtils.modMessage("EventBus Error: class ${event.javaClass.name}. message: ${e.message}")
             }
         }
+
         return if (event.cancelable) event.isCanceled else false
     }
 
     @JvmStatic
-    inline fun <reified T : Event> register(noinline listener: EventContext<T>.() -> Unit): EventListener {
-        val wrappedListener: EventContext<out Event>.() -> Unit = { listener.invoke(EventContext(this.event as T)) }
-        val eventListener = EventListener(T::class.java, wrappedListener as EventContext<Event>.() -> Unit)
-        listeners.getOrPut(T::class.java) { CopyOnWriteArraySet() }.add(eventListener)
+    inline fun <reified T: Event> register(
+        priority: EventPriority = EventPriority.NORMAL,
+        noinline block: EventContext<T>.() -> Unit
+    ): EventListener<T> {
+        val eventListener = EventListener(T::class.java, priority, block)
+
+        synchronized(listeners) {
+            val oldList = listeners[T::class.java] ?: emptyList()
+            val newList = (oldList + eventListener).sortedBy { it.priority.ordinal }
+            listeners[T::class.java] = newList
+        }
+
         return eventListener
     }
 
-    class EventContext<T : Event>(val event: T)
+    fun unregister(listener: EventListener<*>) {
+        synchronized(listeners) {
+            val oldList = listeners[listener.eventClass] ?: return
+            val newList = oldList.filter { it !== listener }
+
+            if (newList.isEmpty()) listeners.remove(listener.eventClass)
+            else listeners[listener.eventClass] = newList
+        }
+    }
+
+    fun register(listener: EventListener<*>) {
+        synchronized(listeners) {
+            val oldList = listeners[listener.eventClass] ?: emptyList()
+            if (oldList.contains(listener)) return
+            val newList = (oldList + listener).sortedBy { it.priority.ordinal }
+            listeners[listener.eventClass] = newList
+        }
+    }
 }

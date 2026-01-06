@@ -11,7 +11,8 @@ import com.github.noamm9.utils.render.Render2D.height
 import com.github.noamm9.utils.render.Render2D.width
 import java.awt.Color
 
-object TpsDisplay: Feature("Displays the game's fps on screen.") {
+
+object TpsDisplay: Feature("Displays the Server's Ticks Per Second on screen.") {
     private val color by ColorSetting("Color", Color(0, 114, 255), false)
 
     private val tpsDisplayHud = hudElement("TpsDisplay") { ctx, example ->

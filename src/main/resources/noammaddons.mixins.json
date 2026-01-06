@@ -6,6 +6,7 @@
     "ExampleMixin",
     "MixinConnection",
     "MixinEntity",
+    "MixinLivingEntity",
     "MixinPacketProcessorListener"
   ],
   "injectors": {
@@ -15,6 +16,7 @@
     "requireAnnotations": true
   },
   "client": [
+    "IAbstractContainerScreen",
     "IKeyMapping",
     "IPlayerTabOverlay",
     "MixinAbstractContainerScreen",
@@ -23,7 +25,10 @@
     "MixinEntityRenderDispatcher",
     "MixinGameRenderer",
     "MixinGui",
+    "MixinItemInHandRenderer",
     "MixinLightTexture",
+    "MixinMinecraft",
+    "MixinScreen",
     "MixinScreenEffectRenderer"
   ]
 }

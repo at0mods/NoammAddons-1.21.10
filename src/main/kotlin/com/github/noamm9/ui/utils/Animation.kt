@@ -31,6 +31,6 @@ class Animation(var duration: Long = 200, initialValue: Float = 0f) {
 
     companion object {
         fun easeOutQuad(t: Double): Double = 1.0 - (1.0 - t) * (1.0 - t)
-        fun easeInOutQuad(t: Double): Double = if (t < 0.5) 2.0 * t * t else 1.0 - (-2.0 * t + 2.0).let { it * it } / 2.0
+        fun easeInOutQuad(t: Double): Double = if (t < 0.5) 2.0 * t * t else 1.0 - (- 2.0 * t + 2.0).let { it * it } / 2.0
     }
 }

@@ -6,7 +6,9 @@ import com.github.noamm9.ui.clickgui.componnents.impl.SeparatorSetting
 import net.minecraft.client.gui.GuiGraphics
 import kotlin.reflect.KProperty
 
-abstract class Setting<T>(val name: String, open var value: T) {
+abstract class Setting<T>(val name: String, val defaultValue: T) {
+    open var value: T = defaultValue
+
     var x = 0
     var y = 0
 
@@ -20,19 +22,19 @@ abstract class Setting<T>(val name: String, open var value: T) {
 
     var headerName: String? = null
 
+    fun reset() {
+        value = defaultValue
+    }
+
     abstract fun draw(ctx: GuiGraphics, mouseX: Int, mouseY: Int)
     abstract fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean
 
     open fun mouseReleased(button: Int) {}
-    open fun keyPressed(keyCode: Int): Boolean = false
-    open fun charTyped(codePoint: Char): Boolean = false
+    open fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
+    open fun charTyped(codePoint: Char, modifiers: Int): Boolean = false
 }
 
-/**
- * Attaches a Category and Separator to this setting.
- * They will be injected into the GUI right above this setting.
- */
-fun <T: Setting<*>> T.section(name: String): T {
+fun <T: Setting<*>> T.section(name: String, showIf: () -> Boolean = { true }): T {
     this.headerName = name
     return this
 }

@@ -4,9 +4,9 @@ import com.github.noamm9.NoammAddons
 import com.github.noamm9.NoammAddonsClient
 import com.github.noamm9.config.Savable
 import com.github.noamm9.event.Event
-import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.EventBus.EventContext
 import com.github.noamm9.event.EventListener
+import com.github.noamm9.event.EventPriority
 import com.github.noamm9.features.annotations.AlwaysActive
 import com.github.noamm9.features.annotations.Dev
 import com.github.noamm9.ui.clickgui.CategoryType
@@ -23,7 +23,7 @@ open class Feature(
     toggled: Boolean = false,
 ) {
     val name = name ?: this::class.simpleName.toString().spaceCaps()
-    val listeners = mutableSetOf<EventListener>()
+    val listeners = mutableSetOf<EventListener<*>>()
 
     val configSettings = CopyOnWriteArrayList<Setting<*>>()
     val hudElements = CopyOnWriteArrayList<HudElement>()
@@ -50,11 +50,11 @@ open class Feature(
 
 
     open fun onEnable() {
-        listeners.forEach(EventListener::register)
+        listeners.forEach(EventListener<*>::register)
     }
 
     open fun onDisable() {
-        listeners.forEach(EventListener::unregister)
+        listeners.forEach(EventListener<*>::unregister)
     }
 
     open fun toggle() {
@@ -67,8 +67,11 @@ open class Feature(
         }
     }
 
-    protected inline fun <reified T: Event> register(noinline block: EventContext<T>.() -> Unit): EventListener {
-        val listener = EventBus.register<T>(block).unregister()
+    protected inline fun <reified T: Event> register(
+        priority: EventPriority = EventPriority.NORMAL,
+        noinline block: EventContext<T>.() -> Unit
+    ): EventListener<T> {
+        val listener = EventListener(T::class.java, priority, block)
         listeners.add(listener)
         return listener
     }

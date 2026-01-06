@@ -129,7 +129,7 @@ class ColorSetting(name: String, defaultValue: Color, val withAlpha: Boolean = t
         }
     }
 
-    override fun charTyped(codePoint: Char): Boolean {
+    override fun charTyped(codePoint: Char, modifiers: Int): Boolean {
         if (expanded && hexFocused) {
             val codePoint = codePoint.lowercase()
             if (validHexChars.contains(codePoint) && hexText.length < (if (withAlpha) 8 else 6)) {
@@ -141,7 +141,7 @@ class ColorSetting(name: String, defaultValue: Color, val withAlpha: Boolean = t
         return false
     }
 
-    override fun keyPressed(keyCode: Int): Boolean {
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (expanded && hexFocused) {
             if (keyCode == GLFW.GLFW_KEY_BACKSPACE && hexText.isNotEmpty()) {
                 hexText = hexText.dropLast(1)

@@ -1,9 +1,11 @@
 package com.github.noamm9.ui.hud
 
+import com.github.noamm9.features.Feature
 import com.github.noamm9.ui.clickgui.componnents.Style
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
+import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.jvmName
 
 abstract class HudElement {
@@ -72,3 +74,11 @@ abstract class HudElement {
         }
     }
 }
+
+
+operator fun <T: HudElement> T.provideDelegate(thisRef: Feature, prop: KProperty<*>): T {
+    thisRef.hudElements.add(this)
+    return this
+}
+
+operator fun <T: HudElement> T.getValue(thisRef: Feature, prop: KProperty<*>): T = this

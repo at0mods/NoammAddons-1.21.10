@@ -25,10 +25,22 @@ object Camera: Feature() {
     val hideFireOverlay by ToggleSetting("Hide Fire Overlay").withDescription("Hides the fire overlay on ur screen").section("Hide Overlays")
 
     @JvmStatic
+    val hidePortalOverlay by ToggleSetting("Hide Portal Overlay").withDescription("Hides the portal overlay on ur screen when you enter a portal")
+
+    @JvmStatic
+    val hideWaterOverlay by ToggleSetting("Hide Water Overlay").withDescription("Hides the under water overlay on ur screen")
+
+    @JvmStatic
+    val hideBlockOverlay by ToggleSetting("Hide Block Overlay").withDescription("Hides the Block that render on your screen when u are stuck inside a block")
+
+    @JvmStatic
     val disableBlindness by ToggleSetting("Disable Blindness").withDescription("Disables the Blindness potion effect").section("Hide Effects")
 
     @JvmStatic
     val disableDarkness by ToggleSetting("Disable Darkness").withDescription("Disables the Darkness potion effect")
+
+    @JvmStatic
+    val disableNausea by ToggleSetting("Disable Nausea").withDescription("Disables the Nausea potion effect")
 
     @JvmStatic
     val isFullBright get() = enabled && fullBright.value
