@@ -1,5 +1,6 @@
 package com.github.noamm9.mixin;
 
+import com.github.noamm9.NoammAddons;
 import com.github.noamm9.event.EventBus;
 import com.github.noamm9.event.impl.KeyboardEvent;
 import net.minecraft.client.KeyboardHandler;
@@ -15,7 +16,7 @@ public abstract class KeyboardMixin {
     @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
     private void onKey(long l, int i, KeyEvent keyEvent, CallbackInfo ci) {
         if (keyEvent.key() == GLFW.GLFW_KEY_UNKNOWN) return;
-        if (EventBus.post(new KeyboardEvent(keyEvent.key(), keyEvent.modifiers(), keyEvent.scancode()))) {
+        if (EventBus.post(new KeyboardEvent(keyEvent.key(), keyEvent.modifiers(), GLFW.glfwGetKey(NoammAddons.mc.getWindow().handle(), keyEvent.key())))) {
             ci.cancel();
         }
     }

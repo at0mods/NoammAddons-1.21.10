@@ -19,23 +19,23 @@ object EventDispatcher {
         }
 
         ClientPlayConnectionEvents.JOIN.register { _, _, _ ->
-            EventBus.post(ServerEvent.Connect())
+            EventBus.post(ServerEvent.Connect)
         }
 
         ClientPlayConnectionEvents.DISCONNECT.register { _, _ ->
-            EventBus.post(ServerEvent.Disconnect())
+            EventBus.post(ServerEvent.Disconnect)
         }
 
         ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register { _, _ ->
-            EventBus.post(WorldChangeEvent())
+            EventBus.post(WorldChangeEvent)
         }
 
         ClientTickEvents.START_CLIENT_TICK.register { _ ->
-            mc.level?.let { EventBus.post(TickEvent.Start()) }
+            mc.level?.let { EventBus.post(TickEvent.Start) }
         }
 
         ClientTickEvents.END_CLIENT_TICK.register { _ ->
-            mc.level?.let { EventBus.post(TickEvent.End()) }
+            mc.level?.let { EventBus.post(TickEvent.End) }
         }
 
         ClientEntityEvents.ENTITY_UNLOAD.register { entity, _ ->
@@ -45,7 +45,7 @@ object EventDispatcher {
         register<PacketEvent.Received> {
             if (event.packet is ClientboundPingPacket) {
                 if (event.packet.id != 0) {
-                    EventBus.post(TickEvent.Server())
+                    EventBus.post(TickEvent.Server)
                 }
             }
             else if (event.packet is ClientboundSystemChatPacket) {

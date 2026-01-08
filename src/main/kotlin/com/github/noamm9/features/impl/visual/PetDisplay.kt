@@ -22,12 +22,12 @@ object PetDisplay: Feature("Displays your active pet on screen") {
         register<ChatMessageEvent> {
             if (! LocationUtils.inSkyblock) return@register
             event.formattedText.let {
-                if (chatSpawnRegex.matches(it)) {
+                if (chatDespawnRegex.matches(it)) {
                     cacheData.getData().remove("pet")
                     return@register
                 }
 
-                val match1 = chatDespawnRegex.find(it)?.destructured?.component1()
+                val match1 = chatSpawnRegex.find(it)?.destructured?.component1()
                 val match3 = chatPetRuleRegex.find(it)?.destructured?.component1()
                 cacheData.getData()["pet"] = match1 ?: match3 ?: return@let
             }

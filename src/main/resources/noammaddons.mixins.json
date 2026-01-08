@@ -16,6 +16,8 @@
     "requireAnnotations": true
   },
   "client": [
+    "AbstractRecipeBookScreenMixin",
+    "EffectsInInventoryMixin",
     "IAbstractContainerScreen",
     "IKeyMapping",
     "IMouseHandler",
@@ -33,9 +35,13 @@
     "MixinItemInHandRenderer",
     "MixinLightTexture",
     "MixinMinecraft",
+    "MixinMouseHandler",
+    "MixinMultiPlayerGameMode",
     "MixinOptions",
     "MixinScreen",
     "MixinScreenEffectRenderer",
-    "MouseMixin"
+    "MixinScreenn",
+    "NameTagFeatureRendererMixin",
+    "PlayerRendererMixin"
   ]
 }

@@ -9,7 +9,6 @@ class Notification(val title: String, val message: String, val duration: Long) {
     var elapsedTime = 0L
     var isDead = false
 
-    // Split width: 170 total - 10 left padding - 10 right padding = 150
     val wrappedLines = mc.font.split(Component.literal(message), 150)
     val height: Float = 22f + (wrappedLines.size * (mc.font.lineHeight + 1f)) + 4f
 }

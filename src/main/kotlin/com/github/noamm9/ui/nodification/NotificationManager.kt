@@ -7,9 +7,10 @@ import com.github.noamm9.utils.ColorUtils.withAlpha
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
+import java.util.concurrent.CopyOnWriteArrayList
 
 object NotificationManager {
-    private val notifications = mutableListOf<Notification>()
+    private val notifications = CopyOnWriteArrayList<Notification>()
     private var lastFrameTime = System.currentTimeMillis()
 
     fun push(title: String, message: String, duration: Long = 5000L) {
@@ -18,23 +19,26 @@ object NotificationManager {
 
     @JvmStatic
     fun render(ctx: GuiGraphics) {
+        val now = System.currentTimeMillis()
+        val delta = now - lastFrameTime
+        lastFrameTime = now
         if (notifications.isEmpty()) return
 
         Resolution.refresh()
         val screenW = Resolution.width
         val screenH = Resolution.height
 
-        val now = System.currentTimeMillis()
-        val delta = now - lastFrameTime
-        lastFrameTime = now
-
         val mX = Resolution.getMouseX(mc.mouseHandler.getScaledXPos(mc.window))
         val mY = Resolution.getMouseY(mc.mouseHandler.getScaledYPos(mc.window))
 
         var currentYOffset = 0f
-        notifications.removeIf { it.isDead }
 
         for (notify in notifications) {
+            if (notify.isDead) {
+                notifications.remove(notify)
+                continue
+            }
+
             val width = 175f
             val height = notify.height
 
@@ -55,22 +59,17 @@ object NotificationManager {
                 notify.elapsedTime += delta
             }
 
-            // 1. Draw Background & 2px Top Accent
             Render2D.drawRect(ctx, x, y, width, height, Color(20, 20, 20, 240))
             Render2D.drawRect(ctx, x, y, width, 2f, Style.accentColor)
 
-            // 2. Draw Title
             Render2D.drawString(ctx, "§a${notify.title}", x + 10f, y + 8f, Color.GREEN)
 
-            // 3. Draw Wrapped Lines (Now starting further down for padding)
-            // y + 8 (title top) + 9 (font height) + 8 (new gap) = 25
             var lineY = y + 20f
             notify.wrappedLines.forEach { line ->
                 ctx.drawString(mc.font, line, (x + 10f).toInt(), lineY.toInt(), Color.GRAY.rgb, true)
                 lineY += mc.font.lineHeight + 1f
             }
 
-            // 4. Progress Bar
             val progress = (notify.elapsedTime.toFloat() / notify.duration.toFloat()).coerceIn(0f, 1f)
             val barWidth = width * (1f - progress)
             if (isAlive) {

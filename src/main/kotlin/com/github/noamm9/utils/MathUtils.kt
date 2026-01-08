@@ -7,12 +7,7 @@ import net.minecraft.core.Vec3i
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 import java.awt.Color
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
+import kotlin.math.*
 
 object MathUtils {
     data class Rotation(var yaw: Float, var pitch: Float)
@@ -71,7 +66,6 @@ object MathUtils {
         return sqrt(delta.x.toDouble().pow(2) + delta.y.toDouble().pow(2) + delta.z.toDouble().pow(2))
     }
 
-
     /**
      * Calculates the distance between two points in a 2D space (ignoring the Y coordinate) using Vec3.
      * @param vec1 The first point as a Vec3.
@@ -90,18 +84,18 @@ object MathUtils {
         return sqrt((deltaX * deltaX + deltaZ * deltaZ).toDouble())
     }
 
-    fun normalizeYaw(yaw: Float): Float {
-        var result = yaw
-        while (result >= 180) result -= 360
-        while (result < - 180) result += 360
-        return result
+    fun normalizeYaw(value: Float): Float {
+        var value = value
+        value %= 360.0f
+        if (value >= 180.0f) value -= 360.0f
+        if (value < - 180.0f) value += 360.0f
+        
+        return value
     }
 
-    fun normalizePitch(pitch: Float): Float {
-        var result = pitch
-        while (result >= 90) result -= 180
-        while (result < - 90) result += 180
-        return result
+    fun normalizePitch(num: Float): Float {
+        return if (num < - 90f) - 90f
+        else if (num > 90f) 90f else num
     }
 
     fun fixRot(rot: Rotation, lastRot: Rotation): Rotation {
@@ -126,7 +120,7 @@ object MathUtils {
         return Rotation(fixedYaw, fixedPitch)
     }
 
-    fun calcYawPitch(blockPos: Vec3, playerPos: Vec3 = mc.player!!.renderVec.add(y = mc.player!!.eyeHeight)): Rotation {
+    fun calcYawPitch(blockPos: Vec3, playerPos: Vec3 = mc.player !!.renderVec.add(y = mc.player !!.eyeHeight)): Rotation {
         val delta = blockPos.subtract(playerPos)
         val yaw = - atan2(delta.x, delta.z) * (180 / PI)
         val pitch = - atan2(delta.y, sqrt(delta.x * delta.x + delta.z * delta.z)) * (180 / PI)
