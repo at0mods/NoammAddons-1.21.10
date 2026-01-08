@@ -1,6 +1,9 @@
 package com.github.noamm9.ui.clickgui
 
+import com.github.noamm9.NoammAddonsClient
 import com.github.noamm9.features.FeatureManager
+import com.github.noamm9.features.impl.tweaks.sound.SoundGui
+import com.github.noamm9.features.impl.tweaks.sound.SoundManager
 import com.github.noamm9.ui.clickgui.componnents.Style
 import com.github.noamm9.ui.utils.Animation
 import com.github.noamm9.utils.ColorUtils.withAlpha
@@ -110,9 +113,15 @@ class Panel(val category: CategoryType, var x: Int, var y: Int) {
             if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + buttonHeight) {
                 if (button == 0) {
                     feature.toggle()
+                    return
                 }
                 else if (button == 1 && feature.configSettings.isNotEmpty()) {
-                    ClickGuiScreen.selectFeature(feature)
+                    if (feature is SoundManager) {
+                        ClickGuiScreen.selectFeature(null)
+                        NoammAddonsClient.screen = SoundGui
+                    }
+                    else ClickGuiScreen.selectFeature(feature)
+                    return
                 }
             }
             currentY += buttonHeight

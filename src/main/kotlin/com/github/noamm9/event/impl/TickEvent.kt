@@ -8,3 +8,4 @@ abstract class TickEvent: Event(false) {
 
     class Server: TickEvent()
 }
+

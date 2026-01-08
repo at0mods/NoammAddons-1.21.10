@@ -12,7 +12,13 @@ import java.awt.Color
 
 object DebugHUD {
     @JvmStatic
-    fun renderDungeonDebug(graphics: GuiGraphics) {
+    fun render(guiGraphics: GuiGraphics) {
+        renderDungeonDebug(guiGraphics)
+        renderLocationDebug(guiGraphics)
+    }
+
+
+    private fun renderDungeonDebug(graphics: GuiGraphics) {
         if (! NoammAddonsClient.debugFlags.contains("dungeon")) return
 
         var y = 20
@@ -84,8 +90,7 @@ object DebugHUD {
         if (! foundBlessing) draw(" §7No blessings active")
     }
 
-    @JvmStatic
-    fun renderLocationDebug(graphics: GuiGraphics) {
+    private fun renderLocationDebug(graphics: GuiGraphics) {
         if (! NoammAddonsClient.debugFlags.contains("location")) return
 
         var y = 20

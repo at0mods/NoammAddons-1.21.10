@@ -7,8 +7,10 @@ import com.github.noamm9.features.impl.tweaks.Camera;
 import com.github.noamm9.features.impl.visual.PlayerHud;
 import com.github.noamm9.ui.ClientBranding;
 import com.github.noamm9.utils.DebugHUD;
+import com.github.noamm9.utils.location.LocationUtils;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
@@ -17,6 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Gui.class)
-public class MixinGui {
+public abstract class MixinGui {
     @Shadow
     @Final
     private Minecraft minecraft;
@@ -35,10 +38,40 @@ public class MixinGui {
     @Final
     private PlayerTabOverlay tabList;
 
+    @Shadow @Nullable private Component title;
+    @Shadow @Nullable private Component subtitle;
+
     @Inject(method = "renderArmor", at = @At("HEAD"), cancellable = true)
     private static void renderArmor(GuiGraphics guiGraphics, Player player, int i, int j, int k, int l, CallbackInfo ci) {
         if (PlayerHud.INSTANCE.getHideArmorbar().getValue()) {
             ci.cancel();
+        }
+    }
+
+    @Shadow
+    public abstract Font getFont();
+
+    @Inject(method = "renderTitle", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix3x2fStack;scale(FF)Lorg/joml/Matrix3x2f;", ordinal = 0, shift = At.Shift.AFTER))
+    private void onScaleTitle(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (title == null) return;
+
+        float maxWidth = minecraft.getWindow().getGuiScaledWidth() * 0.85f;
+        float currentWidth = minecraft.font.width(title) * 4.0f;
+        if (currentWidth > maxWidth) {
+            float scaleFactor = maxWidth / currentWidth;
+            guiGraphics.pose().scale(scaleFactor);
+        }
+    }
+
+    @Inject(method = "renderTitle", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix3x2fStack;scale(FF)Lorg/joml/Matrix3x2f;", ordinal = 1, shift = At.Shift.AFTER))
+    private void onScaleSubtitle(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (subtitle == null) return;
+
+        float maxWidth = minecraft.getWindow().getGuiScaledWidth() * 0.85f;
+        float currentWidth = minecraft.font.width(subtitle) * 2.0f;
+        if (currentWidth > maxWidth) {
+            float scaleFactor = maxWidth / currentWidth;
+            guiGraphics.pose().scale(scaleFactor);
         }
     }
 
@@ -48,8 +81,7 @@ public class MixinGui {
         if (this.minecraft.getDebugOverlay().showDebugScreen()) return;
         EventBus.post(new RenderOverlayEvent(guiGraphics, deltaTracker));
 
-        DebugHUD.renderDungeonDebug(guiGraphics);
-        DebugHUD.renderLocationDebug(guiGraphics);
+        DebugHUD.render(guiGraphics);
     }
 
     @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)
@@ -106,6 +138,13 @@ public class MixinGui {
     @Inject(method = "renderFood", at = @At("HEAD"), cancellable = true)
     public void renderFood(GuiGraphics guiGraphics, Player player, int i, int j, CallbackInfo ci) {
         if (PlayerHud.INSTANCE.getHideFoodbar().getValue()) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderEffects", at = @At("HEAD"), cancellable = true)
+    private void onRenderEffects(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (LocationUtils.inSkyblock) {
             ci.cancel();
         }
     }

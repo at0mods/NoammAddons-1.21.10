@@ -2,6 +2,7 @@ package com.github.noamm9.mixin;
 
 import com.github.noamm9.event.EventBus;
 import com.github.noamm9.event.impl.ContainerEvent;
+import com.github.noamm9.features.impl.tweaks.ScrollableTooltip;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -9,7 +10,9 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractContainerScreen.class)
 public class MixinAbstractContainerScreen {
+    @Shadow @Nullable protected Slot hoveredSlot;
+
     @Inject(method = "init", at = @At("HEAD"), cancellable = true)
     protected void onInit(CallbackInfo ci) {
         if (EventBus.post(new ContainerEvent.Open((Screen) (Object) this))) {
@@ -68,9 +73,18 @@ public class MixinAbstractContainerScreen {
 
     @Inject(method = "renderTooltip", at = @At("HEAD"), cancellable = true)
     public void onDrawMouseoverTooltip(GuiGraphics context, int mouseX, int mouseY, CallbackInfo ci) {
+        if (hoveredSlot != null && hoveredSlot.hasItem()) {
+            ScrollableTooltip.setSlot(hoveredSlot.index);
+        }
+
         if (EventBus.post(new ContainerEvent.Render.Tooltip((Screen) (Object) this, context, mouseX, mouseY))) {
             ci.cancel();
         }
+    }
+
+    @Inject(method = "mouseScrolled", at = @At("TAIL"))
+    public void mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
+        EventBus.post(new ContainerEvent.MouseScroll((Screen) (Object) this, mouseX, mouseY, horizontalAmount, verticalAmount));
     }
 }
 

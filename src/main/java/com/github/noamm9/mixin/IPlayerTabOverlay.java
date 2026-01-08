@@ -13,3 +13,4 @@ public interface IPlayerTabOverlay {
     @Accessor("footer")
     Component getFooter();
 }
+

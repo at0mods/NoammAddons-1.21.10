@@ -14,7 +14,7 @@ import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
 import kotlin.math.abs
 
-class SliderSetting(name: String, value: Number, val min: Number, val max: Number, val step: Number = 1): Setting<Number>(name, value), Savable {
+open class SliderSetting(name: String, value: Number, val min: Number, val max: Number, val step: Number = 1): Setting<Number>(name, value), Savable {
     private var dragging = false
     private val hoverAnim = Animation(200)
     private val sliderAnim = Animation(250, ((value - min) / (max - min)).toFloat())

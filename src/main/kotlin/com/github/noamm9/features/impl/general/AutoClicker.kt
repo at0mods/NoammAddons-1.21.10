@@ -57,3 +57,4 @@ object AutoClicker: Feature("Automatically clicks for you.") {
         return now + delay + randomOffset
     }
 }
+

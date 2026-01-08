@@ -10,6 +10,9 @@ object Camera: Feature() {
     val legacySneakHeight by ToggleSetting("1.8 Sneak height").withDescription("Changes the sneak height back to its 1.8 height while maitaining all vanilla behevior (visual only)").section("Camera")
 
     @JvmStatic
+    val noFrontCamera by ToggleSetting("Disable Front Camera").withDescription("Removes the front camera perspective.")
+
+    @JvmStatic
     val noCameraClip by ToggleSetting("Camera Clip").withDescription("Allows ur camera to clip in walls")
 
     @JvmStatic

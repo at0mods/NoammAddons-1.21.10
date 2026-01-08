@@ -18,17 +18,24 @@
   "client": [
     "IAbstractContainerScreen",
     "IKeyMapping",
+    "IMouseHandler",
     "IPlayerTabOverlay",
+    "KeyboardMixin",
     "MixinAbstractContainerScreen",
+    "MixinAbstractSoundInstance",
     "MixinBlindnessFogEnvironment",
     "MixinCamera",
+    "MixinChatComponent",
     "MixinEntityRenderDispatcher",
     "MixinGameRenderer",
     "MixinGui",
+    "MixinGuiGraphics",
     "MixinItemInHandRenderer",
     "MixinLightTexture",
     "MixinMinecraft",
+    "MixinOptions",
     "MixinScreen",
-    "MixinScreenEffectRenderer"
+    "MixinScreenEffectRenderer",
+    "MouseMixin"
   ]
 }

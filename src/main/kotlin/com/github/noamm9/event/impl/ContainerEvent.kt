@@ -23,6 +23,7 @@ abstract class ContainerEvent(val screen: Screen): Event(cancelable = true) {
 
     class SlotClick(screen: Screen, val slot: McSlot, val button: Int, val clickType: ClickType): ContainerEvent(screen)
     class MouseClick(screen: Screen, val mouseX: Double, val mouseY: Double, val button: Int, val modifiers: Int): ContainerEvent(screen)
+    class MouseScroll(screen: Screen, val mouseX: Double, val mouseY: Double, val horizontalAmount: Double, val verticalAmount: Double): ContainerEvent(screen)
 
     class Keyboard(screen: Screen, val key: Int, val input: Char, val scancode: Int, val modifiers: Int): ContainerEvent(screen)
 }
