@@ -29,20 +29,19 @@ public abstract class MixinGuiGraphics {
         }
 
         if (ScrollableTooltip.INSTANCE.enabled) {
-            float scale = 1 + (float) ScrollableTooltip.scale / 10;
-
-            this.pose.pushMatrix();
-            this.pose.translate(i, j);
-            this.pose.scale(scale);
-            this.pose.translate(ScrollableTooltip.scrollAmountX, ScrollableTooltip.scrollAmountY);
-            this.pose.translate(-i, -j);
+            float scale = (1 * (ScrollableTooltip.INSTANCE.getScale().getValue().floatValue() / 100f)) + ScrollableTooltip.scaleOverride / 10;
+            pose.pushMatrix();
+            pose.translate(i, j);
+            pose.scale(scale);
+            pose.translate(ScrollableTooltip.scrollAmountX, ScrollableTooltip.scrollAmountY);
+            pose.translate(-i, -j);
         }
     }
 
     @Inject(method = "renderTooltip", at = @At("TAIL"))
     private void onRenderTooltipPost(CallbackInfo ci) {
         if (ScrollableTooltip.INSTANCE.enabled) {
-            this.pose.popMatrix();
+            pose.popMatrix();
         }
     }
 }

@@ -147,5 +147,4 @@ object ChatUtils {
         mc.gui.setTitle(Component.literal(title.addColor()))
         mc.gui.setSubtitle(Component.literal(subtitle.addColor()))
     }
-
 }

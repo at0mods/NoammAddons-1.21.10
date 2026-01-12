@@ -6,6 +6,9 @@ import com.github.noamm9.event.EventPriority
 import com.github.noamm9.event.impl.MainThreadPacketRecivedEvent
 import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.Utils.remove
+import com.github.noamm9.utils.dungeons.map.DungeonInfo
+import com.github.noamm9.utils.dungeons.map.core.Room
+import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
 import com.github.noamm9.utils.location.LocationUtils
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket
@@ -85,16 +88,15 @@ object ActionBarParser {
             secrets = match.groupValues[1].remove(",").toIntOrNull() ?: secrets
             maxSecrets = match.groupValues[2].remove(",").toIntOrNull() ?: maxSecrets
 
-            /*
-            ScanUtils.getEntityRoom(mc.player)?.let setFoundSecrets@ {
-                if (it.data.name == "Unknown") return@setFoundSecrets
-                if (it.uniqueRoom?.foundSecrets != secrets) {
-                    it.uniqueRoom?.foundSecrets = secrets !!
-                    if (DungeonUtils.dungeonTeammatesNoSelf.isNotEmpty()) {
-                        WebSocket.send(S2CPacketRoomSecrets(it.data.name, secrets !!))
-                    }
+
+            ScanUtils.getRoomGraf(mc.player !!.position()).let { (gx, gy) ->
+                val room = DungeonInfo.dungeonList[gy * 11 + gx] as? Room ?: return
+                if (room.data.name == "Unknown") return
+
+                if (room.uniqueRoom?.foundSecrets != secrets && room.data.secrets == maxSecrets) {
+                    room.uniqueRoom?.foundSecrets = secrets !!
                 }
-            }*/
+            }
 
             return
         }

@@ -1,5 +1,7 @@
 package com.github.noamm9.ui.utils
 
+import kotlinx.coroutines.delay
+
 class Animation(var duration: Long = 200, initialValue: Float = 0f) {
     var value: Float = initialValue
         private set
@@ -20,6 +22,28 @@ class Animation(var duration: Long = 200, initialValue: Float = 0f) {
 
         value = if (progress >= 1.0) targetValue
         else startValue + (targetValue - startValue) * easeOutQuad(progress).toFloat()
+    }
+
+    suspend fun updateAsync(newTarget: Float) {
+        if (newTarget == targetValue) return
+
+        targetValue = newTarget
+        startValue = value
+        val localStartTime = System.currentTimeMillis()
+        startTime = localStartTime
+
+        while (true) {
+            val elapsed = System.currentTimeMillis() - localStartTime
+            val progress = (elapsed.toDouble() / duration).coerceIn(0.0, 1.0)
+
+            value = if (progress >= 1.0) targetValue
+            else startValue + (targetValue - startValue) * easeInOutQuad(progress).toFloat()
+
+            if (progress >= 1.0) break
+            if (startTime != localStartTime) break
+
+            delay(10)
+        }
     }
 
     fun set(v: Float) {

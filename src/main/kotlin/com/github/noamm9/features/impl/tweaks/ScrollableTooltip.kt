@@ -7,13 +7,13 @@ import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.withDescription
-import com.github.noamm9.utils.NumbersUtils.times
 import org.lwjgl.glfw.GLFW
 
 
 object ScrollableTooltip: Feature("allows you to scroll through long tooltips") {
-    private val scrollSpeed by SliderSetting("Scroll Speed", 3, 1, 10.0).withDescription("how fast the tooltip scrolls")
-    private val scaleSpeed by SliderSetting("Scale Speed", 3, 1, 10).withDescription("how fast the tooltip scales")
+    val scale by SliderSetting("Tooltip Scale", 100, 30, 150, 0.1).withDescription("how fast the tooltip scrolls")
+    private val scrollSpeed by SliderSetting("Scroll Speed", 3, 1, 10, 1).withDescription("how fast the tooltip scrolls")
+    private val scaleSpeed by SliderSetting("Scale Speed", 3, 1, 10, 1).withDescription("how fast the tooltip scales")
 
     @JvmField
     var scrollAmountX = 0f
@@ -22,7 +22,7 @@ object ScrollableTooltip: Feature("allows you to scroll through long tooltips") 
     var scrollAmountY = 0f
 
     @JvmField
-    var scale = 0f
+    var scaleOverride = 0f
 
     @JvmStatic
     var slot = 0
@@ -30,7 +30,7 @@ object ScrollableTooltip: Feature("allows you to scroll through long tooltips") 
             if (value == field) return
             scrollAmountX = 0f
             scrollAmountY = 0f
-            scale = 0f
+            scaleOverride = 0f
             field = value
         }
 
@@ -45,8 +45,8 @@ object ScrollableTooltip: Feature("allows you to scroll through long tooltips") 
             val holdingCtrl = GLFW.glfwGetKey(mc.window.handle(), GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
 
             if (holdingShift && ! holdingCtrl) scrollAmountX -= scroll
-            else if (! holdingShift && holdingCtrl) scale += (event.verticalAmount / 10f).toFloat() * scaleSpeed.value.toFloat()
-            else scrollAmountY -= scroll
+            else if (! holdingShift && holdingCtrl) scaleOverride += (event.verticalAmount / 10f).toFloat() * scaleSpeed.value.toFloat()
+            else scrollAmountY += scroll
         }
     }
 }

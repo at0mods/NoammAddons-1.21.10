@@ -6,3 +6,4 @@ package com.github.noamm9.utils.dungeons.map.core
 enum class RoomState {
     FAILED, GREEN, CLEARED, DISCOVERED, UNOPENED, UNDISCOVERED
 }
+

@@ -2,24 +2,27 @@ package com.github.noamm9.utils.dungeons
 
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.NoammAddons.scope
+import com.github.noamm9.NoammAddonsClient
 import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.EventBus.register
 import com.github.noamm9.event.EventPriority
 import com.github.noamm9.event.impl.*
+import com.github.noamm9.mixin.IMapState
 import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.ChatUtils.removeFormatting
 import com.github.noamm9.utils.ItemUtils.skyblockId
 import com.github.noamm9.utils.NumbersUtils.romanToDecimal
 import com.github.noamm9.utils.Utils.equalsOneOf
+import com.github.noamm9.utils.dungeons.map.DungeonInfo
 import com.github.noamm9.utils.dungeons.map.core.RoomState
 import com.github.noamm9.utils.location.LocationUtils.inDungeon
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import net.minecraft.client.multiplayer.PlayerInfo
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundTabListPacket
-import net.minecraft.world.entity.player.PlayerSkin
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes
 
 
 object DungeonListener {
@@ -35,7 +38,7 @@ object DungeonListener {
     const val WITHER_ESSENCE_ID = "e0f3e929-869e-3dca-9504-54c666ee6f23"
     const val REDSTONE_KEY_ID = "fed95410-aba1-39df-9b95-1d4f361eb66e"
 
-    val runPlayersNames = mutableMapOf<String, PlayerSkin>()
+    val runPlayersNames = mutableMapOf<String, ResourceLocation>()
     var dungeonTeammates = mutableListOf<DungeonPlayer>()
     var dungeonTeammatesNoSelf = listOf<DungeonPlayer>()
     var leapTeammates = listOf<DungeonPlayer>()
@@ -67,10 +70,10 @@ object DungeonListener {
                     val actions = packet.actions()
                     if (actions.contains(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME) || actions.contains(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER)) {
                         for (entry in packet.entries()) {
-                            val playerInfo = mc.connection?.getPlayerInfo(entry.profileId()) ?: continue
                             val text = entry.displayName()?.formattedText ?: continue
+                            val skin = mc.connection?.getPlayerInfo(entry.profileId())?.skin?.body?.id() ?: continue
 
-                            updateDungeonTeammates(playerInfo, text)
+                            updateDungeonTeammates(text, skin)
                             updatePuzzleCount(text)
                             updatePuzzles(text)
                         }
@@ -102,14 +105,14 @@ object DungeonListener {
                 unformatted.lowercase().contains("blaze done") -> {
                     puzzles.find { it.tabName == "Higher Or Lower" }?.let {
                         it.state = RoomState.CLEARED
-                        EventBus.post(DungeonEvent.PuzzleEvent.Completed(it))
+                        EventBus.post(DungeonEvent.PuzzleEvent(it, DungeonEvent.PuzzleEvent.Type.COMPLETE))
                     }
                 }
 
                 unformatted.matches(runEndRegex) -> {
                     dungeonEnded = true
                     dungeonEndTime = currentTime
-                    scope.launch { EventBus.post(DungeonEvent.RunEndedEvent()) }
+                    scope.launch { EventBus.post(DungeonEvent.RunEndedEvent) }
                 }
 
                 text == "§cThe §c§lBLOOD DOOR§c has been opened!" -> doorKeys --
@@ -126,12 +129,12 @@ object DungeonListener {
                 }
 
                 unformatted == "[BOSS] The Watcher: You have proven yourself. You may pass." -> {
-                    // DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.GREEN
+                    DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.GREEN
                     watcherClearTime = currentTime
                 }
 
                 unformatted == "[BOSS] The Watcher: That will be enough for now." -> {
-                    //  DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.CLEARED
+                    DungeonInfo.uniqueRooms["Blood"]?.mainRoom?.state = RoomState.CLEARED
                     watcherFinishSpawnTime = currentTime
                 }
 
@@ -142,7 +145,7 @@ object DungeonListener {
                 unformatted == "[NPC] Mort: Here, I found this map when I first entered the dungeon." -> scope.launch {
                     dungeonStartTime = currentTime
                     while (thePlayer == null) delay(1)
-                    EventBus.post(DungeonEvent.RunStatedEvent())
+                    EventBus.post(DungeonEvent.RunStatedEvent)
                 }
 
                 else -> {
@@ -185,19 +188,17 @@ object DungeonListener {
             doorKeys = 0
             Blessing.reset()
         }
+
+        register<DungeonEvent.RoomEvent.onStateChange> {
+            if (lastDoorOpenner == null) return@register
+            if (event.room.name != "Blood") return@register
+            if (! event.newState.equalsOneOf(RoomState.DISCOVERED, RoomState.CLEARED, RoomState.GREEN)) return@register
+            lastDoorOpenner = null
+        }
     }
 
-    /*
-    @SubscribeEvent
-    fun onRoomStateChange(event: DungeonEvent.RoomEvent.onStateChange) {
-        if (lastDoorOpenner == null) return
-        if (event.room.name != "Blood") return
-        if (! event.newState.equalsOneOf(RoomState.DISCOVERED, RoomState.CLEARED, RoomState.GREEN)) return
-        lastDoorOpenner = null
-    }*/
-
-    private fun updateDungeonTeammates(playerInfo: PlayerInfo, tabName: String) {
-        /*if (DevOptions.devMode) {
+    private fun updateDungeonTeammates(tabName: String, infoSkin: ResourceLocation) {
+        if (NoammAddonsClient.debugFlags.contains("dev")) {
             listOf(
                 DungeonPlayer("Noamm", Classes.Mage, 50, isDead = false),
                 DungeonPlayer("Noamm9", Classes.Archer, 50, isDead = false),
@@ -207,18 +208,18 @@ object DungeonListener {
                 dungeonTeammates.clear()
                 dungeonTeammates.addAll(list)
 
-                thePlayer = dungeonTeammates.find { it.entity == mc.thePlayer }
+                thePlayer = dungeonTeammates.find { it.entity == mc.player }
                 dungeonTeammatesNoSelf = dungeonTeammates.filterNot { it == thePlayer }
                 leapTeammates = dungeonTeammatesNoSelf.sortedBy { it.clazz }
 
                 return
             }
-        }*/
+        }
 
 
         var (_, name, clazz, clazzLevel) = tablistRegex.find(tabName.removeFormatting())?.destructured ?: return
         if (runPlayersNames.isEmpty()) name = mc.user.name
-        val skin = (if (runPlayersNames.isEmpty()) mc.player?.skin else playerInfo.skin) ?: return
+        val skin = (if (runPlayersNames.isEmpty()) mc.player?.skin?.body?.id() else infoSkin) ?: return
         runPlayersNames[name] = skin
         if (clazz == "EMPTY") return
 
@@ -244,21 +245,18 @@ object DungeonListener {
         dungeonTeammatesNoSelf = dungeonTeammates.filter { it != thePlayer }
         leapTeammates = dungeonTeammatesNoSelf.sortedBy { it.clazz }
 
-        /*
-        val decorations = DungeonInfo.mapData?.mapDecorations ?: return
+        val decorations = (DungeonInfo.mapData as? IMapState)?.decorations ?: return
         val livingTeammates = dungeonTeammatesNoSelf.filter { ! it.isDead }
 
         decorations.forEach { (key, value) ->
-            val type = value.func_176110_a().toInt()
-            if (type == 1) thePlayer?.mapIcon?.icon = key
-            else if (type == 3) {
+            if (value.type.value().equals(MapDecorationTypes.FRAME.value())) thePlayer?.mapIcon?.icon = key
+            else {
                 val index = key[key.lastIndex].digitToInt()
                 if (index >= 0 && index < livingTeammates.size) {
                     livingTeammates[index].mapIcon.icon = key
                 }
             }
-        }*/
-
+        }
     }
 
     private fun updatePuzzleCount(tabName: String) {
@@ -287,7 +285,7 @@ object DungeonListener {
             if (detected != Puzzle.UNKNOWN) puzzles.find { it == Puzzle.UNKNOWN }?.let {
                 puzzles.remove(it)
                 puzzles.add(detected)
-                EventBus.post(DungeonEvent.PuzzleEvent.Discovered(detected))
+                EventBus.post(DungeonEvent.PuzzleEvent(detected, DungeonEvent.PuzzleEvent.Type.DISCOVERE))
                 return@run detected
             }
 
@@ -299,9 +297,9 @@ object DungeonListener {
             puzzle.state = newState
 
             when {
-                newState.equalsOneOf(RoomState.GREEN, RoomState.CLEARED) -> DungeonEvent.PuzzleEvent.Completed(puzzle)
-                oldState != RoomState.DISCOVERED && newState == RoomState.DISCOVERED -> DungeonEvent.PuzzleEvent.Reset(puzzle)
-                newState == RoomState.FAILED -> DungeonEvent.PuzzleEvent.Failed(puzzle)
+                newState.equalsOneOf(RoomState.GREEN, RoomState.CLEARED) -> DungeonEvent.PuzzleEvent(puzzle, DungeonEvent.PuzzleEvent.Type.COMPLETE)
+                oldState != RoomState.DISCOVERED && newState == RoomState.DISCOVERED -> DungeonEvent.PuzzleEvent(puzzle, DungeonEvent.PuzzleEvent.Type.RESET)
+                newState == RoomState.FAILED -> DungeonEvent.PuzzleEvent(puzzle, DungeonEvent.PuzzleEvent.Type.FAIL)
                 else -> null
             }?.let(EventBus::post)
         }

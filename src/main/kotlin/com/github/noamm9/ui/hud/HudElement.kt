@@ -1,10 +1,13 @@
 package com.github.noamm9.ui.hud
 
+import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.features.Feature
+import com.github.noamm9.features.FeatureManager
 import com.github.noamm9.ui.clickgui.componnents.Style
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
+import kotlin.random.Random
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.jvmName
 
@@ -14,6 +17,60 @@ abstract class HudElement {
     open val shouldDraw = true
     var width = 0f
     var height = 0f
+
+    init {
+        randomizePosition()
+    }
+
+    private fun randomizePosition() {
+        if (mc.window == null) return
+        val screenW = mc.window.guiScaledWidth
+        val screenH = mc.window.guiScaledHeight
+
+        val estW = 60
+        val estH = 20
+
+        val padding = 10
+
+        var safeX = 0f
+        var safeY = 0f
+        var foundSpot = false
+
+        for (i in 0 .. 50) {
+            val randX = Random.nextInt(padding, (screenW - estW - padding).coerceAtLeast(padding + 1)).toFloat()
+            val randY = Random.nextInt(padding, (screenH - estH - padding).coerceAtLeast(padding + 1)).toFloat()
+
+            var collides = false
+            for (element in FeatureManager.hudElements) {
+                val otherW = if (element.width > 0) element.width else estW.toFloat()
+                val otherH = if (element.height > 0) element.height else estH.toFloat()
+
+                if (randX < element.x + otherW &&
+                    randX + estW > element.x &&
+                    randY < element.y + otherH &&
+                    randY + estH > element.y) {
+                    collides = true
+                    break
+                }
+            }
+
+            if (! collides) {
+                safeX = randX
+                safeY = randY
+                foundSpot = true
+                break
+            }
+        }
+
+        if (foundSpot) {
+            x = safeX
+            y = safeY
+        }
+        else {
+            x = (FeatureManager.hudElements.size * 10).toFloat() % (screenW - 50)
+            y = (FeatureManager.hudElements.size * 10).toFloat() % (screenH - 50)
+        }
+    }
 
     var x = 0f
     var y = 0f
@@ -49,6 +106,11 @@ abstract class HudElement {
             y = my - dragY
         }
 
+        drawBackground(ctx, mx, my)
+        renderElement(ctx, true)
+    }
+
+    open fun drawBackground(ctx: GuiGraphics, mx: Int, my: Int) {
         val scaledW = width * scale
         val scaledH = height * scale
         val hovered = mx >= x && mx <= x + scaledW && my >= y && my <= y + scaledH
@@ -58,11 +120,9 @@ abstract class HudElement {
         Render2D.drawRect(ctx, x, y, scaledW, scaledH, Color(10, 10, 10, 150))
         Render2D.drawRect(ctx, x, y, scaledW, 1f, borderColor)
         Render2D.drawRect(ctx, x, y + scaledH - 1f, scaledW, 1f, borderColor)
-
-        renderElement(ctx, true)
     }
 
-    fun isHovered(mx: Int, my: Int): Boolean {
+    open fun isHovered(mx: Int, my: Int): Boolean {
         return mx >= x && mx <= x + (width * scale) && my >= y && my <= y + (height * scale)
     }
 

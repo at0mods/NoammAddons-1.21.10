@@ -3,6 +3,8 @@ package com.github.noamm9.mixin;
 
 import com.github.noamm9.features.impl.visual.Animations;
 import com.github.noamm9.utils.ItemUtils;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -15,7 +17,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -67,10 +68,10 @@ public abstract class MixinItemInHandRenderer {
         poseStack.scale(s, s, s);
     }
 
-    @Redirect(method = "swingArm", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(FFF)V"))
-    private void onSwingArmTranslate(PoseStack instance, float f, float g, float h) {
+    @WrapOperation(method = "swingArm", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(FFF)V"))
+    private void onSwingArmTranslate(PoseStack instance, float f, float g, float h, Operation<Void> original) {
         if (!Animations.INSTANCE.enabled) {
-            instance.translate(f, g, h);
+            original.call(instance, f, g, h);
             return;
         }
 

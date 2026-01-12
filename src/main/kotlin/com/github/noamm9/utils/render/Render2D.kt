@@ -3,14 +3,10 @@ package com.github.noamm9.utils.render
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.utils.ChatUtils.addColor
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.components.PlayerFaceRenderer
 import net.minecraft.client.renderer.RenderPipelines
-import net.minecraft.client.resources.DefaultPlayerSkin
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.world.entity.player.PlayerSkin
 import net.minecraft.world.item.ItemStack
 import java.awt.Color
-import java.util.*
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
@@ -19,27 +15,8 @@ object Render2D {
         ctx.blitSprite(RenderPipelines.GUI_TEXTURED, image, x, y, width, height)
     }
 
-    fun drawTexture(
-        ctx: GuiGraphics, image: ResourceLocation,
-        x: Int, y: Int, u: Float, v: Float,
-        width: Int, height: Int,
-        regionWidth: Int, regionHeight: Int,
-        textureWidth: Int = 256, textureHeight: Int = 256
-    ) {
-        ctx.blit(
-            RenderPipelines.GUI_TEXTURED,
-            image,
-            x,
-            y,
-            u,
-            v,
-            width,
-            height,
-            regionWidth,
-            regionHeight,
-            textureWidth,
-            textureHeight
-        )
+    fun drawTexture(ctx: GuiGraphics, texture: ResourceLocation, x: Number, y: Number, width: Number, height: Number) {
+        ctx.blitSprite(RenderPipelines.GUI_TEXTURED, texture, x.toInt(), y.toInt(), width.toInt(), height.toInt())
     }
 
     fun drawRect(ctx: GuiGraphics, x: Number, y: Number, width: Number, height: Number, color: Color = Color.WHITE) {
@@ -47,6 +24,27 @@ object Render2D {
         pose.translate(x.toFloat(), y.toFloat())
         ctx.fill(0, 0, width.toInt(), height.toInt(), color.rgb)
         pose.translate(- x.toFloat(), - y.toFloat())
+    }
+
+    fun drawBorder(
+        ctx: GuiGraphics,
+        x: Number,
+        y: Number,
+        width: Number,
+        height: Number,
+        color: Color = Color.WHITE,
+        thickness: Number = 1,
+    ) {
+        val X = x.toDouble()
+        val Y = y.toDouble()
+        val W = width.toDouble()
+        val H = height.toDouble()
+        val T = thickness.toDouble()
+
+        drawRect(ctx, X, Y, W, T, color)
+        drawRect(ctx, X, Y + H - T, W, T, color)
+        drawRect(ctx, X, Y + T, T, H - (T * 2), color)
+        drawRect(ctx, X + W - T, Y + T, T, H - (T * 2), color)
     }
 
     fun drawLine(ctx: GuiGraphics, x1: Number, y1: Number, x2: Number, y2: Number, color: Color, thickness: Number = 1) {
@@ -102,29 +100,10 @@ object Render2D {
         context.pose().popMatrix()
     }
 
-    private val textureCache = mutableMapOf<UUID, PlayerSkin>()
-    private var lastCacheClear = System.currentTimeMillis()
 
-    fun drawPlayerHead(context: GuiGraphics, x: Int, y: Int, size: Int, uuid: UUID) {
-        val now = System.currentTimeMillis()
-        if (now - lastCacheClear > 300000L) {
-            textureCache.clear()
-            lastCacheClear = now
-        }
-
-        val textures = textureCache.getOrElse(uuid) {
-            val profile = mc.connection?.getPlayerInfo(uuid)?.profile
-            val skin = if (profile != null) {
-                mc.skinManager.get(profile).getNow(Optional.empty()).orElseGet { DefaultPlayerSkin.get(uuid) }
-            }
-            else DefaultPlayerSkin.get(uuid)
-
-            val defaultSkin = DefaultPlayerSkin.get(uuid)
-            if (skin.body() != defaultSkin.body()) textureCache[uuid] = skin
-            skin
-        }
-
-        PlayerFaceRenderer.draw(context, textures, x, y, size)
+    fun drawPlayerHead(context: GuiGraphics, x: Int, y: Int, size: Int, skin: ResourceLocation) {
+        context.blit(RenderPipelines.GUI_TEXTURED, skin, x, y, 8f, 8f, size, size, 8, 8, 64, 64, - 1)
+        context.blit(RenderPipelines.GUI_TEXTURED, skin, x, y, 40f, 8f, size, size, 8, 8, 64, 64, - 1)
     }
 
     fun String.width(): Int {

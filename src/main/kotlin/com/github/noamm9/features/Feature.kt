@@ -15,7 +15,6 @@ import com.github.noamm9.ui.hud.HudElement
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.Utils.spaceCaps
 import net.minecraft.client.gui.GuiGraphics
-import java.util.concurrent.CopyOnWriteArrayList
 
 open class Feature(
     val description: String? = null,
@@ -25,8 +24,8 @@ open class Feature(
     val name = name ?: this::class.simpleName.toString().spaceCaps()
     val listeners = mutableSetOf<EventListener<*>>()
 
-    val configSettings = CopyOnWriteArrayList<Setting<*>>()
-    val hudElements = CopyOnWriteArrayList<HudElement>()
+    val configSettings = mutableSetOf<Setting<*>>()
+    val hudElements = mutableSetOf<HudElement>()
 
     @JvmField
     var enabled = toggled
@@ -79,11 +78,12 @@ open class Feature(
     fun hudElement(
         name: String,
         enabled: () -> Boolean = { true },
+        toggled: () -> Boolean = { true },
         render: (GuiGraphics, Boolean) -> Pair<Float, Float>
     ): HudElement {
         return object: HudElement() {
             override val name = name
-            override val toggle: Boolean get() = this@Feature.enabled
+            override val toggle: Boolean get() = this@Feature.enabled && toggled.invoke()
             override val shouldDraw: Boolean get() = enabled.invoke()
             override fun draw(ctx: GuiGraphics, example: Boolean): Pair<Float, Float> = render(ctx, example)
         }.also(hudElements::add)

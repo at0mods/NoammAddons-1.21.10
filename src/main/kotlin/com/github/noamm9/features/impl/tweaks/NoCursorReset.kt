@@ -1,14 +1,6 @@
 package com.github.noamm9.features.impl.tweaks
 
-import com.github.noamm9.event.impl.ContainerEvent
-import com.github.noamm9.event.impl.MainThreadPacketRecivedEvent
-import com.github.noamm9.features.Feature
-import com.github.noamm9.mixin.IMouseHandler
-import com.github.noamm9.utils.location.LocationUtils
-import net.minecraft.network.protocol.game.ClientboundContainerClosePacket
-import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket
-import org.lwjgl.glfw.GLFW
-
+/*
 object NoCursorReset: Feature("Prevents the mouse cursor from resetting when you open a new gui.") {
     private var last = 0L
     private var mx = 0.0
@@ -34,4 +26,4 @@ object NoCursorReset: Feature("Prevents the mouse cursor from resetting when you
             }
         }
     }
-}
+}*/

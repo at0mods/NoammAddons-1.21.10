@@ -49,13 +49,8 @@ object EventDispatcher {
                 }
             }
             else if (event.packet is ClientboundSystemChatPacket) {
-                if (event.packet.overlay) return@register
-                event.isCanceled = true
-
-                mc.execute {
-                    if (! EventBus.post(ChatMessageEvent(event.packet.content))) {
-                        mc.connection?.let { event.packet.handle(it) }
-                    }
+                if (EventBus.post(ChatMessageEvent(event.packet.content))) {
+                    event.isCanceled = true
                 }
             }
         }

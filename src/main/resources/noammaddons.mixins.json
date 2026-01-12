@@ -4,8 +4,10 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ExampleMixin",
+    "IMapState",
     "MixinConnection",
     "MixinEntity",
+    "MixinItemStack",
     "MixinLivingEntity",
     "MixinPacketProcessorListener"
   ],
@@ -40,7 +42,6 @@
     "MixinOptions",
     "MixinScreen",
     "MixinScreenEffectRenderer",
-    "MixinScreenn",
     "NameTagFeatureRendererMixin",
     "PlayerRendererMixin"
   ]

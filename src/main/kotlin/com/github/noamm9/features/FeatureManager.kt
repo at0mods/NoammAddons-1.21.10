@@ -9,6 +9,7 @@ import com.github.noamm9.ui.clickgui.CategoryType
 import com.github.noamm9.ui.hud.HudEditorScreen
 import com.github.noamm9.ui.hud.HudElement
 import com.github.noamm9.ui.utils.Resolution
+import com.github.noamm9.utils.render.Render2D.width
 import io.github.classgraph.ClassGraph
 
 object FeatureManager {
@@ -66,5 +67,17 @@ object FeatureManager {
 
     fun getHudByName(name: String): HudElement? {
         return hudElements.find { it.name == name }
+    }
+
+    fun createFeatureList(): String {
+        val featureList = StringBuilder()
+        for ((category, features) in features.groupBy { it.category }.entries) {
+            featureList.appendLine("Category: ${category.name}")
+            for (feature in features.sortedByDescending { it.name.width() }) {
+                featureList.appendLine("- ${feature.name}: ${feature.description}")
+            }
+            featureList.appendLine()
+        }
+        return featureList.toString()
     }
 }

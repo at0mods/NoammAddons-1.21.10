@@ -89,7 +89,7 @@ object MathUtils {
         value %= 360.0f
         if (value >= 180.0f) value -= 360.0f
         if (value < - 180.0f) value += 360.0f
-        
+
         return value
     }
 
@@ -171,5 +171,12 @@ object MathUtils {
             sin(- pitch * 0.017453292f).toDouble(),
             cos(- yaw * 0.017453292f - 3.1415927f) * f2
         )
+    }
+
+    fun getClosestYaw(current: Float, target: Float): Float {
+        var diff = (target - current) % 360f
+        if (diff < - 180f) diff += 360f
+        if (diff > 180f) diff -= 360f
+        return current + diff
     }
 }

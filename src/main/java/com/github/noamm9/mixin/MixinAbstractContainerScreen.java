@@ -30,11 +30,6 @@ import java.util.List;
 public abstract class MixinAbstractContainerScreen extends Screen {
     @Shadow @Nullable protected Slot hoveredSlot;
 
-    @Shadow protected int leftPos;
-    @Shadow protected int topPos;
-    @Shadow protected int imageWidth;
-    @Shadow protected int imageHeight;
-
     protected MixinAbstractContainerScreen(Component component) {
         super(component);
     }
@@ -109,45 +104,6 @@ public abstract class MixinAbstractContainerScreen extends Screen {
             }
         }
     }
-
-/*
-    // 1. Fix Render Mouse Coordinates
-    @ModifyVariable(method = "render", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    private int rescaleRenderMouseX(int x) {
-        return (int) CustomContainer.transformMouse(x, this.width);
-    }
-
-    @ModifyVariable(method = "render", at = @At("HEAD"), ordinal = 1, argsOnly = true)
-    private int rescaleRenderMouseY(int y) {
-        return (int) CustomContainer.transformMouse(y, this.height);
-    }
-
-    // 2. Fix Tooltip Mouse Coordinates (usually called inside render)
-    @ModifyVariable(method = "renderTooltip", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    private int rescaleTooltipX(int x) {
-        return (int) CustomContainer.transformMouse(x, this.width);
-    }
-
-    @ModifyVariable(method = "renderTooltip", at = @At("HEAD"), ordinal = 1, argsOnly = true)
-    private int rescaleTooltipY(int y) {
-        return (int) CustomContainer.transformMouse(y, this.height);
-    }
-
-    // 3. Fix Mouse Clicks (Minecraft standard uses double mouseX, double mouseY)
-    @ModifyVariable(method = "mouseClicked", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    private MouseButtonEvent rescaleClickX(MouseButtonEvent value) {
-        return CustomContainer.transformMouse(value, this.width, this.height);
-    }
-
-    @ModifyVariable(method = "mouseReleased", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    private MouseButtonEvent rescaleReleaseX(MouseButtonEvent value) {
-        return CustomContainer.transformMouse(value, this.width, this.height);
-    }
-
-    @ModifyVariable(method = "mouseDragged", at = @At("HEAD"), argsOnly = true)
-    private MouseButtonEvent rescaleDragX(MouseButtonEvent value) {
-        return CustomContainer.transformMouse(value, this.width, this.height);
-    }*/
 }
 
 

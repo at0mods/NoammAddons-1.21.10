@@ -13,7 +13,7 @@ import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.ItemUtils.skyblockId
 
 object AutoClicker: Feature("Automatically clicks for you.") {
-    private val cps by SliderSetting("Clicks Per Second", 5, 1, 15).withDescription("How many times per second the auto should click.")
+    private val cps by SliderSetting("Clicks Per Second", 5, 1, 15, 1).withDescription("How many times per second the auto should click.")
     private val terminatorCheck by ToggleSetting("Terminator Only", false).withDescription("Only activate when holding a Terminator.")
     private val leftClickToggle by ToggleSetting("Left Click", false).hideIf { terminatorCheck.value }
     private val leftClickKeybind by KeybindSetting("Left Click Keybind").hideIf { terminatorCheck.value || ! leftClickToggle.value }
@@ -52,7 +52,7 @@ object AutoClicker: Feature("Automatically clicks for you.") {
     }
 
     private fun getNextClick(now: Long): Long {
-        val delay = (1000.0 / cps.value.toInt()).toLong()
+        val delay = (1000.0 / cps.value).toLong()
         val randomOffset = (Math.random() * 60.0 - 30.0).toLong()
         return now + delay + randomOffset
     }

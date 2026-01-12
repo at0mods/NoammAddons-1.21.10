@@ -15,4 +15,3 @@ public class PlayerRendererMixin {
         avatarRenderState.arrowCount = 0;
     }
 }
-

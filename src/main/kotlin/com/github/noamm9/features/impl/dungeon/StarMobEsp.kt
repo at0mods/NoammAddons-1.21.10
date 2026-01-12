@@ -80,19 +80,20 @@ object StarMobEsp: Feature("Hightlights all starred mobs in a dungeon.") {
         }
 
         register<CheckEntityGlowEvent> {
-            getColor(event.entity)?.let {
-                event.color = it
-                return@register
-            }
+            if (! LocationUtils.inDungeon || inBoss) return@register
 
             if (event.entity.id in starMobs) {
                 event.color = starMobColor.value
+                return@register
+            }
+
+            getColor(event.entity)?.let {
+                event.color = it
             }
         }
     }
 
-    @JvmStatic
-    fun getColor(entity: Entity): Color? {
+    private fun getColor(entity: Entity): Color? {
         if (entity is Bat) return if (espBats.value && ! entity.isInvisible && ! entity.isPassenger) batColor.value else null
         if (entity is EnderMan) return if (espFels.value && entity.name.unformattedText == "Dinnerbone") felColor.value else null
         if (entity is Player) {

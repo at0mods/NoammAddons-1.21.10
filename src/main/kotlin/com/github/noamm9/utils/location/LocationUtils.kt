@@ -2,6 +2,7 @@ package com.github.noamm9.utils.location
 
 import com.github.noamm9.NoammAddons
 import com.github.noamm9.NoammAddons.mc
+import com.github.noamm9.NoammAddonsClient
 import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.EventPriority
 import com.github.noamm9.event.impl.*
@@ -53,7 +54,7 @@ object LocationUtils {
 
     init {
         EventBus.register<MainThreadPacketRecivedEvent.Post>(EventPriority.HIGHEST) {
-            // if (DevOptions.devMode) return setDevModeValues()
+            if (NoammAddonsClient.debugFlags.contains("dev")) return@register setDevModeValues()
             if (! onHypixel) return@register
 
             if (event.packet is ClientboundPlayerInfoUpdatePacket) {
@@ -83,7 +84,7 @@ object LocationUtils {
             inBoss = isInBossRoom().also {
                 if (it && DungeonListener.bossEntryTime == null) {
                     DungeonListener.bossEntryTime = DungeonListener.currentTime
-                    EventBus.post(DungeonEvent.BossEnterEvent())
+                    EventBus.post(DungeonEvent.BossEnterEvent)
                 }
             }
             F7Phase = getPhase()

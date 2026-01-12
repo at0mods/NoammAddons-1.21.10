@@ -23,14 +23,14 @@ import java.awt.Color
 import java.util.concurrent.ConcurrentLinkedQueue
 
 object PvpBlink: Feature("Desyncs your connection to eat knockback or spoof position.") {
-    private val mode by DropdownSetting("Mode", "Manual", listOf("Manual", "Auto", "Pulse"))
+    private val mode by DropdownSetting("Mode", 0, listOf("Manual", "Auto", "Pulse"))
         .withDescription("Manual: Hold key. Auto: On Velocity. Pulse: Every 0.3s.")
 
     private val blinkDuration by SliderSetting("Blink Duration", 300.0, 50.0, 1000.0, 50.0)
         .withDescription("How long to desync (ms).")
 
     private val key by KeybindSetting("Blink Key", GLFW.GLFW_KEY_P)
-        .showIf { mode.value != "Auto" }
+        .showIf { mode.value != 1 }
 
     private var isBlinking = false
     private var isFlushing = false
@@ -48,7 +48,7 @@ object PvpBlink: Feature("Desyncs your connection to eat knockback or spoof posi
     override fun init() {
         register<PacketEvent.Received> {
             if (mc.singleplayerServer != null) return@register
-            if (mode.value == "Auto" && event.packet is ClientboundSetEntityMotionPacket) {
+            if (mode.value == 1 && event.packet is ClientboundSetEntityMotionPacket) {
                 if (event.packet.id == mc.player?.id) startBlink()
             }
         }
@@ -72,8 +72,8 @@ object PvpBlink: Feature("Desyncs your connection to eat knockback or spoof posi
             if (packet is ServerboundMovePlayerPacket && ! isBlinking) {
                 val now = System.currentTimeMillis()
                 val shouldStart = when (mode.value) {
-                    "Manual" -> key.isDown()
-                    "Pulse" -> key.isDown() && (now - blinkStartTime > (blinkDuration.value + 100))
+                    0 -> key.isDown()
+                    3 -> key.isDown() && (now - blinkStartTime > (blinkDuration.value + 100))
                     else -> false
                 }
                 if (shouldStart) startBlink()
@@ -101,7 +101,7 @@ object PvpBlink: Feature("Desyncs your connection to eat knockback or spoof posi
 
         register<TickEvent.Start> {
             if (mc.singleplayerServer != null) return@register
-            if (mode.value != "Manual") {
+            if (mode.value != 1) {
                 if (isBlinking && System.currentTimeMillis() - blinkStartTime > blinkDuration.value.toLong()) {
                     stopBlink()
                 }

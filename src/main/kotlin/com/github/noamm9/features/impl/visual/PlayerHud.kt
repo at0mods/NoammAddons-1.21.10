@@ -2,12 +2,9 @@ package com.github.noamm9.features.impl.visual
 
 import com.github.noamm9.event.impl.ActionBarMessageEvent
 import com.github.noamm9.features.Feature
-import com.github.noamm9.ui.clickgui.componnents.getValue
+import com.github.noamm9.ui.clickgui.componnents.*
 import com.github.noamm9.ui.clickgui.componnents.impl.MultiCheckboxSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
-import com.github.noamm9.ui.clickgui.componnents.provideDelegate
-import com.github.noamm9.ui.clickgui.componnents.section
-import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.ui.hud.getValue
 import com.github.noamm9.ui.hud.provideDelegate
 import com.github.noamm9.utils.ActionBarParser
@@ -30,7 +27,7 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
 
     val hideFoodbar by ToggleSetting("Hide Food bar").withDescription("Hides the foodbar.").section("Extras")
     val hideHealthbar by ToggleSetting("Hide Health bar").withDescription("Hides the healthbar.")
-    val hideArmorbar by ToggleSetting("Hide Armor bar").withDescription("Hides the defensebar.")
+    val hideArmorbar by ToggleSetting("Hide Armor bar").withDescription("Hides the defensebar.").hideIf { hideHealthbar.value }
 
     val healthDisplay by hudElement(this.name + " Health", { LocationUtils.inSkyblock && elements.value["Health"] == true }) { context, example ->
         val text = if (example) "§e3452§f/§c2452" else getHpFormatted()

@@ -1,15 +1,15 @@
 package com.github.noamm9.utils
 
-import com.github.noamm9.NoammAddons
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.utils.ItemUtils.customData
 import com.github.noamm9.utils.ItemUtils.skyblockId
 import net.minecraft.world.InteractionHand
+import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 
 object PlayerUtils {
-    fun swingArm() = with(NoammAddons.mc.player !!) {
+    fun swingArm() = with(mc.player !!) {
         if (! swinging || this.swingTime < 0) {
             swingingArm = InteractionHand.MAIN_HAND
             swingTime = - 1
@@ -18,7 +18,7 @@ object PlayerUtils {
     }
 
     fun isHoldingEtherwarpItem(itemstack: ItemStack): Boolean {
-        if (NoammAddons.mc.isSingleplayer && itemstack.`is`(Items.DIAMOND_SHOVEL)) return true
+        if (mc.isSingleplayer && itemstack.`is`(Items.DIAMOND_SHOVEL)) return true
         return itemstack.skyblockId == "ETHERWARP_CONDUIT" || itemstack.customData.getBoolean("ethermerge").orElse(false)
     }
 
@@ -38,5 +38,11 @@ object PlayerUtils {
 
         xRot = yaw
         yRot = pitch
+    }
+
+    fun getHotbarSlot(i: Int): ItemStack? {
+        if (! Inventory.isHotbarSlot(i)) return null
+        val player = mc.player ?: return null
+        return player.inventory.getItem(i)
     }
 }

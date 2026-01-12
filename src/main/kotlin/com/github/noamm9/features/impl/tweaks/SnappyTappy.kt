@@ -9,39 +9,42 @@ import org.lwjgl.glfw.GLFW
 
 object SnappyTappy: Feature("Prevents standing still when pressing opposing direction keys") {
     private val pressTicks = mutableMapOf<KeyMapping, Long>()
-    private val prevState = mutableMapOf<KeyMapping, Boolean>()
-    private var tick = 0L
+    private val movementKeys by lazy {
+        listOf(mc.options.keyLeft, mc.options.keyRight, mc.options.keyUp, mc.options.keyDown)
+    }
 
     override fun init() {
         register<TickEvent.Start> {
-            tick ++
-            val o = mc.options
-            val movementKeys = listOf(o.keyLeft, o.keyRight, o.keyUp, o.keyDown, o.keyJump, o.keyShift, o.keySprint)
+            val windowHandle = mc.window?.handle() ?: return@register
+            val opts = mc.options
 
             if (mc.screen != null) {
                 if (pressTicks.isNotEmpty()) {
                     movementKeys.forEach { it.isDown = false }
                     pressTicks.clear()
-                    prevState.clear()
                 }
                 return@register
             }
 
             for (key in movementKeys) {
-                val physicalDown = isKeyDown(key)
-                if (physicalDown && prevState[key] != true) {
-                    pressTicks[key] = tick
+                if (isKeyDown(windowHandle, key)) {
+                    if (! pressTicks.containsKey(key)) {
+                        pressTicks[key] = System.currentTimeMillis()
+                    }
+                    key.isDown = true
                 }
-                prevState[key] = physicalDown
-                key.isDown = physicalDown
+                else {
+                    pressTicks.remove(key)
+                    key.isDown = false
+                }
             }
 
-            resolvePair(o.keyLeft, o.keyRight)
-            resolvePair(o.keyUp, o.keyDown)
+            resolveConflict(opts.keyLeft, opts.keyRight)
+            resolveConflict(opts.keyUp, opts.keyDown)
         }
     }
 
-    private fun resolvePair(a: KeyMapping, b: KeyMapping) {
+    private fun resolveConflict(a: KeyMapping, b: KeyMapping) {
         if (! a.isDown || ! b.isDown) return
         val timeA = pressTicks[a] ?: 0L
         val timeB = pressTicks[b] ?: 0L
@@ -49,10 +52,11 @@ object SnappyTappy: Feature("Prevents standing still when pressing opposing dire
         else a.isDown = false
     }
 
-    private fun isKeyDown(key: KeyMapping): Boolean {
-        val handle = mc?.window?.handle() ?: return false
+    private fun isKeyDown(handle: Long, key: KeyMapping): Boolean {
         val bound = KeyBindingHelper.getBoundKeyOf(key) ?: return false
-        return if (bound.type == InputConstants.Type.MOUSE) GLFW.glfwGetMouseButton(handle, bound.value) == GLFW.GLFW_PRESS
+        return if (bound.type == InputConstants.Type.MOUSE) {
+            GLFW.glfwGetMouseButton(handle, bound.value) == GLFW.GLFW_PRESS
+        }
         else GLFW.glfwGetKey(handle, bound.value) == GLFW.GLFW_PRESS
     }
 }

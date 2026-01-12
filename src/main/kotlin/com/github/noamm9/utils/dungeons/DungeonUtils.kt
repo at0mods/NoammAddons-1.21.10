@@ -1,9 +1,12 @@
 package com.github.noamm9.utils.dungeons
 
 import com.github.noamm9.NoammAddons.mc
+import com.github.noamm9.NoammAddonsClient.electionData
+import com.github.noamm9.features.impl.dungeon.ScoreCalculator
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.DungeonListener.REDSTONE_KEY_ID
 import com.github.noamm9.utils.dungeons.DungeonListener.WITHER_ESSENCE_ID
+import com.github.noamm9.utils.network.data.ElectionData
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.SkullBlock
@@ -21,14 +24,13 @@ object DungeonUtils {
         }
     }
 
-    /*
     fun isPaul(): Boolean {
         if (ScoreCalculator.forcePaul.value) return true
-        val mayorPerks = mutableListOf<ApiMayor.Perk>()
-        mayorData.mayor.perks.let(mayorPerks::addAll)
-        mayorData.minister.perk.let(mayorPerks::add)
+        val mayorPerks = mutableListOf<ElectionData.Perk>()
+        electionData.mayor.perks.let(mayorPerks::addAll)
+        electionData.minister?.perk?.let(mayorPerks::add)
         return mayorPerks.any { it.name == "EZPZ" }
-    }*/
+    }
 
     val dungeonItemDrops = listOf(
         "Health Potion VIII Splash Potion", "Healing Potion 8 Splash Potion",

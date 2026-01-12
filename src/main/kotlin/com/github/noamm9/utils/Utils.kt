@@ -4,7 +4,6 @@ import com.github.noamm9.NoammAddons
 import java.awt.Color
 import java.awt.Desktop
 import java.net.URI
-import java.util.*
 import kotlin.reflect.KClass
 
 object Utils {
@@ -18,9 +17,8 @@ object Utils {
     fun Any?.equalsOneOf(vararg others: Any?): Boolean = others.any { this == it }
 
     fun Any?.containsOneOf(vararg elements: Any): Boolean = when (this) {
-        is EnumSet<*> -> elements.any { contains(it) }
-        is String -> elements.any { contains("$it") }
         is Collection<*> -> elements.any { contains(it) }
+        is String -> elements.any { contains("$it") }
         is Array<*> -> elements.any { contains(it) }
         else -> false
     }

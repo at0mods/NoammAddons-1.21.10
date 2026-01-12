@@ -6,6 +6,7 @@ import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.EventBus.register
 import com.github.noamm9.event.EventPriority
 import com.github.noamm9.event.impl.TickEvent
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.*
 
 object ThreadUtils {
@@ -39,11 +40,11 @@ object ThreadUtils {
         tickTasks.add(TickTask(ticks, block))
     }
 
-    fun loop(delayProvider: () -> Number, stopCondition: () -> Boolean = { false }, block: () -> Unit) {
+    fun loop(delayProvider: () -> Number, stopCondition: suspend () -> Boolean = { false }, block: suspend () -> Unit) {
         val taskWrapper = object: Runnable {
             override fun run() {
                 safeRun(block)
-                if (! stopCondition()) {
+                if (! runBlocking { stopCondition() }) {
                     scheduler.schedule(this, delayProvider().toLong(), TimeUnit.MILLISECONDS)
                 }
             }
@@ -51,7 +52,7 @@ object ThreadUtils {
         scheduler.execute(taskWrapper)
     }
 
-    fun loop(delay: Number, stopCondition: () -> Boolean = { false }, block: () -> Unit) {
+    fun loop(delay: Number, stopCondition: suspend () -> Boolean = { false }, block: suspend () -> Unit) {
         loop({ delay }, stopCondition, block)
     }
 
@@ -72,9 +73,9 @@ object ThreadUtils {
         }
     }
 
-    private inline fun safeRun(block: () -> Unit) {
+    private inline fun safeRun(crossinline block: suspend () -> Unit) {
         try {
-            block()
+            runBlocking { block() }
         }
         catch (e: Throwable) {
             logger.error("Error in ThreadUtils task: ${e.message}")

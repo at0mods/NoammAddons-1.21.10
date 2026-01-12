@@ -5,7 +5,7 @@ import com.github.noamm9.event.impl.ActionBarMessageEvent;
 import com.github.noamm9.event.impl.RenderOverlayEvent;
 import com.github.noamm9.features.impl.tweaks.Camera;
 import com.github.noamm9.features.impl.visual.PlayerHud;
-import com.github.noamm9.ui.ClientBranding;
+import com.github.noamm9.features.impl.visual.Scoreboard;
 import com.github.noamm9.utils.DebugHUD;
 import com.github.noamm9.utils.location.LocationUtils;
 import net.minecraft.client.DeltaTracker;
@@ -13,12 +13,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.Scoreboard;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,10 +30,6 @@ public abstract class MixinGui {
     @Shadow
     @Final
     private Minecraft minecraft;
-
-    @Shadow
-    @Final
-    private PlayerTabOverlay tabList;
 
     @Shadow @Nullable private Component title;
     @Shadow @Nullable private Component subtitle;
@@ -100,11 +93,12 @@ public abstract class MixinGui {
 
     @Inject(method = "displayScoreboardSidebar", at = @At("HEAD"), cancellable = true)
     public void renderScoreboardSidebar(GuiGraphics guiGraphics, Objective objective, CallbackInfo ci) {
-        ci.cancel();
-
-        ClientBranding.drawScoreboard(guiGraphics, objective);
+        if (Scoreboard.INSTANCE.enabled) {
+            ci.cancel();
+        }
     }
 
+    /*
     @Inject(method = "renderTabList", at = @At("HEAD"), cancellable = true)
     public void renderTabList(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         ci.cancel();
@@ -117,9 +111,14 @@ public abstract class MixinGui {
         } else {
             this.tabList.setVisible(true);
             guiGraphics.nextStratum();
-            ClientBranding.drawTablist(guiGraphics);
+            ClientBranding.
+
+
+            drawTablist(guiGraphics);
         }
     }
+
+    */
 
     @ModifyVariable(method = "setOverlayMessage", at = @At("HEAD"), argsOnly = true)
     private Component onSetOverlayMessage(Component component) {

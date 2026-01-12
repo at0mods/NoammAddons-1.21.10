@@ -11,7 +11,7 @@ import com.google.gson.JsonPrimitive
 import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
 
-class DropdownSetting(name: String, value: String, val options: List<String>): Setting<String>(name, value), Savable {
+class DropdownSetting(name: String, value: Int, val options: List<String>): Setting<Int>(name, value), Savable {
     private var expanded = false
     private val openAnim = Animation(250)
     private val hoverAnim = Animation(200)
@@ -27,7 +27,7 @@ class DropdownSetting(name: String, value: String, val options: List<String>): S
         Style.drawHoverBar(ctx, x, y, 20f, hoverAnim.value)
         Style.drawNudgedText(ctx, name, x + 8f, y + 6f, hoverAnim.value)
 
-        val valStr = "§7$value"
+        val valStr = "§7${options[value]}"
         Render2D.drawString(ctx, valStr, x + width - valStr.width() - 8f, y + 6f, Color.WHITE, 1f)
 
         ctx.enableScissor(x, y, x + width, y + height)
@@ -35,12 +35,12 @@ class DropdownSetting(name: String, value: String, val options: List<String>): S
         if (expanded) {
             var oy = y + 20f
             Render2D.drawRect(ctx, x + 4f, oy, width - 8f, (options.size * 16) * openAnim.value, Color(5, 5, 5, 150))
-            options.forEach { opt ->
+            options.forEachIndexed { index, opt ->
                 val hov = mouseX >= x + 4 && mouseX <= x + width - 4 && mouseY >= oy && mouseY <= oy + 16
                 if (hov) Render2D.drawRect(ctx, x + 4f, oy, width - 8f, 16f, Color(255, 255, 255, 20))
-                if (opt == value) Render2D.drawRect(ctx, x + 4f, oy + 2f, 1.5f, 12f, Style.accentColor)
+                if (index == value) Render2D.drawRect(ctx, x + 4f, oy + 2f, 1.5f, 12f, Style.accentColor)
 
-                val color = if (opt == value) Style.accentColor else if (hov) Color.WHITE else Color.GRAY
+                val color = if (index == value) Style.accentColor else if (hov) Color.WHITE else Color.GRAY
                 Render2D.drawString(ctx, opt, x + 12f, oy + 4f, color, 1f)
                 oy += 16
             }
@@ -60,9 +60,9 @@ class DropdownSetting(name: String, value: String, val options: List<String>): S
 
         if (expanded && mouseX >= x && mouseX <= x + width && mouseY >= y + 20 && mouseY <= y + height) {
             var optionY = y + 20
-            options.forEach { option ->
+            options.forEachIndexed { index, option ->
                 if (mouseX >= x && mouseX <= x + width && mouseY >= optionY && mouseY <= optionY + 16) {
-                    value = option
+                    value = index
                     Style.playClickSound(1f)
                     expanded = false
                     return true
@@ -80,7 +80,7 @@ class DropdownSetting(name: String, value: String, val options: List<String>): S
     }
 
     override fun read(element: JsonElement?) {
-        element?.asString?.let { newValue ->
+        element?.asInt?.let { newValue ->
             value = newValue
         }
     }

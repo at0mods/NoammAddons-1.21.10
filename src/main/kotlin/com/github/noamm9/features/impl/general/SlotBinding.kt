@@ -106,9 +106,8 @@ object SlotBinding: Feature("Allows you to bind slots to hotbar slots for quick 
                     )
 
                     if (drawBorders.value) {
-                        val c = borderColor.value.rgb
-                        event.context.submitOutline(p1.first.toInt(), p1.second.toInt(), 16, 16, c)
-                        event.context.submitOutline(p2.first.toInt(), p2.second.toInt(), 16, 16, c)
+                        Render2D.drawBorder(event.context, p1.first.toInt(), p1.second.toInt(), 16, 16, borderColor.value)
+                        Render2D.drawBorder(event.context, p2.first.toInt(), p2.second.toInt(), 16, 16, borderColor.value)
                     }
                 }
             }

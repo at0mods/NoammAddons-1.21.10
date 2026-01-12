@@ -8,7 +8,6 @@ import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ItemUtils.skyblockId
-import com.github.noamm9.utils.NumbersUtils.times
 import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.location.LocationUtils
@@ -17,10 +16,10 @@ object AutoGFS: Feature("Automatically refills dungeon items from your sacks usi
     private val delay by SliderSetting("Delay (seconds)", 20.0, 1.0, 60.0, 1.0)
         .withDescription("How often to check for refills.")
 
-    private val refillPearl by ToggleSetting("Refill Pearl", true)
-    private val refillTNT by ToggleSetting("Refill TNT", true)
-    private val refillJerry by ToggleSetting("Refill Jerry", true)
-    private val refillLeaps by ToggleSetting("Refill Leaps", true)
+    private val refillPearl by ToggleSetting("Refill Pearl")
+    private val refillTNT by ToggleSetting("Refill TNT")
+    private val refillJerry by ToggleSetting("Refill Jerry")
+    private val refillLeaps by ToggleSetting("Refill Leaps")
 
 
     override fun init() {

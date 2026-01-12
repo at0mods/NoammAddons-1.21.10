@@ -56,8 +56,8 @@ object DebugHUD {
         if (DungeonListener.dungeonTeammates.isEmpty()) draw(" §7No teammates detected...")
         else DungeonListener.dungeonTeammates.forEach { player ->
             val status = if (player.isDead) "§c[DEAD]" else "§a[ALIVE]"
-            val isSelf = if (player == DungeonListener.thePlayer) " §d(YOU)" else ""
-            draw("§f${player.name} §7- ${player.clazz.name} ${player.clazzLvl} $status$isSelf")
+            val isSelf = if (player == DungeonListener.thePlayer) "§d(YOU)" else ""
+            draw("§f${player.name} §7- ${player.clazz.name} ${player.clazzLvl} $status ${player.mapIcon.icon} $isSelf")
         }
 
         y += 5

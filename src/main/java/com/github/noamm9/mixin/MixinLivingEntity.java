@@ -1,5 +1,6 @@
 package com.github.noamm9.mixin;
 
+import com.github.noamm9.NoammAddons;
 import com.github.noamm9.features.impl.visual.Animations;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
@@ -8,6 +9,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,6 +33,8 @@ public abstract class MixinLivingEntity extends Entity {
     @Inject(method = "getCurrentSwingDuration", at = @At("HEAD"), cancellable = true)
     private void adjustSwingLength(CallbackInfoReturnable<Integer> cir) {
         if (!Animations.INSTANCE.enabled) return;
+        if (!this.is(NoammAddons.mc.player)) return;
+        if (NoammAddons.mc.player.getMainHandItem() == ItemStack.EMPTY) return;
 
         int length;
 
@@ -41,7 +45,7 @@ public abstract class MixinLivingEntity extends Entity {
         else length = 6;
 
         double speedMod = Animations.INSTANCE.getSwingSpeed().getValue().doubleValue();
-        int finalLength = (int) (length * Math.exp(-(speedMod - 1.0)));
+        int finalLength = (int) (length * Math.exp(-(speedMod)));
 
         cir.setReturnValue(Math.max(finalLength, 1));
     }

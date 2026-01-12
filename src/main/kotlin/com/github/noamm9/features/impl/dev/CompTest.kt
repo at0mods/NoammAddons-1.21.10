@@ -1,6 +1,7 @@
 package com.github.noamm9.features.impl.dev
 
 import com.github.noamm9.features.Feature
+import com.github.noamm9.features.FeatureManager
 import com.github.noamm9.features.annotations.Dev
 import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.*
@@ -39,7 +40,7 @@ object CompTest: Feature(
         .withDescription("Adjusts the visual width of ESP boxes and tracer lines.")
 
     // 4. Dropdown
-    val mode by DropdownSetting("Flight Mode", "Vanilla", listOf("Vanilla", "Motion", "Creative", "Hypixel", "Old-AAC"))
+    val mode by DropdownSetting("Flight Mode", 0, listOf("Vanilla", "Motion", "Creative", "Hypixel", "Old-AAC"))
         .withDescription("Changes the bypass logic for flight. 'Vanilla' is safest for singleplayer, 'Motion' is better for servers.")
 
     // 5. Multi-Checkbox
@@ -70,11 +71,8 @@ object CompTest: Feature(
         .withDescription("The custom name displayed above your head or used in chat-based modules.")
 
     // 9. Button
-    val resetButton by ButtonSetting("Reset All Settings") {
-        speed.value = 1.0
-        reach.value = 3.0
-        flight.value = false
-        customName.value = "Player123"
+    val resetButton by ButtonSetting("copy feature list") {
+        mc.keyboardHandler.clipboard = FeatureManager.createFeatureList()
     }.withDescription("Reverts all settings in the Component Test feature back to their original factory defaults.")
 
     val testHud = hudElement("testHud") { context, _ ->

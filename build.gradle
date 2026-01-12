@@ -2,6 +2,7 @@ plugins {
     id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
     id 'maven-publish'
     id "org.jetbrains.kotlin.jvm" version "2.3.0"
+    id "org.jetbrains.kotlin.plugin.serialization" version "2.3.0"
 }
 
 version = project.mod_version
@@ -27,6 +28,12 @@ dependencies {
 
     implementation "io.github.classgraph:classgraph:4.8.174"
     include "io.github.classgraph:classgraph:4.8.174"
+
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
+    include "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
+
+    implementation("io.github.llamalad7:mixinextras-fabric:0.4.1")
+    annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")
 }
 
 processResources {

@@ -2,10 +2,7 @@ package com.github.noamm9.mixin;
 
 import com.github.noamm9.features.impl.visual.CpsDisplay;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.DirectJoinServerScreen;
-import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,12 +34,13 @@ public abstract class MixinMinecraft {
         System.gc();
     }
 
+    /*
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void onSetScreen(Screen screen, CallbackInfo ci) {
         if (screen instanceof LevelLoadingScreen && !(this.screen instanceof DirectJoinServerScreen || this.screen instanceof JoinMultiplayerScreen)) {
             setScreen(null);
             ci.cancel();
         }
-    }
+    }*/
 }
 

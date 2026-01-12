@@ -9,6 +9,8 @@ import com.github.noamm9.ui.clickgui.ClickGuiScreen
 import com.github.noamm9.ui.hud.HudEditorScreen
 import com.github.noamm9.utils.*
 import com.github.noamm9.utils.dungeons.DungeonListener
+import com.github.noamm9.utils.network.WebUtils
+import com.github.noamm9.utils.network.data.ElectionData
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
@@ -18,12 +20,15 @@ import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
 
 object NoammAddonsClient: ClientModInitializer {
-    var screen: Screen? = null
-
     val cacheData = PogObject("cacheData", mutableMapOf<String, Any>())
     val debugFlags = mutableSetOf<String>()
+    var screen: Screen? = null
+
+    var electionData = ElectionData.empty
 
     override fun onInitializeClient() {
+        DataDownloader.downloadData()
+
         EventDispatcher.init()
         ThreadUtils.init()
         DungeonListener.init()
@@ -31,6 +36,8 @@ object NoammAddonsClient: ClientModInitializer {
         ActionBarParser.init()
         PartyUtils.init()
         ChatUtils.init()
+
+        this.initNetworkLoop()
 
         FeatureManager.registerFeatures()
 
@@ -115,6 +122,12 @@ object NoammAddonsClient: ClientModInitializer {
                 }
             )
 
+        }
+    }
+
+    private fun initNetworkLoop() = ThreadUtils.loop(600_000) {
+        WebUtils.get<ElectionData>("https://api.noammaddons.workers.dev/mayor").onSuccess {
+            electionData = it
         }
     }
 }

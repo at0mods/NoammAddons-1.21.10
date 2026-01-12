@@ -22,7 +22,7 @@ object Camera: Feature() {
     val cameraDistance by SliderSetting("Camera Distance", 4, 1, 10, 0.1).withDescription("The distance of the camera from ur player").showIf { customCameraDistance.value }
 
     private val fullBright by ToggleSetting("Full Bright").section("Full Bright")
-    private val gamma by SliderSetting("Gamma", 5, 0, 15.0).withDescription("Control how strong the FullBright is").showIf { fullBright.value }
+    private val gamma by SliderSetting("Gamma", 5, 0, 15, 1).withDescription("Control how strong the FullBright is").showIf { fullBright.value }
 
     @JvmStatic
     val hideFireOverlay by ToggleSetting("Hide Fire Overlay").withDescription("Hides the fire overlay on ur screen").section("Hide Overlays")
