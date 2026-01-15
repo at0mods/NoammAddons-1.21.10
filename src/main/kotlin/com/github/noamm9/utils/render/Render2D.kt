@@ -98,6 +98,21 @@ object Render2D {
         context.pose().popMatrix()
     }
 
+    fun drawFloatingRect(graphics: GuiGraphics, x: Number, y: Number, width: Number, height: Number, color: Color) {
+        val base = color.rgb
+        val light = color.brighter().rgb
+        val dark = color.darker().rgb
+        val ix = x.toInt()
+        val iy = y.toInt()
+        val iw = width.toInt()
+        val ih = height.toInt()
+
+        graphics.fill(ix, iy, ix + 1, iy + ih, light)
+        graphics.fill(ix + 1, iy, ix + iw, iy + 1, light)
+        graphics.fill(ix + iw - 1, iy + 1, ix + iw, iy + ih, dark)
+        graphics.fill(ix + 1, iy + ih - 1, ix + iw - 1, iy + ih, dark)
+        graphics.fill(ix + 1, iy + 1, ix + iw - 1, iy + ih - 1, base)
+    }
 
     fun drawPlayerHead(context: GuiGraphics, x: Int, y: Int, size: Int, skin: ResourceLocation) {
         context.blit(RenderPipelines.GUI_TEXTURED, skin, x, y, 8f, 8f, size, size, 8, 8, 64, 64, - 1)

@@ -61,11 +61,9 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
 
     override fun init() {
         register<ChatMessageEvent> {
-            if (! enabled) return@register
             leapRegex.find(event.unformattedText)?.destructured?.component1()?.let { name ->
-                if (announceSpiritLeaps.value) {
-                    val msg = leapMsg.value.replace("{name}", name)
-                    ChatUtils.sendPartyMessage(msg)
+                if (announceSpiritLeaps.value) leapMsg.value.replace("{name}", name).takeUnless { it.isBlank() }?.let {
+                    ChatUtils.sendPartyMessage(it)
                 }
 
                 if (hideAfterLeap.value) {
@@ -87,9 +85,6 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
             event.isCanceled = true
 
             updateLeapMenu()
-
-            Resolution.refresh()
-            Resolution.apply(event.context)
 
             if (players.filterNotNull().isEmpty()) {
                 Render2D.drawCenteredString(event.context, "§4§lNo players found", Resolution.width / 2, Resolution.height / 2)
@@ -121,11 +116,11 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
                 (startX + boxWidth + padding) to (startY + boxHeight + padding)
             )
 
-            val cx = mc.window.guiScaledWidth / 2
-            val cy = mc.window.guiScaledHeight / 2
-            val mx = event.mouseX
-            val my = event.mouseY
-
+            val cx = mc.window.width / 2
+            val cy = mc.window.height / 2
+            val mx = mc.mouseHandler.xpos()
+            val my = mc.mouseHandler.ypos()
+            
             val hoveredIndex = when {
                 mx < cx && my < cy -> 0
                 mx > cx && my < cy -> 1
@@ -158,8 +153,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
                     }
                 }
 
-                Render2D.drawRect(event.context, x, y, boxWidth, boxHeight, bgColor.withAlpha(190))
-                Render2D.drawBorder(event.context, x, y, boxWidth, boxHeight, entry.player.clazz.color)
+                Render2D.drawFloatingRect(event.context, x, y, boxWidth, boxHeight, bgColor.withAlpha(190))
 
                 val headX = (x + 10).toInt()
                 val headY = (y + (boxHeight / 2) - headSize / 2).toInt()
@@ -176,31 +170,31 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
             }
 
             pose.popMatrix()
-            Resolution.restore(event.context)
         }
 
         register<ContainerEvent.MouseClick> {
-            if (! enabled || ! customLeapMenu.value) return@register
+            if (! customLeapMenu.value) return@register
             if (! inSpiritLeap(event.screen)) return@register
             if (event.button != 0) return@register
 
-            val cx = mc.window.guiScaledWidth / 2
-            val cy = mc.window.guiScaledHeight / 2
+            val cx = mc.window.width / 2
+            val cy = mc.window.height / 2
 
             val quadrant = when {
-                event.mouseX < cx && event.mouseY < cy -> 0
-                event.mouseX > cx && event.mouseY < cy -> 1
-                event.mouseX < cx && event.mouseY > cy -> 2
-                event.mouseX > cx && event.mouseY > cy -> 3
+                mc.mouseHandler.xpos() < cx && mc.mouseHandler.ypos() < cy -> 0
+                mc.mouseHandler.xpos() > cx && mc.mouseHandler.ypos() < cy -> 1
+                mc.mouseHandler.xpos() < cx && mc.mouseHandler.ypos() > cy -> 2
+                mc.mouseHandler.xpos() > cx && mc.mouseHandler.ypos() > cy -> 3
                 else -> return@register
             }
 
+            ChatUtils.modMessage("Quadrant $quadrant")
             event.isCanceled = true
             triggerLeap(quadrant)
         }
 
         register<ContainerEvent.Keyboard> {
-            if (! enabled || ! customLeapMenu.value || ! leapKeybinds.value) return@register
+            if (! customLeapMenu.value || ! leapKeybinds.value) return@register
             if (! inSpiritLeap(event.screen)) return@register
 
             val index = when (event.key) {
@@ -226,18 +220,16 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
     }
 
     private fun updateLeapMenu() {
-        players.fill(null)
-        val menu = mc.player !!.containerMenu
+        mc.player?.containerMenu?.let { menu ->
+            for (i in (menu.slots.indices - 36)) {
+                val stack = menu.slots[i].item
+                if (! stack.`is`(Items.PLAYER_HEAD)) continue
+                val headName = playerPattern.find(stack.hoverName.unformattedText)?.groups?.get("name")?.value ?: continue
 
-        for (slot in menu.slots) {
-            if (slot.index >= 54) break
-            val stack = slot.item
-            if (! stack.`is`(Items.PLAYER_HEAD)) continue
-            val headName = playerPattern.find(stack.displayName.unformattedText)?.groups?.get("name")?.value ?: continue
-
-            DungeonListener.leapTeammates.forEachIndexed { index, teammate ->
-                if (index < players.size && headName.equals(teammate.name, ignoreCase = true)) {
-                    players[index] = LeapMenuPlayer(slot.index, teammate)
+                DungeonListener.leapTeammates.forEachIndexed { index, teammate ->
+                    if (index > players.lastIndex) return@forEachIndexed
+                    if (headName != teammate.name) return@forEachIndexed
+                    players[index] = LeapMenuPlayer(i, teammate)
                 }
             }
         }
