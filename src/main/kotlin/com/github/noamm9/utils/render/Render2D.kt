@@ -2,13 +2,23 @@ package com.github.noamm9.utils.render
 
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.utils.ChatUtils.addColor
+import com.github.noamm9.utils.NumbersUtils.minus
+import com.github.noamm9.utils.NumbersUtils.plus
+import com.github.noamm9.utils.NumbersUtils.times
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.RenderPipelines
+import net.minecraft.client.resources.DefaultPlayerSkin
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import java.awt.Color
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.atan2
 import kotlin.math.sqrt
+
 
 object Render2D {
     fun drawImage(ctx: GuiGraphics, image: ResourceLocation, x: Int, y: Int, width: Int, height: Int) {
@@ -26,25 +36,11 @@ object Render2D {
         pose.translate(- x.toFloat(), - y.toFloat())
     }
 
-    fun drawBorder(
-        ctx: GuiGraphics,
-        x: Number,
-        y: Number,
-        width: Number,
-        height: Number,
-        color: Color = Color.WHITE,
-        thickness: Number = 1,
-    ) {
-        val X = x.toDouble()
-        val Y = y.toDouble()
-        val W = width.toDouble()
-        val H = height.toDouble()
-        val T = thickness.toDouble()
-
-        drawRect(ctx, X, Y, W, T, color)
-        drawRect(ctx, X, Y + H - T, W, T, color)
-        drawRect(ctx, X, Y + T, T, H - (T * 2), color)
-        drawRect(ctx, X + W - T, Y + T, T, H - (T * 2), color)
+    fun drawBorder(ctx: GuiGraphics, x: Number, y: Number, width: Number, height: Number, color: Color = Color.WHITE, thickness: Number = 1) {
+        drawRect(ctx, x, y, width, thickness, color)
+        drawRect(ctx, x, y + height - thickness, width, thickness, color)
+        drawRect(ctx, x, y + thickness, thickness, height - (thickness * 2), color)
+        drawRect(ctx, x + width - thickness, y + thickness, thickness, height - (thickness * 2), color)
     }
 
     fun drawLine(ctx: GuiGraphics, x1: Number, y1: Number, x2: Number, y2: Number, color: Color, thickness: Number = 1) {
@@ -112,6 +108,19 @@ object Render2D {
         graphics.fill(ix + iw - 1, iy + 1, ix + iw, iy + ih, dark)
         graphics.fill(ix + 1, iy + ih - 1, ix + iw - 1, iy + ih, dark)
         graphics.fill(ix + 1, iy + 1, ix + iw - 1, iy + ih - 1, base)
+    }
+
+    private val skinCache: Cache<UUID, ResourceLocation> = CacheBuilder.newBuilder()
+        .maximumSize(500).expireAfterAccess(5, TimeUnit.MINUTES).build()
+
+    fun getSkin(uuid: UUID): ResourceLocation {
+        return skinCache.getIfPresent(uuid) ?: run {
+            mc.connection?.getPlayerInfo(uuid)?.profile?.let {
+                mc.skinManager.get(it).getNow(Optional.empty()).getOrNull()?.body?.texturePath()?.apply {
+                    skinCache.put(uuid, this)
+                }
+            } ?: DefaultPlayerSkin.get(uuid).body.texturePath()
+        }
     }
 
     fun drawPlayerHead(context: GuiGraphics, x: Int, y: Int, size: Int, skin: ResourceLocation) {

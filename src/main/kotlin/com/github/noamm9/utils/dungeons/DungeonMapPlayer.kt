@@ -3,10 +3,9 @@ package com.github.noamm9.utils.dungeons
 
 import com.github.noamm9.utils.dungeons.map.handlers.DungeonScanner
 import com.github.noamm9.utils.dungeons.map.utils.MapUtils
-import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.phys.Vec3
 
-data class DungeonMapPlayer(val teammate: DungeonPlayer, val skin: ResourceLocation) {
+data class DungeonMapPlayer(val teammate: DungeonPlayer) {
     var mapX = 0f
     var mapZ = 0f
     var yaw = 0f

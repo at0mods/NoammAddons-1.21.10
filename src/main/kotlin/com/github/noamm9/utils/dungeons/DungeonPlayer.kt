@@ -8,10 +8,10 @@ data class DungeonPlayer(
     var name: String,
     var clazz: Classes,
     var clazzLvl: Int,
-    var skin: ResourceLocation = mc.player !!.skin.body.id(),
+    var skin: ResourceLocation = mc.player !!.skin.body.texturePath(),
     var isDead: Boolean = false,
 ) {
     val entity: Player? get() = mc.level?.players()?.find { it.name.string == name }
-    val mapIcon = DungeonMapPlayer(this, skin)
+    val mapIcon = DungeonMapPlayer(this)
     val clearInfo = ClearInfo()
 }

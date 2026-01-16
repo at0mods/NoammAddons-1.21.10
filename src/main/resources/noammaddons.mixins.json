@@ -36,6 +36,7 @@
     "MixinGui",
     "MixinGuiGraphics",
     "MixinItemInHandRenderer",
+    "MixinLevelRenderer",
     "MixinLightTexture",
     "MixinMinecraft",
     "MixinMouseHandler",

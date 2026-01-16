@@ -101,12 +101,6 @@ object DungeonMap: Feature() {
             }
         }
 
-        register<DungeonEvent.PuzzleEvent> {
-            if (event.type == DungeonEvent.PuzzleEvent.Type.RESET) {
-                event.pazzle.room?.mainRoom?.state = RoomState.DISCOVERED
-            }
-        }
-
         register<DungeonEvent.RoomEvent.onStateChange> {
             ClearInfoUpdater.checkSplits(event.room.data, event.oldState, event.newState, event.roomPlayers)
             if (event.newState == RoomState.GREEN) event.room.foundSecrets = event.room.data.secrets

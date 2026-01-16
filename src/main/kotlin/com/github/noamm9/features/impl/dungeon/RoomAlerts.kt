@@ -1,0 +1,44 @@
+package com.github.noamm9.features.impl.dungeon
+
+import com.github.noamm9.event.impl.DungeonEvent
+import com.github.noamm9.features.Feature
+import com.github.noamm9.ui.clickgui.componnents.getValue
+import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
+import com.github.noamm9.ui.clickgui.componnents.provideDelegate
+import com.github.noamm9.utils.ChatUtils
+import com.github.noamm9.utils.SoundUtils
+import com.github.noamm9.utils.Utils.equalsOneOf
+import com.github.noamm9.utils.dungeons.DungeonListener
+import com.github.noamm9.utils.dungeons.map.core.RoomState
+import com.github.noamm9.utils.dungeons.map.core.RoomType
+import net.minecraft.sounds.SoundEvents
+
+object RoomAlerts: Feature("Alerts when certain stuff happens in your current room") {
+    private val clear by ToggleSetting("Cleared", true)
+    private val secrets by ToggleSetting("Secrets Done", true)
+
+    override fun init() {
+        register<DungeonEvent.RoomEvent.onStateChange> {
+            if (! event.room.data.type.equalsOneOf(RoomType.NORMAL, RoomType.PUZZLE, RoomType.RARE, RoomType.TRAP)) return@register
+            if (event.room.data.type == RoomType.PUZZLE && event.room.name != "Blaze") return@register
+            if (DungeonListener.thePlayer !in event.roomPlayers) return@register
+
+            when (event.newState) {
+                RoomState.CLEARED -> if (clear.value) {
+                    alert((if (event.room.data.secrets == 0) "&a" else "") + "Cleared")
+                }
+
+                RoomState.GREEN -> if (secrets.value && event.room.data.secrets > 0) {
+                    alert("&aSecrets Done!")
+                }
+
+                else -> return@register
+            }
+        }
+    }
+
+    private fun alert(msg: String) {
+        SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_PLING, 0.3f)
+        ChatUtils.showTitle(msg)
+    }
+}

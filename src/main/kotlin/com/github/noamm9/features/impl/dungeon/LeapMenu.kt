@@ -76,6 +76,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
             if (System.currentTimeMillis() > shouldHide) return@register
             if (event.entity !is Player) return@register
             if (event.entity == mc.player) return@register
+            if (DungeonListener.dungeonTeammatesNoSelf.none { it.entity?.id == event.entity.id }) return@register
             event.isCanceled = true
         }
 
@@ -91,6 +92,8 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
                 return@register Resolution.restore(event.context)
             }
 
+            Resolution.refresh()
+            Resolution.apply(event.context)
             val userScale = (scale.value.toFloat() / 100f) * 2.0f
             val screenWidth = Resolution.width / userScale
             val screenHeight = Resolution.height / userScale
@@ -120,7 +123,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
             val cy = mc.window.height / 2
             val mx = mc.mouseHandler.xpos()
             val my = mc.mouseHandler.ypos()
-            
+
             val hoveredIndex = when {
                 mx < cx && my < cy -> 0
                 mx > cx && my < cy -> 1
@@ -159,6 +162,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
                 val headY = (y + (boxHeight / 2) - headSize / 2).toInt()
 
                 Render2D.drawPlayerHead(event.context, headX, headY, headSize, entry.player.skin)
+                Render2D.drawBorder(event.context, headX, headY, headSize, headSize, entry.player.clazz.color)
 
                 val textX = (x + 10 + headSize + 5).toInt()
                 val textY = (y + boxHeight / 2 - mc.font.lineHeight / 2).toInt()
@@ -170,6 +174,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
             }
 
             pose.popMatrix()
+            Resolution.restore(event.context)
         }
 
         register<ContainerEvent.MouseClick> {

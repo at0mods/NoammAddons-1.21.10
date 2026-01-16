@@ -4,6 +4,8 @@ import com.github.noamm9.mixin.IMapState
 import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.DungeonListener
+import com.github.noamm9.utils.dungeons.DungeonListener.dungeonTeammatesNoSelf
+import com.github.noamm9.utils.dungeons.DungeonListener.thePlayer
 import com.github.noamm9.utils.dungeons.DungeonMapPlayer
 import com.github.noamm9.utils.dungeons.map.DungeonInfo
 import com.github.noamm9.utils.dungeons.map.core.*
@@ -14,6 +16,7 @@ import com.github.noamm9.utils.dungeons.map.utils.MapUtils.yaw
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.world.WorldUtils
 import kotlinx.coroutines.*
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes
 import java.util.concurrent.ConcurrentHashMap
 
 object MapUpdater {
@@ -21,13 +24,30 @@ object MapUpdater {
     val playerJobs = ConcurrentHashMap<String, Job>()
 
     fun updatePlayers() {
-        val mapData = DungeonInfo.mapData ?: return
-        val aliveTeammates = DungeonListener.dungeonTeammates.filterNot { it.isDead }.takeUnless { it.isEmpty() } ?: return
-        val mapDecorations = (mapData as IMapState).decorations.entries.toList()
+        // 1. Safe Cast & Early Return
+        val mapData = DungeonInfo.mapData as? IMapState ?: return
+        val decorations = mapData.decorations ?: return
 
-        aliveTeammates.forEach { teammate ->
-            val vec4b = mapDecorations.find { it.key == teammate.mapIcon.icon }?.value ?: return@forEach
-            smoothUpdatePlayer(teammate.mapIcon, vec4b.mapX.toFloat(), vec4b.mapZ.toFloat(), vec4b.yaw)
+        // 2. Filter teammates once (Assuming this list is stable for this frame)
+        val livingTeammates = dungeonTeammatesNoSelf.filter { ! it.isDead }
+
+        // 3. Assign Icons (Setup Phase)
+        decorations.forEach { (key, decoration) ->
+            if (decoration.type.value() == MapDecorationTypes.FRAME.value()) {
+                thePlayer?.mapIcon?.icon = key
+            }
+            else {
+                val index = key.lastOrNull()?.digitToIntOrNull()
+                if (index != null && index in livingTeammates.indices) {
+                    livingTeammates[index].mapIcon.icon = key
+                }
+            }
+        }
+
+        DungeonListener.dungeonTeammates.forEach { teammate ->
+            if (teammate.isDead) return@forEach
+            val decoration = decorations[teammate.mapIcon.icon] ?: return@forEach
+            smoothUpdatePlayer(teammate.mapIcon, decoration.mapX.toFloat(), decoration.mapZ.toFloat(), decoration.yaw)
         }
     }
 
@@ -104,7 +124,7 @@ object MapUpdater {
                     continue
                 }
 
-                if (mapTile.state.ordinal < room.state.ordinal) {
+                if (mapTile.state.ordinal < room.state.ordinal || mapTile is Room && room is Room && mapTile.data.type == RoomType.PUZZLE) {
                     room.state = mapTile.state
                 }
 

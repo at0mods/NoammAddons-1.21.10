@@ -11,9 +11,9 @@ import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec3
-import net.minecraft.world.phys.shapes.CollisionContext
 import org.joml.Matrix4f
 import java.awt.Color
 
@@ -21,95 +21,133 @@ object Render3D {
     fun renderBlock(
         ctx: RenderContext,
         pos: BlockPos,
-        color: Color,
+        outlineColor: Color,
+        fillColor: Color = outlineColor,
         outline: Boolean = true,
         fill: Boolean = true,
-        phase: Boolean = false
+        phase: Boolean = false,
+        lineWidth: Number = 2.5
     ) {
+        if (! outline && ! fill) return
+
         val state = mc.level?.getBlockState(pos) ?: return
         val mstack = ctx.matrixStack ?: return
         val consumers = ctx.consumers ?: return
         val camPos = ctx.camera.position
-        val shape = state.getShape(mc.level !!, pos, CollisionContext.of(ctx.camera.entity))
+        val shape = state.getShape(mc.level !!, pos)
+        val adjustedLineWidth = lineWidth.toDouble()
 
-        if (shape.isEmpty) return renderBox(ctx, pos.x + 0.5, pos.y, pos.z + 0.5, 1.0, 1.0, color, outline, fill, phase)
+        val outlineR = outlineColor.red / 255f
+        val outlineG = outlineColor.green / 255f
+        val outlineB = outlineColor.blue / 255f
 
-        val r = color.red / 255f
-        val g = color.green / 255f
-        val b = color.blue / 255f
-        val a = color.alpha / 255f
+        val fillR = fillColor.red / 255f
+        val fillG = fillColor.green / 255f
+        val fillB = fillColor.blue / 255f
+        val fillA = fillColor.alpha / 255f
 
-        shape.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
-            val x1 = pos.x + minX
-            val y1 = pos.y + minY
-            val z1 = pos.z + minZ
-            val x2 = pos.x + maxX
-            val y2 = pos.y + maxY
-            val z2 = pos.z + maxZ
+        val minX = pos.x + shape.min(Direction.Axis.X) - 0.002
+        val minY = pos.y + shape.min(Direction.Axis.Y) - 0.002
+        val minZ = pos.z + shape.min(Direction.Axis.Z) - 0.002
+        val maxX = pos.x + shape.max(Direction.Axis.X) + 0.002
+        val maxY = pos.y + shape.max(Direction.Axis.Y) + 0.002
+        val maxZ = pos.z + shape.max(Direction.Axis.Z) + 0.002
 
-            if (fill) {
-                val layer = if (phase) NoammRenderLayers.FILLED_THROUGH_WALLS else NoammRenderLayers.FILLED
-                ShapeRenderer.addChainedFilledBoxVertices(
-                    mstack,
-                    consumers.getBuffer(layer),
-                    x1 - camPos.x, y1 - camPos.y, z1 - camPos.z,
-                    x2 - camPos.x, y2 - camPos.y, z2 - camPos.z,
-                    r, g, b, a
-                )
-            }
+        val x1 = minX - camPos.x
+        val y1 = minY - camPos.y
+        val z1 = minZ - camPos.z
+        val x2 = maxX - camPos.x
+        val y2 = maxY - camPos.y
+        val z2 = maxZ - camPos.z
 
-            if (outline) {
-                val layer = if (phase) NoammRenderLayers.getLinesThroughWalls(2.5) else NoammRenderLayers.getLines(2.5)
-                ShapeRenderer.renderLineBox(
-                    mstack.last(),
-                    consumers.getBuffer(layer),
-                    x1 - camPos.x, y1 - camPos.y, z1 - camPos.z,
-                    x2 - camPos.x, y2 - camPos.y, z2 - camPos.z,
-                    r, g, b, 1f
-                )
-            }
-        }
+        if (fill) ShapeRenderer.addChainedFilledBoxVertices(
+            mstack,
+            consumers.getBuffer(if (phase) NoammRenderLayers.FILLED_THROUGH_WALLS else NoammRenderLayers.FILLED),
+            x1, y1, z1,
+            x2, y2, z2,
+            fillR, fillG, fillB, fillA
+        )
+
+        if (outline) ShapeRenderer.renderLineBox(
+            mstack.last(),
+            consumers.getBuffer(if (phase) NoammRenderLayers.getLinesThroughWalls(adjustedLineWidth) else NoammRenderLayers.getLines(adjustedLineWidth)),
+            x1, y1, z1,
+            x2, y2, z2,
+            outlineR, outlineG, outlineB, 1f
+        )
     }
+
+    fun renderBlock(
+        ctx: RenderContext,
+        pos: BlockPos,
+        color: Color,
+        outline: Boolean = true,
+        fill: Boolean = true,
+        phase: Boolean = false,
+        lineWidth: Number = 2.5
+    ) = renderBlock(ctx, pos, color, color, outline, fill, phase, lineWidth)
 
     fun renderBox(
         ctx: RenderContext,
-        x: Number, y: Number, z: Number,
-        width: Number, height: Number,
-        color: Color = Color.CYAN,
+        x: Number,
+        y: Number,
+        z: Number,
+        width: Number,
+        height: Number,
+        outlineColor: Color,
+        fillColor: Color = outlineColor,
         outline: Boolean = true,
         fill: Boolean = true,
-        phase: Boolean = false
+        phase: Boolean = false,
+        lineWidth: Number = 2.5
     ) {
         if (! outline && ! fill) return
+
         val consumers = ctx.consumers ?: return
         val matrices = ctx.matrixStack ?: return
         val cam = ctx.camera.position.reverse()
 
-        val xd = x.toDouble();
-        val yd = y.toDouble();
+        val xd = x.toDouble()
+        val yd = y.toDouble()
         val zd = z.toDouble()
         val hw = width.toDouble() / 2.0
         val hd = height.toDouble()
 
-        val r = color.red / 255f;
-        val g = color.green / 255f;
-        val b = color.blue / 255f;
-        val a = color.alpha / 255f
-
         matrices.pushPose()
         matrices.translate(cam.x, cam.y, cam.z)
 
-        if (fill) {
-            val layer = if (phase) NoammRenderLayers.FILLED_THROUGH_WALLS else NoammRenderLayers.FILLED
-            ShapeRenderer.addChainedFilledBoxVertices(matrices, consumers.getBuffer(layer), xd - hw, yd, zd - hw, xd + hw, yd + hd, zd + hw, r, g, b, a)
-        }
+        if (fill) ShapeRenderer.addChainedFilledBoxVertices(
+            matrices,
+            consumers.getBuffer(if (phase) NoammRenderLayers.FILLED_THROUGH_WALLS else NoammRenderLayers.FILLED),
+            xd - hw, yd, zd - hw,
+            xd + hw, yd + hd, zd + hw,
+            fillColor.red / 255f, fillColor.green / 255f, fillColor.blue / 255f, fillColor.alpha / 255f
+        )
 
-        if (outline) {
-            val layer = if (phase) NoammRenderLayers.getLinesThroughWalls(2.5) else NoammRenderLayers.getLines(2.5)
-            ShapeRenderer.renderLineBox(matrices.last(), consumers.getBuffer(layer), xd - hw, yd, zd - hw, xd + hw, yd + hd, zd + hw, r, g, b, 1f)
-        }
+        if (outline) ShapeRenderer.renderLineBox(
+            matrices.last(),
+            consumers.getBuffer(if (phase) NoammRenderLayers.getLinesThroughWalls(lineWidth.toDouble()) else NoammRenderLayers.getLines(lineWidth.toDouble())),
+            xd - hw, yd, zd - hw,
+            xd + hw, yd + hd, zd + hw,
+            outlineColor.red / 255f, outlineColor.green / 255f, outlineColor.blue / 255f, 1f
+        )
+
         matrices.popPose()
     }
+
+    fun renderBox(
+        ctx: RenderContext,
+        x: Number,
+        y: Number,
+        z: Number,
+        width: Number,
+        height: Number,
+        color: Color = Color.CYAN,
+        outline: Boolean = true,
+        fill: Boolean = true,
+        phase: Boolean = false,
+        lineWidth: Number = 2.5
+    ) = renderBox(ctx, x, y, z, width, height, color, color, outline, fill, phase, lineWidth)
 
     fun renderString(
         text: String,
@@ -194,8 +232,8 @@ object Render3D {
 
         RenderSystem.lineWidth(thickness.toFloat())
 
-        buffer.addVertex(entry, cameraPoint.x.toFloat(), cameraPoint.y.toFloat(), cameraPoint.z.toFloat()).setColor(color.red / 255f, color.green / 255f, color.blue / 255f, color.alpha / 255f).setNormal(entry, normal)
-        buffer.addVertex(entry, point.x.toFloat(), point.y.toFloat(), point.z.toFloat()).setColor(color.red / 255f, color.green / 255f, color.blue / 255f, color.alpha / 255f).setNormal(entry, normal)
+        buffer.addVertex(entry, cameraPoint.x.toFloat(), cameraPoint.y.toFloat(), cameraPoint.z.toFloat()).setColor(color.red / 255f, color.green / 255f, color.blue / 255f, 1f).setNormal(entry, normal)
+        buffer.addVertex(entry, point.x.toFloat(), point.y.toFloat(), point.z.toFloat()).setColor(color.red / 255f, color.green / 255f, color.blue / 255f, 1f).setNormal(entry, normal)
 
         consumers.endBatch(RenderType.lines())
         matrixStack.popPose()
