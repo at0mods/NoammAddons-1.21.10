@@ -1,0 +1,99 @@
+package com.github.noamm9.features.impl.dungeon.solvers.terminals
+
+import com.github.noamm9.NoammAddons.mc
+import com.github.noamm9.event.EventBus.register
+import com.github.noamm9.event.impl.PacketEvent
+import com.github.noamm9.event.impl.TickEvent
+import com.github.noamm9.mixin.IServerboundInteractPacket
+import com.github.noamm9.utils.ChatUtils.unformattedText
+import com.github.noamm9.utils.ThreadUtils
+import net.minecraft.network.protocol.Packet
+import net.minecraft.network.protocol.game.*
+import net.minecraft.world.entity.decoration.ArmorStand
+import net.minecraft.world.item.ItemStack
+import java.util.concurrent.ConcurrentHashMap
+
+
+object TerminalListener {
+    var inTerm = false
+    var currentType: TerminalType? = null
+    var currentTitle = ""
+    var initialOpen = 0L
+    var lastWindowId = - 1
+
+    private var interactCooldown = 0
+
+    val currentItems = ConcurrentHashMap<Int, ItemStack>()
+
+    val packetRecivedListener = register<PacketEvent.Received> { onPacketReceived(event.packet) }.unregister()
+    val packetSentListener = register<PacketEvent.Sent> { onPacketSent(event.packet, event) }.unregister()
+    val tickListener = register<TickEvent.Server> { onTick() }.unregister()
+
+    fun onPacketReceived(packet: Packet<*>) {
+        when (packet) {
+            is ClientboundOpenScreenPacket -> {
+                val title = packet.title.string
+                val type = TerminalType.fromName(title)
+                if (type != null) {
+                    if (! inTerm) initialOpen = System.currentTimeMillis()
+                    inTerm = true
+                    currentType = type
+                    currentTitle = title
+                    lastWindowId = packet.containerId
+                    currentItems.clear()
+                    TerminalSolver.onTerminalOpen()
+                }
+                else reset()
+            }
+
+            is ClientboundContainerSetSlotPacket -> {
+                if (! inTerm || packet.containerId != lastWindowId) return
+                if (packet.slot > currentType !!.slotCount) return
+                currentItems[packet.slot] = packet.item
+
+                if (currentItems.size == currentType?.slotCount || currentType == TerminalType.MELODY) {
+                    TerminalSolver.onItemsUpdated(packet.slot, packet.item)
+                }
+            }
+
+            // we use scheduled task to stop the real gui from drawing until the packet is prossed on the main thread
+            is ClientboundContainerClosePacket -> if (inTerm) ThreadUtils.scheduledTask(1, ::reset)
+        }
+    }
+
+    private fun onPacketSent(packet: Packet<*>, event: PacketEvent.Sent) {
+        when (packet) {
+            is ServerboundContainerClickPacket -> {
+                if (! inTerm) return
+                if (currentType == TerminalType.MELODY) return
+
+                if (System.currentTimeMillis() - initialOpen < TerminalSolver.FIRST_CLICK_DELAY || packet.containerId != lastWindowId) {
+                    event.isCanceled = true
+                }
+            }
+
+            is ServerboundContainerClosePacket -> if (inTerm) reset()
+
+            is ServerboundInteractPacket -> {
+                val entity = mc.level?.getEntity((packet as IServerboundInteractPacket).entityId) as? ArmorStand ?: return
+                if (entity.displayName?.unformattedText != "Inactive Terminal") return
+
+                if (interactCooldown > 0 || lastWindowId != - 1) event.isCanceled = true else interactCooldown = 15
+            }
+        }
+    }
+
+    private fun onTick() {
+        if (interactCooldown > 0) interactCooldown --
+    }
+
+    private fun reset() {
+        inTerm = false
+        currentType = null
+        currentTitle = ""
+        currentItems.clear()
+        lastWindowId = - 1
+        interactCooldown = 0
+        TerminalSolver.onTerminalClose()
+    }
+}

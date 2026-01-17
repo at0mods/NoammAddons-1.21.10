@@ -22,4 +22,6 @@ object ItemUtils {
         val properties = profile.partialProfile().properties
         return properties["textures"].firstOrNull()?.value
     }
+
+    fun ItemStack.hasGlint() = componentsPatch.get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE)?.isPresent == true
 }

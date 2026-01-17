@@ -1,0 +1,47 @@
+package com.github.noamm9.features.impl.dungeon.solvers.terminals
+
+import net.minecraft.world.item.Items
+
+enum class TerminalType(val slotCount: Int) {
+    COLORS(54), MELODY(54), NUMBERS(36), REDGREEN(45), RUBIX(45), STARTWITH(45);
+
+    companion object {
+        val colorsRegex = Regex("^Select all the ([\\w ]+) items!$")
+        val melodyRegex = Regex("^Click the button on time!$")
+        val numbersRegex = Regex("^Click in order!$")
+        val redgreenRegex = Regex("^Correct all the panes!$")
+        val rubixRegex = Regex("^Change all to same color!$")
+        val startwithRegex = Regex("^What starts with: '(\\w)'\\?$")
+
+        val rubixOrder = listOf(
+            Items.RED_STAINED_GLASS_PANE,
+            Items.ORANGE_STAINED_GLASS_PANE,
+            Items.YELLOW_STAINED_GLASS_PANE,
+            Items.GREEN_STAINED_GLASS_PANE,
+            Items.BLUE_STAINED_GLASS_PANE,
+        )
+
+        var lastRubixTarget: Int? = null
+
+        var melodyButton: Int? = null
+        var melodyCurrent: Int? = null
+        var melodyCorrect: Int? = null
+
+        fun fromName(windowTitle: String): TerminalType? {
+            if (colorsRegex.matches(windowTitle)) return COLORS
+            if (melodyRegex.matches(windowTitle)) return MELODY
+            if (numbersRegex.matches(windowTitle)) return NUMBERS
+            if (redgreenRegex.matches(windowTitle)) return REDGREEN
+            if (rubixRegex.matches(windowTitle)) return RUBIX
+            if (startwithRegex.matches(windowTitle)) return STARTWITH
+            return null
+        }
+
+        fun reset() {
+            lastRubixTarget = null
+            melodyButton = null
+            melodyCurrent = null
+            melodyCorrect = null
+        }
+    }
+}

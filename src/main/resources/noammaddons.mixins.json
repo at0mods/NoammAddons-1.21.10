@@ -5,6 +5,7 @@
   "mixins": [
     "ExampleMixin",
     "IMapState",
+    "IServerboundInteractPacket",
     "MixinConnection",
     "MixinEntity",
     "MixinItemStack",
