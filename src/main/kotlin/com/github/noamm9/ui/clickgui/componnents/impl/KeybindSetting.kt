@@ -8,15 +8,19 @@ import com.github.noamm9.ui.utils.Animation
 import com.github.noamm9.utils.render.Render2D
 import com.github.noamm9.utils.render.Render2D.width
 import com.google.gson.JsonElement
-import com.google.gson.JsonPrimitive
+import com.google.gson.JsonObject
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.GuiGraphics
 import org.lwjgl.glfw.GLFW
 import java.awt.Color
 
+
 class KeybindSetting(name: String, value: Int = InputConstants.UNKNOWN.value): Setting<Int>(name, value), Savable {
     var listening = false
     private val hoverAnim = Animation(200)
+
+    var scanCode = 0
+    var isMouse = false
 
     override fun draw(ctx: GuiGraphics, mouseX: Int, mouseY: Int) {
         val isHovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height
@@ -26,13 +30,32 @@ class KeybindSetting(name: String, value: Int = InputConstants.UNKNOWN.value): S
         Style.drawHoverBar(ctx, x, y, height, hoverAnim.value)
         Style.drawNudgedText(ctx, name, x + 8f, y + 6f, hoverAnim.value)
 
-        val bindText = if (listening) "§b..." else "§7" + (GLFW.glfwGetKeyName(value, 0)?.uppercase() ?: "NONE")
+        val bindText = when {
+            listening -> "§b..."
+            value == InputConstants.UNKNOWN.value -> "§7NONE"
+            else -> {
+                val key = if (isMouse) InputConstants.Type.MOUSE.getOrCreate(value)
+                else InputConstants.Type.KEYSYM.getOrCreate(value)
+                "§7" + key.displayName.string.uppercase()
+            }
+        }
         Render2D.drawString(ctx, bindText, x + width - bindText.width() - 8f, y + 6f, Color.WHITE)
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
-            listening = ! listening
+        val isInside = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height
+
+        if (listening) {
+            this.value = button
+            this.isMouse = true
+            this.scanCode = 0
+            this.listening = false
+            Style.playClickSound(1f)
+            return true
+        }
+
+        if (isInside) {
+            listening = true
             Style.playClickSound(1f)
             return true
         }
@@ -41,25 +64,46 @@ class KeybindSetting(name: String, value: Int = InputConstants.UNKNOWN.value): S
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (listening) {
-            if (keyCode == InputConstants.KEY_ESCAPE) {
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 listening = false
                 return true
             }
 
-            value = if (keyCode == InputConstants.KEY_BACKSPACE) 0 else keyCode
+            if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+                value = InputConstants.UNKNOWN.value
+                isMouse = false
+            }
+            else {
+                this.value = keyCode
+                this.scanCode = scanCode
+                this.isMouse = false
+            }
             listening = false
             return true
         }
         return false
     }
 
-    override fun write(): JsonElement = JsonPrimitive(value)
+    override fun write(): JsonElement {
+        val obj = JsonObject()
+        obj.addProperty("key", value)
+        obj.addProperty("scan", scanCode)
+        obj.addProperty("isMouse", isMouse)
+        return obj
+    }
+
     override fun read(element: JsonElement?) {
-        element?.asInt?.let { value = it }
+        element?.asJsonObject?.let {
+            value = it.get("key").asInt
+            scanCode = it.get("scan").asInt
+            isMouse = it.get("isMouse")?.asBoolean ?: false
+        }
     }
 
     fun isDown(): Boolean {
-        return InputConstants.isKeyDown(mc.window, value)
+        if (value == InputConstants.UNKNOWN.value) return false
+        return if (isMouse) GLFW.glfwGetMouseButton(mc.window.handle(), value) == GLFW.GLFW_PRESS
+        else InputConstants.isKeyDown(mc.window, value)
     }
 
     private var previousState = false

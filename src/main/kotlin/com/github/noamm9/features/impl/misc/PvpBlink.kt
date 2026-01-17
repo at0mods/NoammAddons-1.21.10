@@ -12,7 +12,6 @@ import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.showIf
 import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.ColorUtils.withAlpha
-import com.github.noamm9.utils.NumbersUtils.plus
 import com.github.noamm9.utils.render.Render3D
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket
@@ -30,7 +29,7 @@ object PvpBlink: Feature("Desyncs your connection to eat knockback or spoof posi
         .withDescription("How long to desync (ms).")
 
     private val key by KeybindSetting("Blink Key", GLFW.GLFW_KEY_P)
-        .showIf { mode.value != 1 }
+        .showIf { mode.value != 0 }
 
     private var isBlinking = false
     private var isFlushing = false
@@ -73,7 +72,7 @@ object PvpBlink: Feature("Desyncs your connection to eat knockback or spoof posi
                 val now = System.currentTimeMillis()
                 val shouldStart = when (mode.value) {
                     0 -> key.isDown()
-                    3 -> key.isDown() && (now - blinkStartTime > (blinkDuration.value + 100))
+                    2 -> key.isDown() && (now - blinkStartTime > (blinkDuration.value + 100))
                     else -> false
                 }
                 if (shouldStart) startBlink()
@@ -101,7 +100,7 @@ object PvpBlink: Feature("Desyncs your connection to eat knockback or spoof posi
 
         register<TickEvent.Start> {
             if (mc.singleplayerServer != null) return@register
-            if (mode.value != 1) {
+            if (mode.value != 0) {
                 if (isBlinking && System.currentTimeMillis() - blinkStartTime > blinkDuration.value.toLong()) {
                     stopBlink()
                 }

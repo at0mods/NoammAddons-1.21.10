@@ -36,6 +36,7 @@ object NoammAddonsClient: ClientModInitializer {
         ActionBarParser.init()
         PartyUtils.init()
         ChatUtils.init()
+        TestGround.toString()
 
         this.initNetworkLoop()
 
