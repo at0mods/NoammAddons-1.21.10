@@ -11,6 +11,7 @@ import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.ChatUtils.removeFormatting
 import com.github.noamm9.utils.ItemUtils.skyblockId
 import com.github.noamm9.utils.NumbersUtils.romanToDecimal
+import com.github.noamm9.utils.PlayerUtils
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.map.DungeonInfo
 import com.github.noamm9.utils.dungeons.map.core.RoomState
@@ -88,9 +89,7 @@ object DungeonListener {
                 }
 
                 is ClientboundContainerSetSlotPacket -> {
-                    if (packet.containerId == 0 && packet.slot == 36) {
-                        thePlayer?.isDead = packet.item?.skyblockId == "HAUNT_ABILITY"
-                    }
+                    thePlayer?.isDead = PlayerUtils.getHotbarSlot(0)?.skyblockId == "HAUNT_ABILITY"
                 }
             }
         }

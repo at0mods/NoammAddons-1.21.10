@@ -18,6 +18,7 @@ import com.github.noamm9.utils.ItemUtils.hasGlint
 import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.Utils.uppercaseFirst
+import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.world.inventory.ClickType
@@ -27,23 +28,45 @@ import net.minecraft.world.item.Items
 import java.awt.Color
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.random.Random
 
 
-object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
-    const val FIRST_CLICK_DELAY = 350
+object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
+    // --- Existing Settings ---
+    const val FIRST_CLICK_DELAY = 7 // 350ms (Ticks)
 
     val scale by SliderSetting("Custom Menu's Scale", 1f, 0.1f, 2f, 0.01f).section("General")
         .withDescription("How big the Terminal Menu should be.")
 
-    val mode by DropdownSetting("Mode", 0, listOf("Normal", "Q-Terms", "Auto"))
-        .withDescription("The Terminal mode to use. Normal is vanilla, Q-Terms is queueing your clicks until the terminal updates so they all register correctly (recommended for high ping players).")
-
-    val resyncTimeout by SliderSetting<Long>("Resync Timeout", 800, 400, 1000, 1)
-        .withDescription("How long should the queue wait before clearing itself if the server doesn't update the terminal. higher values are better for high ping players.")
-        .showIf { mode.value == 1 }
-
-    val slotStyle by DropdownSetting("Slot Style", 0, listOf("Rect", "Bordered-Rect", "Button")).section("Visuals")
+    val slotStyle by DropdownSetting("Slot Style", 0, listOf("Rect", "Bordered-Rect", "Button"))
         .withDescription("How the highlighted slots should be drawn.")
+
+    val mode by DropdownSetting("Mode", 0, listOf("Normal", "Q-Terms", "Auto"))
+        .withDescription("The Terminal mode to use.")
+
+    val resyncTimeout by SliderSetting<Long>("Resync Timeout", 800, 600, 1000, 1)
+        .withDescription("How long should the queue wait before clearing itself if the server doesn't update the terminal.")
+        .showIf { mode.value != 0 }
+
+    val randomDelay by ToggleSetting("Random Delay").section("Auto Terminal")
+        .withDescription("Should the delay between clicks be random?")
+        .showIf { mode.value == 2 }
+
+    val autoDelay by SliderSetting("Click Delay", 150.0, 0.0, 500.0, 10.0)
+        .withDescription("Fixed delay between clicks in milliseconds.")
+        .showIf { mode.value == 2 && ! randomDelay.value }
+
+    val minRandomDelay by SliderSetting("Min Random Delay", 50.0, 0.0, 500.0, 10.0)
+        .withDescription("The minimum possible delay")
+        .showIf { mode.value == 2 && randomDelay.value }
+
+    val maxRandomDelay by SliderSetting("Max Random Delay", 150.0, 0.0, 500.0, 10.0)
+        .withDescription("The maximum possible delay")
+        .showIf { mode.value == 2 && randomDelay.value }
+
+    val clickOrder by DropdownSetting("Click Order", 0, listOf("None", "Random", "Human", "Skizo"))
+        .withDescription("Human: Logic pathing. Random: RNG. Skizo: Chaotic/Furthest.")
+        .showIf { mode.value == 2 }
 
     val backgroundColor by ColorSetting("Background Color", Color(0, 0, 0, 100)).section("Colors - UI")
     val borderColor by ColorSetting("Border Color", Color(255, 255, 255))
@@ -52,15 +75,11 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
     val overlayTextColor by ColorSetting("Overlay Text Color", Color.WHITE)
 
     val solutionColor by ColorSetting("Generic Solution", Color(0, 255, 0, 130)).section("Colors - Terminals")
-        .withDescription("Used for Red-Green, Start-With, Colors, etc.")
-
     val numbersFirstColor by ColorSetting("Numbers: 1st Click", Color(0, 255, 0, 130))
     val numbersSecondColor by ColorSetting("Numbers: 2nd Click", Color(0, 200, 0, 130))
     val numbersThirdColor by ColorSetting("Numbers: 3rd Click", Color(0, 150, 0, 130))
-
     val rubixPositiveColor by ColorSetting("Rubix: Positive (+)", Color(0, 114, 255, 130))
     val rubixNegativeColor by ColorSetting("Rubix: Negative (-)", Color(205, 0, 0, 130))
-
     val melodyColumnColor by ColorSetting("Melody: Column", Color(255, 0, 255, 130))
     val melodyIndicatorColor by ColorSetting("Melody: Indicator", Color(255, 116, 0, 130))
     val melodyWrongColor by ColorSetting("Melody: Wrong", Color(255, 0, 0, 130))
@@ -86,32 +105,29 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
         TerminalListener.tickListener.unregister()
     }
 
-    private data class TerminalClick(val slotId: Int, val btn: Int)
-
     private var solution = mutableListOf<TerminalClick>()
     private val queue = mutableListOf<TerminalClick>()
     private var isClicked = false
-    private var lastClick = 0L
+    private var lastClickTime = 0L
+    private var lastClickedSlot = - 1
 
     override fun init() {
         register<TickEvent.Server> {
             if (mode.value != 2) return@register
             if (! TerminalListener.inTerm) return@register
-            if (System.currentTimeMillis() - TerminalListener.initialOpen < FIRST_CLICK_DELAY) return@register
+            if (DungeonListener.currentTime - TerminalListener.initialOpen < FIRST_CLICK_DELAY) return@register
+            if (TerminalListener.currentType != TerminalType.MELODY) return@register
+            if (DungeonListener.currentTime - lastClickTime < 5) return@register
 
-            if (TerminalListener.currentType == TerminalType.MELODY) {
-                if (System.currentTimeMillis() - lastClick < 250) return@register
+            val current = TerminalType.melodyCurrent ?: return@register
+            val correct = TerminalType.melodyCorrect ?: return@register
+            val buttonRow = TerminalType.melodyButton ?: return@register
+            if (current != correct) return@register
+            val actualSlot = buttonRow * 9 + 16
+            if (lastClickedSlot == actualSlot) return@register
 
-                val current = TerminalType.melodyCurrent ?: return@register
-                val correct = TerminalType.melodyCorrect ?: return@register
-                val buttonRow = TerminalType.melodyButton ?: return@register
-
-                if (current != correct) return@register
-
-                val actualSlot = buttonRow * 9 + 16
-                sendClickPacket(actualSlot, 0)
-                lastClick = System.currentTimeMillis()
-            }
+            sendClickPacket(actualSlot, 0)
+            lastClickTime = DungeonListener.currentTime
         }
 
         register<ScreenEvent.PreRender> {
@@ -219,7 +235,7 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
             val termType = TerminalListener.currentType ?: return@register
             event.isCanceled = true
             if (mode.value == 2) return@register
-            if (System.currentTimeMillis() - TerminalListener.initialOpen < FIRST_CLICK_DELAY) return@register
+            if (DungeonListener.currentTime - TerminalListener.initialOpen < FIRST_CLICK_DELAY) return@register
 
             val uiScale = 3f * scale.value
             val mx = Resolution.getMouseX() / uiScale
@@ -266,7 +282,6 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
             if (click == null) return@register
 
             if (mode.value != 0) predict(click)
-            //SoundUtils.playEvent(SoundEvents.UI_BUTTON_CLICK, 0.2f, 1f)
             if (mode.value == 0) click(click) else if (isClicked) queue.add(click) else click(click)
         }
     }
@@ -280,7 +295,6 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
             }
 
             2 -> Render2D.drawFloatingRect(ctx, x, y, w, h, color.darker())
-            //    3 -> Render2D.drawRoundedRect(ctx, x, y, w, h, 3f, color)
         }
     }
 
@@ -310,13 +324,15 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
             if (btn == 0) ClickType.CLONE else ClickType.PICKUP,
             mc.player
         )
+
+        if (NoammAddons.debugFlags.contains("terminal")) {
+            ChatUtils.modMessage("Sent Click Packet on ${TerminalListener.currentType?.name}")
+        }
     }
 
     private fun click(click: TerminalClick) {
         isClicked = true
-
         sendClickPacket(click.slotId, click.btn)
-
         val initialWindowId = TerminalListener.lastWindowId
         ThreadUtils.setTimeout(resyncTimeout.value) {
             if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@setTimeout
@@ -324,12 +340,19 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
                 ChatUtils.modMessage("Resync Timeout Triggered")
             }
 
-            queue.clear()
-            solve()
-            isClicked = false
+            if (mode.value == 1) {
+                queue.clear()
+                solve()
+                isClicked = false
+            }
+            else if (mode.value == 2) {
+                ThreadUtils.scheduledTaskServer((resyncTimeout.value / 50).toInt()) {
+                    if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@scheduledTaskServer
+                    autoClick()
+                }
+            }
         }
     }
-
 
     fun solve(updatedSlot1: Int = 0, updatedItem1: ItemStack = ItemStack.EMPTY) {
         val type = TerminalListener.currentType ?: return
@@ -343,13 +366,13 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
                     .sortedBy { it.second.count }
                     .forEach {
                         TerminalType.numbersSlotCounts[it.first] = it.second.count
-                        solution.add(TerminalClick(it.first, 0))
+                        solution.add(TerminalClick(it.first))
                     }
             }
 
             TerminalType.REDGREEN -> {
                 currentItems.filter { it.value.item == Items.RED_STAINED_GLASS_PANE }
-                    .forEach { solution.add(TerminalClick(it.key, 0)) }
+                    .forEach { solution.add(TerminalClick(it.key)) }
             }
 
             TerminalType.STARTWITH -> {
@@ -358,7 +381,7 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
                 currentItems.forEach { (slot, item) ->
                     val name = item.hoverName.string.removeFormatting().lowercase()
                     if (name.startsWith(letter) && ! item.hasGlint()) {
-                        solution.add(TerminalClick(slot, 0))
+                        solution.add(TerminalClick(slot))
                     }
                 }
             }
@@ -379,7 +402,7 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
                         else -> false
                     }
                     if (! isNameMatch && ! isDyeMatch) return@forEach
-                    solution.add(TerminalClick(slot, 0))
+                    solution.add(TerminalClick(slot))
                 }
             }
 
@@ -451,23 +474,51 @@ object TerminalSolver: Feature("Terminal Solver with Prediction and Queue") {
             }
             else queue.clear()
         }
-        else if (mode.value == 2 && solution.isNotEmpty()) {
-            val click = if (TerminalListener.currentType == TerminalType.NUMBERS) solution.first() else solution.random()
-            if (System.currentTimeMillis() - TerminalListener.initialOpen > FIRST_CLICK_DELAY) {
-                if (TerminalListener.currentType == TerminalType.RUBIX)
-                    sendClickPacket(click.slotId, if (click.btn > 0) 0 else 1)
-                else sendClickPacket(click.slotId, click.btn)
+        else autoClick()
 
+    }
+
+    private fun autoClick() {
+        if (mode.value != 2 || solution.isEmpty()) return
+
+        val rawClick = if (TerminalListener.currentType == TerminalType.NUMBERS) solution.first()
+        else when (clickOrder.value) {
+            1 -> solution.random()
+            2 -> HumanClickOrder.getBestClick(solution, TerminalListener.currentType !!)
+            3 -> HumanClickOrder.getWorstClick(solution, TerminalListener.currentType !!)
+            else -> solution.first()
+        }
+
+        val finalClick = if (TerminalListener.currentType == TerminalType.RUBIX)
+            TerminalClick(rawClick.slotId, if (rawClick.btn > 0) 0 else 1)
+        else rawClick
+
+        val delayTicks = when {
+            DungeonListener.currentTime - TerminalListener.initialOpen <= FIRST_CLICK_DELAY -> FIRST_CLICK_DELAY
+
+            randomDelay.value -> {
+                val min = minRandomDelay.value.toLong().coerceAtLeast(0)
+                val max = maxRandomDelay.value.toLong().coerceAtLeast(0)
+                val delayMs = if (min == max) min else Random.nextLong(minOf(min, max), maxOf(min, max))
+                (delayMs / 50).toInt()
             }
-            else ThreadUtils.scheduledTask(1 + FIRST_CLICK_DELAY / 50) {
-                if (! TerminalListener.inTerm) return@scheduledTask
-                if (TerminalListener.currentType == TerminalType.RUBIX)
-                    sendClickPacket(click.slotId, if (click.btn > 0) 0 else 1)
-                else sendClickPacket(click.slotId, click.btn)
-            }
+
+            else -> (autoDelay.value.toLong() / 50).toInt()
+
+        }.coerceAtLeast(0)
+
+
+        if (delayTicks == 0) click(finalClick)
+        else ThreadUtils.scheduledTaskServer(delayTicks) {
+            if (TerminalListener.inTerm) click(finalClick)
         }
     }
 
     fun onTerminalOpen() = ::isClicked.set(false)
-    fun onTerminalClose() = queue.clear()
+
+    fun onTerminalClose() {
+        queue.clear()
+        solution.clear()
+        lastClickTime = 0
+    }
 }

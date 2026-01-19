@@ -20,7 +20,8 @@ object ThreadUtils {
 
     private val asyncExecutor = Executors.newCachedThreadPool(createDaemonFactory("$MOD_NAME-Async"))
     private val scheduler = Executors.newScheduledThreadPool(1, createDaemonFactory("$MOD_NAME-Scheduler"))
-    private val tickTasks = ConcurrentLinkedQueue<TickTask>()
+    private val serverTickTasks = ConcurrentLinkedQueue<TickTask>()
+    private val clientTickTasks = ConcurrentLinkedQueue<TickTask>()
 
 
     fun runOnMcThread(block: () -> Unit) {
@@ -37,7 +38,11 @@ object ThreadUtils {
     }
 
     fun scheduledTask(ticks: Int = 0, block: () -> Unit) {
-        tickTasks.add(TickTask(ticks, block))
+        clientTickTasks.add(TickTask(ticks, block))
+    }
+
+    fun scheduledTaskServer(ticks: Int = 0, block: () -> Unit) {
+        serverTickTasks.add(TickTask(ticks, block))
     }
 
     fun loop(delayProvider: () -> Number, stopCondition: suspend () -> Boolean = { false }, block: suspend () -> Unit) {
@@ -58,9 +63,24 @@ object ThreadUtils {
 
     fun init() {
         register<TickEvent.Start>(EventPriority.HIGHEST) {
-            if (tickTasks.isEmpty()) return@register
+            if (clientTickTasks.isEmpty()) return@register
 
-            tickTasks.removeIf { entry ->
+            clientTickTasks.removeIf { entry ->
+                if (entry.ticks <= 0) {
+                    safeRun(entry.action)
+                    true
+                }
+                else {
+                    entry.ticks --
+                    false
+                }
+            }
+        }
+
+        register<TickEvent.Server>(EventPriority.HIGHEST) {
+            if (serverTickTasks.isEmpty()) return@register
+
+            serverTickTasks.removeIf { entry ->
                 if (entry.ticks <= 0) {
                     safeRun(entry.action)
                     true

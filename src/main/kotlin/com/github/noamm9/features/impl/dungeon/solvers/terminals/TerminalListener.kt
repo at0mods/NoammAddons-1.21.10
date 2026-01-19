@@ -8,6 +8,7 @@ import com.github.noamm9.event.impl.TickEvent
 import com.github.noamm9.mixin.IServerboundInteractPacket
 import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.ThreadUtils
+import com.github.noamm9.utils.dungeons.DungeonListener
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.*
 import net.minecraft.world.entity.decoration.ArmorStand
@@ -35,7 +36,7 @@ object TerminalListener {
                 val title = packet.title.string
                 val type = TerminalType.fromName(title)
                 if (type != null) {
-                    if (! inTerm) initialOpen = System.currentTimeMillis()
+                    if (! inTerm) initialOpen = DungeonListener.currentTime
                     inTerm = true
                     currentType = type
                     currentTitle = title
@@ -77,9 +78,8 @@ object TerminalListener {
         when (packet) {
             is ServerboundContainerClickPacket -> {
                 if (! inTerm) return
-                if (currentType == TerminalType.MELODY) return
 
-                if (System.currentTimeMillis() - initialOpen < TerminalSolver.FIRST_CLICK_DELAY || packet.containerId != lastWindowId) {
+                if (DungeonListener.currentTime - initialOpen < TerminalSolver.FIRST_CLICK_DELAY || packet.containerId != lastWindowId) {
                     event.isCanceled = true
                 }
             }
@@ -105,6 +105,7 @@ object TerminalListener {
         currentTitle = ""
         currentItems.clear()
         lastWindowId = - 1
+        HumanClickOrder.lastClickedSlot = null
         TerminalSolver.onTerminalClose()
     }
 }
