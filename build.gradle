@@ -71,6 +71,10 @@ jar {
     }
 }
 
+test {
+    failOnNoDiscoveredTests = false
+}
+
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
