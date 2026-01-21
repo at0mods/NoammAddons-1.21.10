@@ -2,6 +2,7 @@ package com.github.noamm9.features.impl.general
 
 import com.github.noamm9.event.impl.ContainerEvent
 import com.github.noamm9.event.impl.MainThreadPacketRecivedEvent
+import com.github.noamm9.event.impl.PacketEvent
 import com.github.noamm9.features.Feature
 import com.github.noamm9.mixin.IKeyMapping
 import com.github.noamm9.ui.clickgui.componnents.getValue
@@ -16,6 +17,7 @@ import com.github.noamm9.utils.Utils.equalsOneOf
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.network.protocol.game.ClientboundContainerClosePacket
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket
+import net.minecraft.network.protocol.game.ServerboundContainerClosePacket
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import org.lwjgl.glfw.GLFW
@@ -48,6 +50,12 @@ object WardrobeKeybinds: Feature("Make it possible to bind armor slots to your k
                 inWardrobeMenu = event.packet.title.unformattedText.matches(wardrobeMenuRegex)
             }
             else if (event.packet is ClientboundContainerClosePacket && inWardrobeMenu) {
+                inWardrobeMenu = false
+            }
+        }
+
+        register<PacketEvent.Sent> {
+            if (event.packet is ServerboundContainerClosePacket && inWardrobeMenu) {
                 inWardrobeMenu = false
             }
         }

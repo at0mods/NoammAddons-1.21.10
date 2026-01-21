@@ -67,7 +67,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         .withDescription("Human: Logic pathing. Random: RNG. Skizo: Chaotic/Furthest.")
         .showIf { mode.value == 2 }
 
-    val backgroundColor by ColorSetting("Background Color", Color(0, 0, 0, 100)).section("Colors - UI")
+    val backgroundColor by ColorSetting("Background Color", Color(0, 0, 0, 100)).section("Settings - UI")
     val borderColor by ColorSetting("Border Color", Color(255, 255, 255))
     val titleColor by ColorSetting("Title Text Color", Color.WHITE)
     val queueColor by ColorSetting("Queue Text Color", Color.CYAN)
@@ -76,6 +76,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
     val solutionColor by ColorSetting("Generic Solution", Color(0, 255, 0, 130)).section("Colors - Terminals").showIf {
         melody.value || numbers.value || rubix.value || colors.value || startwith.value || redgreen.value
     }
+    val numbersNumbers by ToggleSetting("Numbers: Show Numbers").showIf { numbers.value }.withDescription("Should the numbers be shown on the slots?")
     val numbersFirstColor by ColorSetting("Numbers: 1st Click", Color(0, 255, 0, 130)).showIf { numbers.value }
     val numbersSecondColor by ColorSetting("Numbers: 2nd Click", Color(0, 200, 0, 130)).showIf { numbers.value }
     val numbersThirdColor by ColorSetting("Numbers: 3rd Click", Color(0, 150, 0, 130)).showIf { numbers.value }
@@ -110,7 +111,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
     private val queue = mutableListOf<TerminalClick>()
     private var isClicked = false
     private var lastClickTime = 0L
-    private var lastClickedSlot = - 1
+    private var lastClickedSlot: Int? = null
 
     override fun init() {
         register<TickEvent.Server> {
@@ -129,6 +130,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
 
             sendClickPacket(actualSlot, 0)
             lastClickTime = DungeonListener.currentTime
+            lastClickedSlot = actualSlot
         }
 
         register<ScreenEvent.PreRender> {
@@ -179,8 +181,10 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                             }
                             drawSlot(event.context, slotX, slotY, color)
 
-                            val count = TerminalType.numbersSlotCounts[slot] ?: 0
-                            drawCenteredText(event.context, count.toString(), slotX, slotY)
+                            if (numbersNumbers.value) {
+                                val count = TerminalType.numbersSlotCounts[slot] ?: 0
+                                drawCenteredText(event.context, count.toString(), slotX, slotY)
+                            }
                         }
                     }
 
@@ -327,12 +331,13 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         )
 
         if (NoammAddons.debugFlags.contains("terminal")) {
-            ChatUtils.modMessage("Sent Click Packet on ${TerminalListener.currentType?.name}")
+            ChatUtils.modMessage("Clicked $slot on ${TerminalListener.currentType?.name}")
         }
     }
 
     private fun click(click: TerminalClick) {
         isClicked = true
+        lastClickedSlot = click.slotId
         sendClickPacket(click.slotId, click.btn)
         val initialWindowId = TerminalListener.lastWindowId
         ThreadUtils.setTimeout(resyncTimeout.value) {
@@ -349,6 +354,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             else if (mode.value == 2) {
                 ThreadUtils.scheduledTaskServer((resyncTimeout.value / 50).toInt()) {
                     if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@scheduledTaskServer
+                    lastClickedSlot = null
                     autoClick()
                 }
             }
@@ -444,6 +450,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                     if (correct != null) TerminalType.melodyCorrect = correct
                     TerminalType.melodyButton = button.toInt()
                     TerminalType.melodyCurrent = current
+                    lastClickedSlot = null
                 }
             }
         }
@@ -490,6 +497,8 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             else -> solution.first()
         }
 
+        if (lastClickedSlot == rawClick.slotId && TerminalListener.currentType != TerminalType.RUBIX) return
+
         val finalClick = if (TerminalListener.currentType == TerminalType.RUBIX)
             TerminalClick(rawClick.slotId, if (rawClick.btn > 0) 0 else 1)
         else rawClick
@@ -521,5 +530,6 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         queue.clear()
         solution.clear()
         lastClickTime = 0
+        lastClickedSlot = null
     }
 }
