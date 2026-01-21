@@ -109,9 +109,9 @@ object TerminalTitles: Feature("Reformats the Terminal completed title on P3.") 
         }?.clazz?.let { Classes.getColorCode(it) } ?: "&7") + name
 
         return when (mode.value) {
-            0 -> "$formattedName $formattedType &7${brackets[0]}$color$min&8/&a$max&7${brackets[1]}"
-            1 -> "$formattedType &7${brackets[0]}$color$min&8/&a$max&7${brackets[1]}"
-            2 -> "&7${brackets[0]}$color$min&8/&a$max&7${brackets[1]}"
+            0 -> "$formattedName $formattedType &f${brackets[0]}$color$min&8/&a$max&f${brackets[1]}"
+            1 -> "$formattedType &f${brackets[0]}$color$min&f/&a$max&f${brackets[1]}"
+            2 -> "&f${brackets[0]}$color$min&f/&a$max&f${brackets[1]}"
             else -> ""
         }
     }

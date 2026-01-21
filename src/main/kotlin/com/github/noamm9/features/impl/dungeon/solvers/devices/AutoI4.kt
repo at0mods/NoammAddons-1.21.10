@@ -69,29 +69,33 @@ object AutoI4: Feature("Fully Automated I4") {
         register<TickEvent.Server> {
             if (state.tickTimer == - 1) return@register
             state = state.copy(tickTimer = state.tickTimer + 1)
-            if (! isOnDev()) return@register
+            if (! isOnDev()) {
+                state = PhaseState(tickTimer = state.tickTimer)
+                return@register
+            }
 
-            if (state.tickTimer == 174 && rodSetting.value) queue(2) { PlayerUtils.rodSwap() }
+            if (state.tickTimer == 174 && rodSetting.value) queue(2, PlayerUtils::rodSwap)
             else if (state.tickTimer == 174 && maskSetting.value && ! state.hasChangedMask) {
                 state = state.copy(hasChangedMask = true)
-                queue(3) { PlayerUtils.changeMaskAction() }
+                queue(3, PlayerUtils::changeMaskAction)
             }
-            if (state.tickTimer == 307 && leapSetting.value && ! state.hasLeaped) queue(4) { saveLeap() }
+            if (state.tickTimer == 244 && maskSetting.value && ! state.hasChangedMask) queue(3, PlayerUtils::changeMaskAction)
+            if (state.tickTimer == 307 && leapSetting.value && ! state.hasLeaped) queue(4, ::saveLeap)
 
             devBlocks.forEach { pos ->
-                val block = mc.level?.getBlockState(pos)?.block ?: return@forEach
-                if (block == Blocks.EMERALD_BLOCK && pos !in state.doneCoords) {
-                    state = state.copy(lastEmeraldTick = state.tickTimer, doneCoords = state.doneCoords + pos)
+                val block = WorldUtils.getBlockAt(pos) ?: return@forEach
+                if (block != Blocks.EMERALD_BLOCK || pos in state.doneCoords) return@forEach
+                
+                state = state.copy(lastEmeraldTick = state.tickTimer, doneCoords = state.doneCoords + pos)
 
-                    queue(1) {
-                        shootAtBlock(pos)
+                queue(1) {
+                    shootAtBlock(pos)
 
-                        if (predictSetting.value) {
-                            getPredictionTarget(pos)?.let { nextTarget ->
-                                val preCheckEmerald = findAnyEmeraldExcluding(pos, nextTarget)
-                                if (preCheckEmerald != null) return@queue
-                                shootAtBlock(nextTarget)
-                            }
+                    if (predictSetting.value) {
+                        getPredictionTarget(pos)?.let { nextTarget ->
+                            val preCheckEmerald = findAnyEmeraldExcluding(pos, nextTarget)
+                            if (preCheckEmerald != null) return@queue
+                            shootAtBlock(nextTarget)
                         }
                     }
                 }

@@ -180,7 +180,6 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
         register<ContainerEvent.MouseClick> {
             if (! customLeapMenu.value) return@register
             if (! inSpiritLeap(event.screen)) return@register
-            if (event.button != 0) return@register
 
             val cx = mc.window.width / 2
             val cy = mc.window.height / 2
