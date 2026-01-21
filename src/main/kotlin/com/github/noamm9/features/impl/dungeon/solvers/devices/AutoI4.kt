@@ -85,7 +85,7 @@ object AutoI4: Feature("Fully Automated I4") {
             devBlocks.forEach { pos ->
                 val block = WorldUtils.getBlockAt(pos) ?: return@forEach
                 if (block != Blocks.EMERALD_BLOCK || pos in state.doneCoords) return@forEach
-                
+
                 state = state.copy(lastEmeraldTick = state.tickTimer, doneCoords = state.doneCoords + pos)
 
                 queue(1) {
@@ -104,7 +104,7 @@ object AutoI4: Feature("Fully Automated I4") {
             val ticksSinceLastEmerald = if (state.lastEmeraldTick < 0) Int.MAX_VALUE else (state.tickTimer - state.lastEmeraldTick)
             val shouldCheckForStall = rotationTime.value > 0 && state.tickTimer > 150 && ticksSinceLastEmerald > 30 && state.doneCoords.size > 4
             if (shouldCheckForStall) {
-                val hasEmeraldBlock = devBlocks.any { mc.level?.getBlockState(it)?.block == Blocks.EMERALD_BLOCK }
+                val hasEmeraldBlock = devBlocks.any { WorldUtils.getBlockAt(it) == Blocks.EMERALD_BLOCK }
                 if (hasEmeraldBlock) state = state.copy(lastEmeraldTick = state.tickTimer)
                 else onComplete("Device stalled")
             }

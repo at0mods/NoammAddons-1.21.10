@@ -6,6 +6,7 @@
     "ExampleMixin",
     "IMapState",
     "IServerboundInteractPacket",
+    "MixinClipContext",
     "MixinConnection",
     "MixinEntity",
     "MixinItemStack",
