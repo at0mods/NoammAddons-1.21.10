@@ -29,37 +29,61 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
     val hideHealthbar by ToggleSetting("Hide Health bar").withDescription("Hides the healthbar.")
     val hideArmorbar by ToggleSetting("Hide Armor bar").withDescription("Hides the defensebar.").hideIf { hideHealthbar.value }
 
-    val healthDisplay by hudElement(this.name + " Health", { LocationUtils.inSkyblock && elements.value["Health"] == true }) { context, example ->
+    val healthDisplay by hudElement(
+        this.name + " Health",
+        { LocationUtils.inSkyblock },
+        { elements.value["Health"] == true }
+    ) { context, example ->
         val text = if (example) "§e3452§f/§c2452" else getHpFormatted()
         Render2D.drawString(context, text, 0, 0)
         return@hudElement text.width().toFloat() to text.height().toFloat()
     }
 
-    val defenseDisplay by hudElement(this.name + " Defense", { LocationUtils.inSkyblock && elements.value["Defense"] == true }) { context, example ->
+    val defenseDisplay by hudElement(
+        this.name + " Defense",
+        { LocationUtils.inSkyblock },
+        { elements.value["Defense"] == true }
+    ) { context, example ->
         val text = if (example) "§a5001" else "§a${ActionBarParser.currentDefense}"
         Render2D.drawString(context, text, 0, 0)
         return@hudElement text.width().toFloat() to text.height().toFloat()
     }
 
-    val manaDisplay by hudElement(this.name + " Mana", { LocationUtils.inSkyblock && elements.value["Mana"] == true }) { context, example ->
+    val manaDisplay by hudElement(
+        this.name + " Mana",
+        { LocationUtils.inSkyblock },
+        { elements.value["Mana"] == true }
+    ) { context, example ->
         val text = if (example) "§b2452/2452" else "§b${ActionBarParser.currentMana}/${ActionBarParser.maxMana}"
         Render2D.drawString(context, text, 0, 0)
         return@hudElement text.width().toFloat() to text.height().toFloat()
     }
 
-    val overflowDisplay by hudElement(this.name + " Overflow Mana", { LocationUtils.inSkyblock && elements.value["Overflow Mana"] == true && ActionBarParser.overflowMana > 0 }) { context, example ->
+    val overflowDisplay by hudElement(
+        this.name + " Overflow Mana",
+        { LocationUtils.inSkyblock && ActionBarParser.overflowMana > 0 },
+        { elements.value["Overflow Mana"] == true }
+    ) { context, example ->
         val text = if (example) "§3600ʬ" else "§3${ActionBarParser.overflowMana}ʬ"
         Render2D.drawString(context, text, 0, 0)
         return@hudElement text.width().toFloat() to text.height().toFloat()
     }
 
-    val ehpDisplay by hudElement(this.name + " Effective HP", { LocationUtils.inSkyblock && elements.value["Effective HP"] == true }) { context, example ->
+    val ehpDisplay by hudElement(
+        this.name + " Effective HP",
+        { LocationUtils.inSkyblock },
+        { elements.value["Effective HP"] == true }
+    ) { context, example ->
         val text = if (example) "§27.3m" else "§2${NumbersUtils.format(ActionBarParser.effectiveHP)}"
         Render2D.drawString(context, text, 0, 0)
         return@hudElement text.width().toFloat() to text.height().toFloat()
     }
 
-    val speedDisplay by hudElement(this.name + " Speed", { LocationUtils.inSkyblock && elements.value["Speed"] == true }) { context, example ->
+    val speedDisplay by hudElement(
+        this.name + " Speed",
+        { LocationUtils.inSkyblock },
+        { elements.value["Speed"] == true }
+    ) { context, example ->
         val text = if (example) "§f400✦" else "§f${ActionBarParser.currentSpeed}✦"
         Render2D.drawString(context, text, 0, 0)
         return@hudElement text.width().toFloat() to text.height().toFloat()
