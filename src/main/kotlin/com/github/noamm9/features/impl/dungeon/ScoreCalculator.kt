@@ -22,15 +22,15 @@ object ScoreCalculator: Feature("Shows the score of the dungeon run") {
     val sendMimic by ToggleSetting("Send Mimic Message")
     val sendPrince by ToggleSetting("Send Prince Message")
 
-    private val sendMsg270 by ToggleSetting("Send message on 270 score").section("270")
-    private val msg270 by TextInputSetting("Message for 270 score", "270 Score!").showIf { sendMsg270.value }
-    private val title270 by ToggleSetting("Create Title on 270 score")
-    private val titleMsg270 by TextInputSetting("270 Title Message", "270 Score!").showIf { title270.value }
+    private val sendMsg270 by ToggleSetting("270 score message").section("270")
+    private val msg270 by TextInputSetting("Message", "270 Score!").showIf { sendMsg270.value }
+    private val title270 by ToggleSetting("270 score Title")
+    private val titleMsg270 by TextInputSetting("Title Message", "&e270 Score!").showIf { title270.value }
 
-    private val sendMsg300 by ToggleSetting("Send message on 300 score").section("300")
-    private val msg300 by TextInputSetting("Message for 300 score", "300 Score!").showIf { sendMsg300.value }
-    private val title300 by ToggleSetting("Create Title on 300 score")
-    private val titleMsg300 by TextInputSetting("300 Title Message", "300 Score!").showIf { title300.value }
+    private val sendMsg300 by ToggleSetting("300 score message").section("300")
+    private val msg300 by TextInputSetting("Message ", "300 Score!").showIf { sendMsg300.value }
+    private val title300 by ToggleSetting("300 score Title")
+    private val titleMsg300 by TextInputSetting("Title Message ", "&c300 Score!").showIf { title300.value }
 
     private data class Milestone(
         val score: Int, val sendMessage: ToggleSetting,

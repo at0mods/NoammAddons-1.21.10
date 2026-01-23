@@ -117,13 +117,13 @@ object LocationUtils {
 
     private fun getPhase(): Int? {
         if (dungeonFloorNumber != 7 || ! inBoss) return null
-        val playerPosition = NoammAddons.mc.player?.y ?: return null
+        val y = mc.player?.y ?: return null
 
         return when {
-            playerPosition > 210 -> 1
-            playerPosition > 155 -> 2
-            playerPosition > 100 -> 3
-            playerPosition > 45 -> 4
+            y > 210 -> 1
+            y > 155 -> 2
+            y > 100 -> 3
+            y > 45 -> 4
             else -> 5
         }
     }
@@ -137,7 +137,7 @@ object LocationUtils {
 
     private fun findP3Section(): Int? {
         if (F7Phase != 3) return null
-        val playerPos = NoammAddons.mc.player?.position() ?: return null
+        val playerPos = mc.player?.position() ?: return null
 
         P3Sections.forEachIndexed { i, (a, b) ->
             if (MathUtils.isCoordinateInsideBox(playerPos, a, b)) {
@@ -159,7 +159,7 @@ object LocationUtils {
     )
 
     private fun isInBossRoom(): Boolean {
-        val playerPos = NoammAddons.mc.player?.position() ?: return false
+        val playerPos = mc.player?.position() ?: return false
         val floor = dungeonFloorNumber ?: return false
         val corners = bossRoomCorners[floor] ?: return false
         return MathUtils.isCoordinateInsideBox(playerPos, corners.first, corners.second)

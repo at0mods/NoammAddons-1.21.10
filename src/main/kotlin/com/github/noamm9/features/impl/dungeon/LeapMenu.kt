@@ -76,6 +76,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
             if (System.currentTimeMillis() > shouldHide) return@register
             if (event.entity !is Player) return@register
             if (event.entity == mc.player) return@register
+            if (event.entity.distanceToSqr(mc.player) > 4) return@register
             if (DungeonListener.dungeonTeammatesNoSelf.none { it.entity?.id == event.entity.id }) return@register
             event.isCanceled = true
         }

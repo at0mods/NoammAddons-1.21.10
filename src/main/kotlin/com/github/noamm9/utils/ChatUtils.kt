@@ -48,12 +48,8 @@ object ChatUtils {
         scope.launch {
             try {
                 while (queue.isNotEmpty()) {
-                    val str = queue.poll() ?: break
-
-                    val now = System.currentTimeMillis()
-                    val timeSinceLast = now - lastSentTime
-                    val waitTime = 300L - timeSinceLast
-
+                    val str = queue.poll()?.removeFormatting() ?: break
+                    val waitTime = 300L - System.currentTimeMillis() - lastSentTime
                     if (waitTime > 0) delay(waitTime)
 
                     mc.execute {

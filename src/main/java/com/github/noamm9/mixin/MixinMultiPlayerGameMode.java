@@ -30,10 +30,8 @@ public class MixinMultiPlayerGameMode {
         }
     }
 
-    @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "startDestroyBlock", at = @At("HEAD"))
     private void onBlockHit(BlockPos blockPos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
-        if (BreakerHelper.onHitBlock(blockPos)) {
-            cir.setReturnValue(true);
-        }
+        BreakerHelper.onHitBlock(blockPos);
     }
 }

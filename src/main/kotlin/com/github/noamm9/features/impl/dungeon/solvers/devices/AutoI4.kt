@@ -118,7 +118,7 @@ object AutoI4: Feature("Fully Automated I4") {
 
             if (event.newBlock != Blocks.EMERALD_BLOCK) return@register
 
-            queue(1) {
+            if (rotationTime.value > 0) queue(1) {
                 shootAtBlock(event.pos)
                 state = state.copy(lastTarget = event.pos)
 
@@ -142,7 +142,6 @@ object AutoI4: Feature("Fully Automated I4") {
     }
 
     private suspend fun shootAtBlock(pos: BlockPos) {
-        if (rotationTime.value < 1) return
         val player = mc.player ?: return
         val (yaw, pitch) = calcYawPitch(getTargetVector(pos))
         val block = suspend {
@@ -220,6 +219,7 @@ object AutoI4: Feature("Fully Automated I4") {
     private suspend fun saveLeap() {
         if (! leapSetting.value) return
         if (state.hasLeaped) return
+        deviceActionQueue.clear()
         state = state.copy(hasLeaped = true, tickTimer = - 1)
         val aliveTeammates = DungeonListener.leapTeammates.filterNot { it.isDead }
 

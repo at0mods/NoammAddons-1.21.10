@@ -78,7 +78,6 @@ object TerminalTitles: Feature("Reformats the Terminal completed title on P3.") 
     private var timer = 0
 
     private val tickListener = register<TickEvent.Start> {
-        if (! LocationUtils.inDungeon || LocationUtils.F7Phase != 3) return@register
         if (timer <= 0) {
             this.listener.unregister()
             titleStr = ""
