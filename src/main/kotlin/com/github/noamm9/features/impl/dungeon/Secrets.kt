@@ -25,8 +25,7 @@ import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.sounds.SoundEvents
-import net.minecraft.world.item.ItemStack
-import net.minecraft.world.level.block.Blocks
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.jvm.optionals.getOrNull
 
 object Secrets: Feature() {
@@ -94,9 +93,8 @@ object Secrets: Feature() {
 
     private data class ClickedSecret(val pos: BlockPos, val time: Long)
 
-    private val clicked = mutableSetOf<ClickedSecret>()
+    private val clicked = CopyOnWriteArraySet<ClickedSecret>()
     private var lastPlayed = System.currentTimeMillis()
-    private val chestItem = ItemStack(Blocks.CHEST)
 
     override fun init() {
         register<MainThreadPacketRecivedEvent.Pre> {
@@ -111,7 +109,7 @@ object Secrets: Feature() {
         register<RenderWorldEvent> {
             if (clicked.isEmpty()) return@register
             clicked.removeIf { it.time + (displayTime.value * 1000) < System.currentTimeMillis() }
-            clicked.takeUnless { it.isEmpty() }?.toList()?.forEach {
+            clicked.takeUnless { it.isEmpty() }?.forEach {
                 Render3D.renderBlock(
                     event.ctx, it.pos,
                     secretClickedColor.value,

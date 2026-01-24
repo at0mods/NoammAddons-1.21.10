@@ -1,5 +1,6 @@
 package com.github.noamm9.features.impl.general
 
+import com.github.noamm9.event.impl.MainThreadPacketRecivedEvent
 import com.github.noamm9.event.impl.MouseClickEvent
 import com.github.noamm9.features.Feature
 import com.github.noamm9.interfaces.IChatComponent
@@ -9,14 +10,23 @@ import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.ui.nodification.NotificationManager
 import com.github.noamm9.utils.ChatUtils.removeFormatting
+import com.github.noamm9.utils.ChatUtils.unformattedText
+import com.github.noamm9.utils.DataDownloader
 import net.minecraft.client.GuiMessage
 import net.minecraft.client.gui.screens.ChatScreen
+import net.minecraft.network.protocol.game.ClientboundSystemChatPacket
 import org.lwjgl.glfw.GLFW
 
 object Chat: Feature("Useful tweaks for the chat such as Ctrl + Click to copy messages.") {
+    val uselessMessages by lazy { DataDownloader.loadJson<List<String>>("uselessMessages.json").map(::Regex) }
+
     private val ctrlClickToCopy by ToggleSetting("Ctrl Click to Copy", true)
         .withDescription("Ctrl + Left Click a message to copy it to your clipboard.")
 
+    private val removeUselessMessages by ToggleSetting("Remove useless messages", true)
+        .withDescription("Removes a lot of useless messages from the chat.")
+
+    private var lastMessageBlank: Boolean = false
 
     override fun init() {
         register<MouseClickEvent> {
@@ -30,6 +40,23 @@ object Chat: Feature("Useful tweaks for the chat such as Ctrl + Click to copy me
             NotificationManager.push("Message copied to clipboard", message)
             mc.keyboardHandler.clipboard = message
             event.isCanceled = true
+        }
+
+        register<MainThreadPacketRecivedEvent.Pre> {
+            if (! removeUselessMessages.value) return@register
+            if (event.packet !is ClientboundSystemChatPacket) return@register
+            val msg = event.packet.content.unformattedText
+
+            if (msg.isBlank()) {
+                if (lastMessageBlank) return@register event.cancel()
+                else {
+                    lastMessageBlank = true
+                    return@register
+                }
+            }
+
+            if (uselessMessages.any { it.matches(msg) }) return@register event.cancel()
+            lastMessageBlank = false
         }
     }
 
