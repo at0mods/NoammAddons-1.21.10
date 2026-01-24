@@ -1,9 +1,8 @@
 package com.github.noamm9.utils.render
 
 import com.github.noamm9.NoammAddons.mc
-import com.github.noamm9.utils.render.RenderHelper.renderX
-import com.github.noamm9.utils.render.RenderHelper.renderY
-import com.github.noamm9.utils.render.RenderHelper.renderZ
+import com.github.noamm9.utils.ChatUtils.addColor
+import com.github.noamm9.utils.NumbersUtils.times
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.gui.Font
 import net.minecraft.client.renderer.LightTexture
@@ -12,7 +11,6 @@ import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
-import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f
 import java.awt.Color
@@ -152,11 +150,11 @@ object Render3D {
     fun renderString(
         text: String,
         x: Number, y: Number, z: Number,
-        scale: Float = 1f,
+        scale: Number = 1f,
         bgBox: Boolean = false,
         phase: Boolean = false
     ) {
-        val toScale = scale * 0.025f
+        val toScale = (scale * 0.025).toFloat()
         val matrices = Matrix4f()
         val textRenderer = mc.font
         val camera = mc.gameRenderer.mainCamera
@@ -168,7 +166,7 @@ object Render3D {
 
         val consumer = mc.renderBuffers().bufferSource()
         val textLayer = if (phase) Font.DisplayMode.SEE_THROUGH else Font.DisplayMode.NORMAL
-        val lines = text.split("\n")
+        val lines = text.addColor().split("\n")
         val maxWidth = lines.maxOf { textRenderer.width(it) }
         val offset = - maxWidth / 2f
 
@@ -183,10 +181,6 @@ object Render3D {
             textRenderer.drawInBatch(line, - textRenderer.width(line) / 2f, i * 9f, 0xFFFFFFFF.toInt(), true, matrices, consumer, textLayer, 0, LightTexture.FULL_BLOCK)
         }
         consumer.endBatch()
-    }
-
-    fun renderString(text: String, entity: Entity, scale: Float = 1f, phase: Boolean = false) {
-        renderString(text, entity.renderX, entity.renderY + entity.bbHeight + 0.5, entity.renderZ, scale, bgBox = true, phase = phase)
     }
 
     fun renderLine(ctx: RenderContext, start: Vec3, finish: Vec3, thickness: Number, color: Color) {
