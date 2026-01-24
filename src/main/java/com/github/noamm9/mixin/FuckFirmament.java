@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -13,9 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class FuckFirmament {
     @Dynamic
     @Inject(method = "onServerJoin", at = @At("HEAD"), cancellable = true)
-    private void stopFeddingEveryone(Object event, CallbackInfo ci) {
+    private void stopFeddingEveryone(@Coerce Object event, CallbackInfo ci) {
         ci.cancel();
         NoammAddons.INSTANCE.getLogger().info("FUCK FIRMAMENT");
     }
 }
-
