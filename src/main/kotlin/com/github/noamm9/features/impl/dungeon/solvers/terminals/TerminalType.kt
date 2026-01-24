@@ -21,6 +21,18 @@ enum class TerminalType(val slotCount: Int) {
             Items.BLUE_STAINED_GLASS_PANE,
         )
 
+        val colorReplacements = mapOf(
+            Regex("^light gray") to "silver",
+            Regex("^wool") to "white",
+            Regex("^bone") to "white",
+            Regex("^ink") to "black",
+            Regex("^lapis") to "blue",
+            Regex("^cocoa") to "brown",
+            Regex("^dandelion") to "yellow",
+            Regex("^rose") to "red",
+            Regex("^cactus") to "green"
+        )
+
         var lastRubixTarget: Int? = null
 
         var melodyButton: Int? = null

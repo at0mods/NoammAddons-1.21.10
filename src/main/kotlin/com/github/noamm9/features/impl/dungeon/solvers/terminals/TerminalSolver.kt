@@ -13,6 +13,7 @@ import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.utils.Resolution
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.removeFormatting
+import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.ColorUtils.withAlpha
 import com.github.noamm9.utils.ItemUtils.hasGlint
 import com.github.noamm9.utils.ThreadUtils
@@ -22,7 +23,6 @@ import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.world.inventory.ClickType
-import net.minecraft.world.item.DyeColor
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import java.awt.Color
@@ -397,22 +397,21 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
 
             TerminalType.COLORS -> {
                 val match = TerminalType.colorsRegex.matchEntire(TerminalListener.currentTitle)
-                val targetColor = match?.groupValues?.get(1) ?: return
-                val dyeColor = DyeColor.entries.find { it.name.replace("_", " ").equals(targetColor.replace("SILVER", "LIGHT GRAY"), true) } ?: return
-                currentItems.forEach { (slot, item) ->
-                    if (item.hasGlint()) return@forEach
-                    if (item.item == Items.BLACK_STAINED_GLASS_PANE) return@forEach
-                    val isNameMatch = item.item.name.string.startsWith(dyeColor.name.replace("_", " "), true)
-                    val isDyeMatch = when (dyeColor) {
-                        DyeColor.BLACK -> item.item == Items.INK_SAC
-                        DyeColor.BLUE -> item.item == Items.LAPIS_LAZULI
-                        DyeColor.BROWN -> item.item == Items.COCOA_BEANS
-                        DyeColor.WHITE -> item.item == Items.BONE_MEAL
-                        else -> false
+                val extra = match?.groupValues?.get(1)?.lowercase() ?: return
+
+                fun fixName(name: String): String {
+                    var fixedName = name
+                    TerminalType.colorReplacements.forEach { (k, v) ->
+                        fixedName = fixedName.replace(Regex("^$k"), v)
                     }
-                    if (! isNameMatch && ! isDyeMatch) return@forEach
-                    solution.add(TerminalClick(slot))
+                    return fixedName
                 }
+
+                currentItems.filter {
+                    it.value.item != Items.BLACK_STAINED_GLASS_PANE
+                        && fixName(it.value.hoverName.unformattedText.lowercase()).startsWith(extra)
+                        && ! it.value.hasGlint()
+                }.map { it.key }.forEach { solution.add(TerminalClick(it)) }
             }
 
             TerminalType.RUBIX -> {
