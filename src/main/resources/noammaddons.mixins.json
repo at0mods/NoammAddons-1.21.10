@@ -16,6 +16,7 @@
     "MixinLivingEntity",
     "MixinMushroomBlock",
     "MixinPacketProcessorListener",
+    "MixinPlayer",
     "MixinSkullBlock"
   ],
   "injectors": {
