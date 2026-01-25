@@ -5,7 +5,6 @@ import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.ui.hud.HudElement
 import com.github.noamm9.utils.ColorUtils.colorCodeByPresent
 import com.github.noamm9.utils.ColorUtils.colorizeScore
-import com.github.noamm9.utils.ItemUtils.skyblockId
 import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.dungeons.Classes
 import com.github.noamm9.utils.dungeons.DungeonListener
@@ -14,6 +13,7 @@ import com.github.noamm9.utils.dungeons.map.core.*
 import com.github.noamm9.utils.dungeons.map.handlers.HotbarMapColorParser
 import com.github.noamm9.utils.dungeons.map.handlers.ScoreCalculation
 import com.github.noamm9.utils.dungeons.map.utils.MapUtils
+import com.github.noamm9.utils.items.ItemUtils.skyblockId
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.render.Render2D
 import com.github.noamm9.utils.render.Render2D.width

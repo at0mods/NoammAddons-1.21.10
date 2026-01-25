@@ -1,10 +1,10 @@
 package com.github.noamm9.features.impl.dungeon
 
 import com.github.noamm9.features.Feature
-import com.github.noamm9.utils.ItemUtils.skyblockId
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.map.core.RoomType
 import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
+import com.github.noamm9.utils.items.ItemUtils.skyblockId
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.world.WorldUtils
 import net.minecraft.core.BlockPos

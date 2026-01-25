@@ -2,7 +2,7 @@ package com.github.noamm9.mixin;
 
 
 import com.github.noamm9.features.impl.visual.Animations;
-import com.github.noamm9.utils.ItemUtils;
+import com.github.noamm9.utils.items.ItemUtils;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;

@@ -7,8 +7,8 @@ import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.utils.ChatUtils.formattedText
-import com.github.noamm9.utils.ItemUtils
 import com.github.noamm9.utils.Utils.equalsOneOf
+import com.github.noamm9.utils.items.ItemUtils
 import com.github.noamm9.utils.location.LocationUtils
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.network.chat.Component

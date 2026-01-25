@@ -3,6 +3,7 @@ package com.github.noamm9.mixin;
 import com.github.noamm9.event.EventBus;
 import com.github.noamm9.event.impl.ActionBarMessageEvent;
 import com.github.noamm9.event.impl.RenderOverlayEvent;
+import com.github.noamm9.features.impl.general.FEAT_ItemRarity;
 import com.github.noamm9.features.impl.tweaks.Camera;
 import com.github.noamm9.features.impl.visual.PlayerHud;
 import com.github.noamm9.features.impl.visual.Scoreboard;
@@ -15,6 +16,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.scores.Objective;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -145,6 +147,13 @@ public abstract class MixinGui {
     private void onRenderEffects(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         if (LocationUtils.inSkyblock) {
             ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderSlot", at = @At("HEAD"))
+    private void onRenderHotbarSlot(GuiGraphics guiGraphics, int i, int j, DeltaTracker deltaTracker, Player player, ItemStack itemStack, int k, CallbackInfo ci) {
+        if (FEAT_ItemRarity.INSTANCE.getDrawOnHotbar().getValue()) {
+            FEAT_ItemRarity.onSlotDraw(guiGraphics, itemStack, i, j);
         }
     }
 }

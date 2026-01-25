@@ -11,10 +11,10 @@ import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.nodification.NotificationManager
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.formattedText
-import com.github.noamm9.utils.ItemUtils.customData
-import com.github.noamm9.utils.ItemUtils.itemUUID
-import com.github.noamm9.utils.ItemUtils.lore
-import com.github.noamm9.utils.ItemUtils.skyblockId
+import com.github.noamm9.utils.items.ItemUtils.customData
+import com.github.noamm9.utils.items.ItemUtils.itemUUID
+import com.github.noamm9.utils.items.ItemUtils.lore
+import com.github.noamm9.utils.items.ItemUtils.skyblockId
 import com.github.noamm9.utils.location.LocationUtils
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
