@@ -157,25 +157,7 @@ object F7Titles: Feature(name = "F7 Titles", description = "Custom Titles for F7
     }
 
     private fun formatProgress(current: Int, max: Int): String {
-        val isFull = current == max
-        val bold = isFull && max > 2
-        val boldSep = if (bold) "&l" else ""
-
-        val minColor = when {
-            max == 2 && current < max -> "&c"
-            max == 1 && isFull -> "&b"
-            bold -> "&6&l"
-            current >= max * 0.75 -> "&a"
-            current >= max * 0.5 -> "&e"
-            else -> "&c"
-        }
-
-        val maxColor = when {
-            max == 2 -> "&b"
-            bold -> "&6&l"
-            else -> "&a"
-        }
-
-        return "$minColor$current&r$boldSep/&r$maxColor$max&r"
+        val minColor = if (current == max) "&b" else "&c"
+        return "$minColor$current&r/&r&b$max&r"
     }
 }
