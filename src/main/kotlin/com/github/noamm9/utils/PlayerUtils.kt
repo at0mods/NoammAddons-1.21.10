@@ -8,18 +8,22 @@ import com.github.noamm9.mixin.IKeyMapping
 import com.github.noamm9.ui.utils.Animation.Companion.easeInOutCubic
 import com.github.noamm9.utils.ChatUtils.modMessage
 import com.github.noamm9.utils.ChatUtils.unformattedText
+import com.github.noamm9.utils.MathUtils.floor
 import com.github.noamm9.utils.MathUtils.interpolateYaw
 import com.github.noamm9.utils.MathUtils.lerp
+import com.github.noamm9.utils.MathUtils.toPos
 import com.github.noamm9.utils.Utils.containsOneOf
 import com.github.noamm9.utils.dungeons.DungeonListener.thePlayer
 import com.github.noamm9.utils.dungeons.DungeonPlayer
 import com.github.noamm9.utils.items.ItemUtils.customData
 import com.github.noamm9.utils.items.ItemUtils.skyblockId
 import kotlinx.coroutines.delay
+import net.minecraft.core.BlockPos
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
+import net.minecraft.world.phys.HitResult
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -38,6 +42,12 @@ object PlayerUtils {
 
     fun rightClick() {
         (mc.options.keyUse as IKeyMapping).clickCount += 1
+    }
+
+    fun getSelectionBlock(): BlockPos? {
+        val hit = mc.hitResult ?: return null
+        if (hit.type != HitResult.Type.BLOCK) return null
+        return hit.location.floor().toPos()
     }
 
     fun isHoldingEtherwarpItem(itemstack: ItemStack): Boolean {

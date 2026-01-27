@@ -151,7 +151,8 @@ object MathUtils {
 
     fun BlockPos.add(x: Number = 0, y: Number = 0, z: Number = 0) = this.offset(x.toInt(), y.toInt(), z.toInt())
 
-    fun Vec3.floor() = Vec3(kotlin.math.floor(x), kotlin.math.floor(y), kotlin.math.floor(z))
+    fun Vec3.floor() = Vec3(floor(x), floor(y), floor(z))
+    fun Vec3.toPos() = BlockPos(floor(x).toInt(), floor(y).toInt(), floor(z).toInt())
     fun Vec3.add(x: Number = 0.0, y: Number = 0.0, z: Number = 0.0) = add(Vec3(x, y, z))
     fun Vec3i.destructured() = listOf(x, y, z)
     fun Vec3.destructured() = listOf(x, y, z)
