@@ -24,6 +24,7 @@ import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.phys.HitResult
+import net.minecraft.world.phys.Vec3
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -120,6 +121,11 @@ object PlayerUtils {
 
             delay(1)
         }
+    }
+
+    suspend fun rotateSmoothly(target: Vec3, time: Long, block: suspend () -> Unit = {}) {
+        val rot = MathUtils.calcYawPitch(target)
+        rotateSmoothly(rot, time, block)
     }
 
     suspend fun changeMaskAction() {

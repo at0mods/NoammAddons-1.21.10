@@ -21,6 +21,6 @@ enum class WitherRelic(
     val coloredName: String get() = "$colorCode${name.lowercase().replaceFirstChar { it.uppercase() }}"
 
     companion object {
-        fun fromName(name: String): WitherRelic? = entries.find { it.formalName.contains(name, ignoreCase = true) }
+        fun fromName(name: String): WitherRelic? = entries.find { it.formalName.equals(name, ignoreCase = true) }
     }
 }

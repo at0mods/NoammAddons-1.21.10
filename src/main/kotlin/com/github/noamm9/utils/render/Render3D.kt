@@ -210,7 +210,7 @@ object Render3D {
         renderLine(ctx, Vec3.atCenterOf(start), Vec3.atCenterOf(end), thickness, color)
     }
 
-    fun renderTracer(ctx: RenderContext, point: Vec3, color: Color, thickness: Number) {
+    fun renderTracer(ctx: RenderContext, point: Vec3, color: Color, thickness: Number = 2) {
         val camera = ctx.camera
         val matrixStack = ctx.matrixStack ?: return
         val consumers = ctx.consumers

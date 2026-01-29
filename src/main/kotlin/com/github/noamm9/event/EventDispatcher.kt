@@ -182,7 +182,9 @@ object EventDispatcher {
         if (invWindowId != winId) return
 
         invFired = true
-        EventBus.post(ContainerFullyOpenedEvent(title, winId, slotCount, items))
+        mc.execute {
+            EventBus.post(ContainerFullyOpenedEvent(title, winId, slotCount, items))
+        }
     }
 
     private fun getSlotCount(type: MenuType<*>): Int {
