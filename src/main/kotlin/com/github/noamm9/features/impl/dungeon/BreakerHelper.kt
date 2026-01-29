@@ -1,6 +1,11 @@
 package com.github.noamm9.features.impl.dungeon
 
+import com.github.noamm9.event.impl.PlayerInteractEvent
 import com.github.noamm9.features.Feature
+import com.github.noamm9.ui.clickgui.componnents.getValue
+import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
+import com.github.noamm9.ui.clickgui.componnents.provideDelegate
+import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.map.core.RoomType
 import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
@@ -12,12 +17,25 @@ import net.minecraft.sounds.SoundSource
 import net.minecraft.world.level.block.Blocks
 
 object BreakerHelper: Feature("Zero Ping Dungeon Breaker") {
+    private val preventBreakingSecrets by ToggleSetting("Prevent Secret Mine")
+        .withDescription("Prevents you from breaking secret blocks like chests lever")
+
     private val blacklist = setOf(
         Blocks.BARRIER, Blocks.BEDROCK, Blocks.COMMAND_BLOCK, Blocks.TNT, Blocks.CHEST, Blocks.PLAYER_HEAD,
         Blocks.PLAYER_WALL_HEAD, Blocks.TRAPPED_CHEST, Blocks.END_PORTAL_FRAME, Blocks.END_PORTAL, Blocks.STICKY_PISTON,
         Blocks.PISTON_HEAD, Blocks.PISTON, Blocks.MOVING_PISTON, Blocks.LEVER, Blocks.STONE_BUTTON,
         Blocks.SKELETON_SKULL, Blocks.SKELETON_WALL_SKULL, Blocks.WITHER_SKELETON_SKULL, Blocks.WITHER_SKELETON_WALL_SKULL
     )
+
+    override fun init() {
+        register<PlayerInteractEvent.LEFT_CLICK.BLOCK> {
+            if (! preventBreakingSecrets.value) return@register
+            if (! LocationUtils.inDungeon) return@register
+            if (event.item?.skyblockId != "DUNGEONBREAKER") return@register
+            if (! WorldUtils.getBlockAt(event.pos).equalsOneOf(Blocks.LEVER, Blocks.CHEST, Blocks.TRAPPED_CHEST)) return@register
+            event.isCanceled = true
+        }
+    }
 
     @JvmStatic
     fun onHitBlock(pos: BlockPos) {
