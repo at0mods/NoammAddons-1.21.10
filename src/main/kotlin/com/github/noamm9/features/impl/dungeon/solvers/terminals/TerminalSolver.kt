@@ -98,6 +98,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         TerminalListener.packetRecivedListener.register()
         TerminalListener.packetSentListener.register()
         TerminalListener.tickListener.register()
+        TerminalListener.worldChangeListener.register()
     }
 
     override fun onDisable() {
@@ -105,6 +106,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         TerminalListener.packetRecivedListener.unregister()
         TerminalListener.packetSentListener.unregister()
         TerminalListener.tickListener.unregister()
+        TerminalListener.worldChangeListener.unregister()
     }
 
     private var solution = mutableListOf<TerminalClick>()

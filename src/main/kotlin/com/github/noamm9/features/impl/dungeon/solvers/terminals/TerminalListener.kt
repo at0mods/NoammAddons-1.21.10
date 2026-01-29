@@ -5,6 +5,7 @@ import com.github.noamm9.event.EventBus.register
 import com.github.noamm9.event.impl.MainThreadPacketReceivedEvent
 import com.github.noamm9.event.impl.PacketEvent
 import com.github.noamm9.event.impl.TickEvent
+import com.github.noamm9.event.impl.WorldChangeEvent
 import com.github.noamm9.mixin.IServerboundInteractPacket
 import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.ThreadUtils
@@ -30,6 +31,7 @@ object TerminalListener {
     val packetRecivedListener = register<MainThreadPacketReceivedEvent.Pre> { onPacketReceived(event.packet) }.unregister()
     val packetSentListener = register<PacketEvent.Sent> { onPacketSent(event.packet, event) }.unregister()
     val tickListener = register<TickEvent.Server> { onTick() }.unregister()
+    val worldChangeListener = register<WorldChangeEvent> { reset() }.unregister()
 
     fun onPacketReceived(packet: Packet<*>) {
         if (LocationUtils.F7Phase != 3) return
