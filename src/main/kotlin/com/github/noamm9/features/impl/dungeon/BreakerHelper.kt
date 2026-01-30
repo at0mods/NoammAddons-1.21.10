@@ -32,7 +32,7 @@ object BreakerHelper: Feature("Zero Ping Dungeon Breaker") {
             if (! preventBreakingSecrets.value) return@register
             if (! LocationUtils.inDungeon) return@register
             if (event.item?.skyblockId != "DUNGEONBREAKER") return@register
-            if (! WorldUtils.getBlockAt(event.pos).equalsOneOf(Blocks.LEVER, Blocks.CHEST, Blocks.TRAPPED_CHEST)) return@register
+            if (! WorldUtils.getBlockAt(event.pos).equalsOneOf(Blocks.LEVER, Blocks.CHEST, Blocks.TRAPPED_CHEST, Blocks.REDSTONE_BLOCK)) return@register
             event.isCanceled = true
         }
     }

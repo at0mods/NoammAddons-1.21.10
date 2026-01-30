@@ -1,5 +1,7 @@
 package com.github.noamm9.mixin;
 
+import com.github.noamm9.event.EventBus;
+import com.github.noamm9.event.impl.PlayerInteractEvent;
 import com.github.noamm9.features.impl.visual.CpsDisplay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -97,6 +99,6 @@ public abstract class MixinMinecraft {
                 }
             };
 
-        if (event.postAndCatch()) ci.cancel();
+        if (EventBus.post(event)) ci.cancel();
     }
 }
