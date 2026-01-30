@@ -6,6 +6,7 @@ import com.github.noamm9.event.impl.DungeonEvent
 import com.github.noamm9.features.impl.dungeon.ScoreCalculator
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.formattedText
+import com.github.noamm9.utils.ChatUtils.removeFormatting
 import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.Utils.containsOneOf
 import com.github.noamm9.utils.Utils.equalsOneOf
@@ -123,7 +124,7 @@ object ScoreCalculation {
         }
         else if (packet is ClientboundSetPlayerTeamPacket) {
             val prams = packet.parameters.getOrNull() ?: return
-            val text = prams.playerPrefix.string + prams.playerSuffix.string
+            val text = (prams.playerPrefix.string + prams.playerSuffix.string).removeFormatting()
 
             when {
                 text.startsWith("Cleared:") -> dungeonClearedPattern.find(text)?.let {

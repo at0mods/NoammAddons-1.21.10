@@ -11,7 +11,7 @@ import com.google.gson.JsonPrimitive
 import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
 
-class DropdownSetting(name: String, value: Int, val options: List<String>): Setting<Int>(name, value), Savable {
+class DropdownSetting(name: String, value: Int = 0, val options: List<String>): Setting<Int>(name, value), Savable {
     private var expanded = false
     private val openAnim = Animation(250)
     private val hoverAnim = Animation(200)

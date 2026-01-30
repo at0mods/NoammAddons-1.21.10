@@ -114,7 +114,7 @@ object F7Titles: Feature(name = "F7 Titles", description = "Custom Titles for F7
             if (event.progress > 0f) return@register
             val name = event.name.unformattedText
 
-            if (name.contains("Maxor") && ! maxorDead) {
+            if (name.contains("Maxor") && ! maxorDead && (DungeonListener.bossEntryTime ?: 0) > System.currentTimeMillis() + 6000) {
                 maxorDead = true
                 showTitle("&dMaxor Dead!")
             }

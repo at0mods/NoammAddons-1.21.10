@@ -50,7 +50,7 @@ object TickTimers: Feature("Shows various types of server tick timers for F7 bos
 
                 "[BOSS] Storm: I should have known that I stood no chance." -> {
                     if (p3.value) startTickTime = 104
-                    if (goldorDeathTickTimer.value) goldorTickTime = 104 + 60
+                    if (goldorDeathTickTimer.value) goldorTickTime = 60
                     if (stormActive) {
                         stormActive = false
                         padTickTime = - 1
@@ -116,11 +116,11 @@ object TickTimers: Feature("Shows various types of server tick timers for F7 bos
 
         register<RenderOverlayEvent> {
             val textToRender = when {
-                deathTickTime != - 1 -> formatTimer(deathTickTime, 40, "§cDeath:")
-                secretTickTime != - 1 -> formatTimer(secretTickTime, 20, "§dSecret:")
                 startTickTime != - 1 -> formatTimer(startTickTime, 150, "§aStart:")
                 goldorTickTime != - 1 -> formatTimer(goldorTickTime, 60, "§7Goldor:")
                 padTickTime != - 1 -> formatTimer(padTickTime, 20, "§bPad:")
+                deathTickTime != - 1 -> formatTimer(deathTickTime, 40, "§cDeath:")
+                secretTickTime != - 1 -> formatTimer(secretTickTime, 20, "§dSecret:")
                 else -> return@register
             }
 
@@ -131,7 +131,7 @@ object TickTimers: Feature("Shows various types of server tick timers for F7 bos
                 event.context,
                 textToRender,
                 width / 2f,
-                height / 2f + 30f,
+                height / 2f + height / 15,
                 scale = 1.5f,
                 color = Color.WHITE
             )

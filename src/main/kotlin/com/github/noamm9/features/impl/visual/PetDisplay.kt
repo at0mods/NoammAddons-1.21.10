@@ -4,10 +4,9 @@ import com.github.noamm9.event.impl.ChatMessageEvent
 import com.github.noamm9.event.impl.ContainerEvent
 import com.github.noamm9.event.impl.ContainerFullyOpenedEvent
 import com.github.noamm9.features.Feature
-import com.github.noamm9.ui.clickgui.componnents.getValue
+import com.github.noamm9.ui.clickgui.componnents.*
+import com.github.noamm9.ui.clickgui.componnents.impl.ColorSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
-import com.github.noamm9.ui.clickgui.componnents.provideDelegate
-import com.github.noamm9.ui.clickgui.componnents.section
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.ChatUtils.removeFormatting
@@ -21,9 +20,11 @@ import com.github.noamm9.utils.render.Render2D.width
 import java.awt.Color
 
 object PetDisplay: Feature("Pet Features") {
-    private val petDisplay by ToggleSetting("Pet Display")
-    private val autoPetTitles by ToggleSetting("Auto Pet Title")
-    private val activePetHighlight by ToggleSetting("Highlight Active pet").section("Pets Menu")
+    private val petDisplay by ToggleSetting("Pet Display").withDescription("Draws the current active pet on screen").section("HUD")
+    private val autoPetTitles by ToggleSetting("Auto Pet Title").withDescription("Shows a title on screen when you swap pets via autopet rules")
+
+    private val activePetHighlight by ToggleSetting("Highlight Active pet").withDescription("highlights the active pet inside the pet menu").section("Pets Menu")
+    private val petHighlightColor by ColorSetting("Hightlight color", Color.CYAN).showIf { activePetHighlight.value }
 
     private val chatPetRuleRegex = Regex("§cAutopet §eequipped your §7\\[Lvl .*] (?<pet>.*)§e! §a§lVIEW RULE")
     private val chatSpawnRegex = Regex("§aYou summoned your (?<pet>.*)§a!")
@@ -32,15 +33,15 @@ object PetDisplay: Feature("Pet Features") {
     private val petLevelRegex = Regex("\\[Lvl .*]")
     private var selectedPetSlot = - 1
 
-    val petDisplayHud = hudElement("PetDisplay",
-        shouldDraw = { petDisplay.value },
-        enabled = { LocationUtils.inSkyblock && cacheData.getData()["pet"] != null }) { context, example ->
-        val text = if (example) "&6Golden Dragon" else cacheData.getData()["pet"].toString()
-        Render2D.drawString(context, text, 0, 0)
-        return@hudElement text.width().toFloat() to text.height().toFloat()
-    }
-
     override fun init() {
+        hudElement("PetDisplay",
+            shouldDraw = { petDisplay.value },
+            enabled = { LocationUtils.inSkyblock && cacheData.getData()["pet"] != null }) { context, example ->
+            val text = if (example) "&6Golden Dragon" else cacheData.getData()["pet"].toString()
+            Render2D.drawString(context, text, 0, 0)
+            return@hudElement text.width().toFloat() to text.height().toFloat()
+        }
+
         register<ChatMessageEvent> {
             if (! LocationUtils.inSkyblock) return@register
             event.formattedText.let {
@@ -59,7 +60,7 @@ object PetDisplay: Feature("Pet Features") {
 
         register<ContainerFullyOpenedEvent> {
             if (! activePetHighlight.value) return@register
-            if (event.title.unformattedText != "Pets") return@register
+            if (! event.title.unformattedText.startsWith("Pets")) return@register
 
             for (item in event.items) {
                 for (line in item.value.lore) {
@@ -73,9 +74,15 @@ object PetDisplay: Feature("Pet Features") {
 
         register<ContainerEvent.Render.Slot.Pre> {
             if (! activePetHighlight.value) return@register
-            if (event.screen.title.unformattedText != "Pets") return@register
+            if (! event.screen.title.unformattedText.startsWith("Pets")) return@register
             if (event.slot.index != selectedPetSlot) return@register
-            Render2D.drawRect(event.context, event.slot.x, event.slot.y, 16, 16, Color.GREEN)
+            Render2D.drawRect(event.context, event.slot.x, event.slot.y, 16, 16, petHighlightColor.value)
+        }
+
+        register<ContainerEvent.Close> {
+            if (! activePetHighlight.value) return@register
+            if (! event.screen.title.unformattedText.startsWith("Pets")) return@register
+            selectedPetSlot = - 1
         }
     }
 }

@@ -32,7 +32,7 @@ object StarMobEsp: Feature("Hightlights all starred mobs in a dungeon.") {
     private val checked = HashSet<Int>()
 
     private val espBats by ToggleSetting("Highlight Bats", true).withDescription("Highlights Bats in Dungeons.")
-    private val espFels by ToggleSetting("Highlight Fels", true).withDescription("Highlights Fels, even when they are invisible.")
+    private val espFels by ToggleSetting("Highlight Fels", false).withDescription("Highlights Fels, even when they are invisible.")
 
     private val starMobColor by ColorSetting("Star Mob Color", Color.YELLOW, false).section("General Colors").withDescription("Default color for all Starred mobs.")
     private val batColor by ColorSetting("Bat Color", Color.GREEN, false).withDescription("The color used for highlighted bats.").showIf { espBats.value }
