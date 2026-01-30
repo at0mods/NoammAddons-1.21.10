@@ -183,6 +183,15 @@ object Render3D {
         consumer.endBatch()
     }
 
+    fun renderString(
+        text: String,
+        pos: Vec3,
+        scale: Number = 1f,
+        bgBox: Boolean = false,
+        phase: Boolean = false
+    ) = renderString(text, pos.x, pos.y, pos.z, scale, bgBox, phase)
+
+
     fun renderLine(ctx: RenderContext, start: Vec3, finish: Vec3, thickness: Number, color: Color) {
         val matrices = ctx.matrixStack ?: return
         val cameraPos = mc.gameRenderer.mainCamera.position
