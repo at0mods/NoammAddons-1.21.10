@@ -16,7 +16,10 @@ public class MixinPacketProcessorListener {
 
     @Inject(
         method = "handle",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V"),
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V"
+        ),
         cancellable = true
     )
     private void onPreHandle(CallbackInfo ci) {
@@ -27,7 +30,11 @@ public class MixinPacketProcessorListener {
 
     @Inject(
         method = "handle",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V", shift = At.Shift.AFTER)
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V",
+            shift = At.Shift.AFTER
+        )
     )
     private void onPostHandle(CallbackInfo ci) {
         EventBus.post(new MainThreadPacketReceivedEvent.Post(this.packet));

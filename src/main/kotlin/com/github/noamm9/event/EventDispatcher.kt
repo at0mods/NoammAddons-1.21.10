@@ -126,6 +126,9 @@ object EventDispatcher {
                     if (invItems.size >= invSlotCount) finishInventoryLoading()
                 }
             }
+            else if (event.packet is ClientboundBundlePacket) {
+                
+            }
         }
 
         register<PacketEvent.Sent> {

@@ -1,0 +1,27 @@
+package com.github.noamm9.mixin;
+
+import com.github.noamm9.event.EventBus;
+import com.github.noamm9.event.impl.MainThreadPacketReceivedEvent;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.PacketListener;
+import net.minecraft.network.protocol.Packet;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
+@Mixin(ClientPacketListener.class)
+public class MixinClientPacketListener {
+    @WrapOperation(
+        method = "handleBundlePacket",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V"
+        )
+    )
+    private void redirectPacketHandle(Packet packet, PacketListener listener, Operation<Void> original) {
+        if (EventBus.post(new MainThreadPacketReceivedEvent.Pre(packet))) return;
+        packet.handle(listener);
+        EventBus.post(new MainThreadPacketReceivedEvent.Post(packet));
+    }
+}
