@@ -6,6 +6,8 @@ import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
+import com.github.noamm9.ui.clickgui.componnents.showIf
+import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.MathUtils.toPos
 import com.github.noamm9.utils.PlayerUtils
@@ -23,12 +25,12 @@ import org.lwjgl.glfw.GLFW
 import java.awt.Color
 
 object M7Relics: Feature(name = "M7 Relics", description = "A bunch of M7 Relics features") {
-    private val relicBox by ToggleSetting("Box Relics")
-    private val relicSpawnTimer by ToggleSetting("Spawn Timer")
-    private val relicTimer by ToggleSetting("Place Timer")
-    private val relicLook by ToggleSetting("Relic Look")
-    private val relicLookTime by SliderSetting("Relic Look Time", 150L, 10, 300, 1)
-    private val blockWrongRelic by ToggleSetting("Block Wrong Relic")
+    private val relicBox by ToggleSetting("Box Relics").withDescription("Draws a box on where the relics are spawning and the cauldron u need to place")
+    private val relicSpawnTimer by ToggleSetting("Spawn Timer").withDescription("Shows on screen when the relic will spawn")
+    private val relicTimer by ToggleSetting("Place Timer").withDescription("Sends in chat the time it took to place the relic after u picked it up")
+    private val relicLook by ToggleSetting("Relic Look").withDescription("Automatically rotate to the relic cauldron after u pick it up")
+    private val relicLookTime by SliderSetting("Relic Look Time", 150L, 10, 300, 1).showIf { relicLook.value }.withDescription("How fast should the auto rotate (in milliseconds)")
+    private val blockWrongRelic by ToggleSetting("Block Wrong Relic").withDescription("Prevents you from placing your relic at the wrong cauldron")
 
     private val relicPickUpRegex = Regex("^(\\w{3,16}) picked the Corrupted (\\w{3,6}) Relic!$")
     private val relicTimes = mutableListOf<RelicEntry>()
