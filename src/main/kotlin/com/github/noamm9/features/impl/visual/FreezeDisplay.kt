@@ -23,13 +23,15 @@ object FreezeDisplay: Feature("Shows how long the server froze after a chosen th
     override fun init() {
         hudElement(
             "Freeze Display",
-            { (! dungeonsOnly.value || LocationUtils.inDungeon) && System.currentTimeMillis() - lastTick > threshold.value }
+            { (! dungeonsOnly.value || LocationUtils.inDungeon) && System.currentTimeMillis() - lastTick > threshold.value && ! mc.isLocalServer }
         ) { context, example ->
             val text = if (example) "567ms" else "${System.currentTimeMillis() - lastTick}ms"
             Render2D.drawString(context, text, 0, 0, color.value)
             return@hudElement text.width().toFloat() to text.height().toFloat()
         }
 
-        register<TickEvent.Server> { lastTick = System.currentTimeMillis() }
+        register<TickEvent.Server> {
+            lastTick = System.currentTimeMillis()
+        }
     }
 }

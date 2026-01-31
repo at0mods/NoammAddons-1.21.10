@@ -8,14 +8,9 @@ import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.section
 import com.github.noamm9.ui.clickgui.componnents.showIf
+import com.github.noamm9.utils.PlayerUtils.useDungeonClassAbility
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.location.LocationUtils
-import com.github.noamm9.utils.network.PacketUtils.send
-import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.DROP_ALL_ITEMS
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.DROP_ITEM
 import org.lwjgl.glfw.GLFW
 
 object AbilityKeybinds: Feature("Allows you do use your dungeon class ult/ability with a keybind") {
@@ -40,10 +35,5 @@ object AbilityKeybinds: Feature("Allows you do use your dungeon class ult/abilit
                 return@register useDungeonClassAbility(false)
             }
         }
-    }
-
-    private fun useDungeonClassAbility(dropOne: Boolean) {
-        val action = if (dropOne) DROP_ITEM else DROP_ALL_ITEMS
-        ServerboundPlayerActionPacket(action, BlockPos.ZERO, Direction.DOWN).send()
     }
 }
