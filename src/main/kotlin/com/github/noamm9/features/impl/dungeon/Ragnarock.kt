@@ -64,7 +64,7 @@ object Ragnarock: Feature("Ragnarock alerts") {
             if (startTicks <= 0) return@register
             startTicks --
             if (startTicks != 0) return@register
-
+            
             ChatUtils.showTitle("rag")
             for ((delay, pitch) in soundSequence) ThreadUtils.setTimeout(delay) {
                 SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_HARP, 0.3f, pitch)
