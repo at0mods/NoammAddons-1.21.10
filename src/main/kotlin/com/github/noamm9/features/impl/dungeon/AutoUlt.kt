@@ -11,7 +11,6 @@ import com.github.noamm9.utils.location.LocationUtils
 object AutoUlt: Feature("Automatically uses your dungeon class ultimate when needed") {
     private class UltMessage(val msg: String, val classes: List<Classes>, val floor: Int)
 
-    // todo offload to json?
     private val UltMessages = listOf(
         UltMessage(
             msg = "⚠ Maxor is enraged! ⚠",

@@ -113,5 +113,6 @@ object TerminalListener {
         lastWindowId = - 1
         HumanClickOrder.lastClickedSlot = null
         TerminalSolver.onTerminalClose()
+        TerminalType.reset()
     }
 }

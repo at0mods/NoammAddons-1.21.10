@@ -37,10 +37,10 @@ object NaCommand: BaseCommand("na") {
             argument("flag", StringArgumentType.word()) {
                 runs { ctx ->
                     val flag = StringArgumentType.getString(ctx, "flag")
-                    if (debugFlags.remove(flag)) ChatUtils.modMessage("§cRemoved: §b$flag")
+                    if (debugFlags.remove(flag)) ChatUtils.modMessage("§cRemoved debug flag: §b$flag")
                     else {
                         debugFlags.add(flag)
-                        ChatUtils.modMessage("§aAdded: §b$flag")
+                        ChatUtils.modMessage("§aAdded debug flag: §b$flag")
                     }
                 }
             }

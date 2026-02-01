@@ -337,6 +337,10 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         if (NoammAddons.debugFlags.contains("terminal")) {
             ChatUtils.modMessage("Clicked $slot on ${TerminalListener.currentType?.name}")
         }
+
+        if (TerminalListener.currentType == TerminalType.STARTWITH) {
+            TerminalType.clickedStartWithSlots.add(slot)
+        }
     }
 
     private fun click(click: TerminalClick) {
@@ -354,11 +358,13 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                 queue.clear()
                 solve()
                 isClicked = false
+                TerminalType.clickedStartWithSlots.clear()
             }
             else if (mode.value == 2) {
                 ThreadUtils.scheduledTaskServer((resyncTimeout.value / 50).toInt()) {
                     if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@scheduledTaskServer
                     lastClickedSlot = null
+                    TerminalType.clickedStartWithSlots.clear()
                     autoClick()
                 }
             }
@@ -391,7 +397,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                 val letter = match?.groupValues?.get(1)?.lowercase() ?: return
                 currentItems.forEach { (slot, item) ->
                     val name = item.hoverName.string.removeFormatting().lowercase()
-                    if (name.startsWith(letter) && ! item.hasGlint()) {
+                    if (name.startsWith(letter) && ! item.hasGlint() && slot !in TerminalType.clickedStartWithSlots) {
                         solution.add(TerminalClick(slot))
                     }
                 }

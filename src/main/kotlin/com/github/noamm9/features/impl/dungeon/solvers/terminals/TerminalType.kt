@@ -21,6 +21,8 @@ enum class TerminalType(val slotCount: Int) {
             Items.BLUE_STAINED_GLASS_PANE,
         )
 
+        val clickedStartWithSlots = mutableSetOf<Int>()
+
         val colorReplacements = mapOf(
             Regex("^light gray") to "silver",
             Regex("^wool") to "white",
@@ -57,6 +59,7 @@ enum class TerminalType(val slotCount: Int) {
             melodyCurrent = null
             melodyCorrect = null
             numbersSlotCounts.clear()
+            clickedStartWithSlots.clear()
         }
     }
 }
