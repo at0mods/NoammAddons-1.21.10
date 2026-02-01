@@ -12,7 +12,9 @@ import com.github.noamm9.utils.render.Render2D
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.minecraft.ChatFormatting
+import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.HoverEvent
 import net.minecraft.network.chat.Style
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket
 import net.minecraft.network.protocol.game.ServerboundChatCommandSignedPacket
@@ -20,7 +22,6 @@ import net.minecraft.network.protocol.game.ServerboundChatPacket
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.roundToInt
 
 object ChatUtils {
     private val queue = ConcurrentLinkedQueue<String>()
@@ -169,26 +170,6 @@ object ChatUtils {
             return sb.toString()
         }
 
-    fun getChatBreak(): String {
-        val chatWidth = mc.gui?.chat?.width ?: return ""
-        val textRenderer = mc.font
-        val dashWidth = textRenderer.width("-")
-
-        val repeatCount = chatWidth / dashWidth
-        return "-".repeat(repeatCount)
-    }
-
-    fun getCenteredText(text: String): String {
-        val chatWidth = mc.gui?.chat?.width ?: return text
-        val textRenderer = mc.font
-        val textWidth = textRenderer.width(text)
-        if (textWidth >= chatWidth) return text
-        val spaceWidth = textRenderer.width(" ")
-
-        val padding = ((chatWidth - textWidth) / 2f / spaceWidth).roundToInt()
-        return " ".repeat(padding) + text
-    }
-
     private var title = ""
     private var subtitle = ""
     private var time = 0
@@ -198,6 +179,26 @@ object ChatUtils {
         this.title = title.toString()
         this.subtitle = subtitle.toString()
         this.time = 40
+    }
+
+    fun clickableChat(
+        message: String,
+        prefix: Boolean = false,
+        command: String? = null,
+        hover: String? = null,
+        copy: String? = null
+    ) {
+        if (mc.player == null) return
+        val mainComponent = Component.literal(message.addColor())
+        var style = Style.EMPTY
+
+        if (hover != null) style = style.withHoverEvent(HoverEvent.ShowText(Component.literal(hover.addColor())))
+        if (command != null) style = style.withClickEvent(ClickEvent.RunCommand(command))
+        else if (copy != null) style = style.withClickEvent(ClickEvent.CopyToClipboard(copy))
+
+        mainComponent.style = style
+
+        ChatUtils.chat(if (prefix) Component.literal(NoammAddons.PREFIX).append(mainComponent) else mainComponent)
     }
 
     init {

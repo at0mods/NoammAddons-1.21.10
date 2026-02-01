@@ -1,5 +1,6 @@
 package com.github.noamm9.features.impl.dungeon
 
+import com.github.noamm9.config.PersonalBest
 import com.github.noamm9.event.impl.*
 import com.github.noamm9.features.Feature
 import com.github.noamm9.ui.clickgui.componnents.getValue
@@ -135,12 +136,13 @@ object M7Relics: Feature(name = "M7 Relics", description = "A bunch of M7 Relics
                         entry.placeTimeSeconds = "%.2f".format(currentTime).toDouble()
                         entry.isPlaced = true
 
-                        /* todo
                         if (entry.player == mc.user.name) {
-                             val currentPB = Config.getRelicPB(entry.relic.name)
-                             if (entry.placeTimeSeconds < currentPB) Config.setRelicPB(...)
-                            entry.isPB = true // Placeholder
-                        }*/
+                            entry.isPB = PersonalBest.checkAndSetPB(
+                                key = "M7_relic_${entry.relic.name}",
+                                value = entry.placeTimeSeconds,
+                                lowerIsBetter = true
+                            )
+                        }
                     }
                 }
             }
