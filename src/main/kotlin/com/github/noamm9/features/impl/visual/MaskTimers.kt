@@ -18,7 +18,7 @@ import com.github.noamm9.utils.render.Render2D
 import com.github.noamm9.utils.render.Render2D.width
 import net.minecraft.world.entity.EquipmentSlot
 
-object MaskTimers : Feature("Mask Timers", name = "Mask Timers Style 2") {
+object MaskTimers : Feature("Mask Timers") {
     private val onlyInDungeon by ToggleSetting("Dungeons Only", true)
     private val procNotification by ToggleSetting("Proc Notification").section("Notifications")
     private val comeBackNotification by ToggleSetting("Comeback Notification")
