@@ -43,13 +43,13 @@ object AutoTerminal: Feature("Automatically clicks terminals for you.") {
 
     override fun onEnable() {
         super.onEnable()
-        registerSharedListeners()
+        register()
     }
 
     override fun onDisable() {
         super.onDisable()
         if (! TerminalSolver.enabled) {
-            unregisterSharedListeners()
+            unregister()
         }
     }
 
@@ -106,10 +106,8 @@ object AutoTerminal: Feature("Automatically clicks terminals for you.") {
             TerminalClick(rawClick.slotId, if (rawClick.btn > 0) 0 else 1)
         else rawClick
 
-        val isFirstClick = TerminalListener.checkFcDelay()
-
         val delayMs = when {
-            isFirstClick -> FIRST_CLICK_DELAY * 50
+            TerminalListener.checkFcDelay() -> FIRST_CLICK_DELAY * 50
             randomDelay.value -> {
                 val min = minRandomDelay.value.toInt().coerceAtLeast(0)
                 val max = maxRandomDelay.value.toInt().coerceAtLeast(0)
@@ -120,22 +118,23 @@ object AutoTerminal: Feature("Automatically clicks terminals for you.") {
         }.coerceAtLeast(0)
 
         val delayTicks = delayMs / 50
+        val initialWindowId = TerminalListener.lastWindowId
 
         if (delayMs == 0) click(finalClick)
         else Scheduler.schedule(delayMs, delayTicks) {
-            if (TerminalListener.inTerm) click(finalClick)
+            if (TerminalListener.inTerm && initialWindowId == TerminalListener.lastWindowId) {
+                click(finalClick)
+            }
         }
     }
 
-    private fun shouldAutoSolve(type: TerminalType): Boolean {
-        return when (type) {
-            TerminalType.NUMBERS -> autoNumbers.value
-            TerminalType.COLORS -> autoColors.value
-            TerminalType.MELODY -> autoMelody.value
-            TerminalType.RUBIX -> autoRubix.value
-            TerminalType.REDGREEN -> autoRedGreen.value
-            TerminalType.STARTWITH -> autoStartWith.value
-        }
+    fun shouldAutoSolve(type: TerminalType) = when (type) {
+        TerminalType.NUMBERS -> autoNumbers.value
+        TerminalType.COLORS -> autoColors.value
+        TerminalType.MELODY -> autoMelody.value
+        TerminalType.RUBIX -> autoRubix.value
+        TerminalType.REDGREEN -> autoRedGreen.value
+        TerminalType.STARTWITH -> autoStartWith.value
     }
 
     private fun click(click: TerminalClick) {
@@ -157,7 +156,7 @@ object AutoTerminal: Feature("Automatically clicks terminals for you.") {
         lastClickedSlot = null
     }
 
-    fun registerSharedListeners() {
+    fun register() {
         TerminalListener.packetRecivedListener.register()
         TerminalListener.packetSentListener.register()
         TerminalListener.tickListener.register()
@@ -166,7 +165,7 @@ object AutoTerminal: Feature("Automatically clicks terminals for you.") {
         Scheduler.timeListener.register()
     }
 
-    fun unregisterSharedListeners() {
+    fun unregister() {
         TerminalListener.packetRecivedListener.unregister()
         TerminalListener.packetSentListener.unregister()
         TerminalListener.tickListener.unregister()

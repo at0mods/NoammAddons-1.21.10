@@ -68,13 +68,13 @@ object TerminalSolver: Feature("Renders solutions for Floor 7 terminals.") {
 
     override fun onEnable() {
         super.onEnable()
-        AutoTerminal.registerSharedListeners()
+        AutoTerminal.register()
     }
 
     override fun onDisable() {
         super.onDisable()
         if (! AutoTerminal.enabled) {
-            AutoTerminal.unregisterSharedListeners()
+            AutoTerminal.unregister()
         }
     }
 
@@ -183,8 +183,8 @@ object TerminalSolver: Feature("Renders solutions for Floor 7 terminals.") {
 
         register<ContainerEvent.MouseClick> {
             if (! TerminalListener.inTerm) return@register
-            if (AutoTerminal.enabled) return@register
             val termType = TerminalListener.currentType ?: return@register
+            if (AutoTerminal.enabled && AutoTerminal.shouldAutoSolve(termType)) return@register
             event.isCanceled = true
             if (TerminalListener.checkFcDelay()) return@register
 
@@ -283,10 +283,10 @@ object TerminalSolver: Feature("Renders solutions for Floor 7 terminals.") {
             }
 
             if (mode.value == 1) {
+                TerminalType.clickedStartWithSlots.clear()
                 queue.clear()
                 solve()
                 isClicked = false
-                TerminalType.clickedStartWithSlots.clear()
             }
         }
     }
@@ -300,12 +300,12 @@ object TerminalSolver: Feature("Renders solutions for Floor 7 terminals.") {
             mc.player
         )
 
-        if (TerminalListener.currentType == TerminalType.STARTWITH) {
-            TerminalType.clickedStartWithSlots.add(slot)
-        }
-
         if (NoammAddons.debugFlags.contains("terminal")) {
             ChatUtils.modMessage("Clicked $slot on ${TerminalListener.currentType?.name}")
+        }
+
+        if (TerminalListener.currentType == TerminalType.STARTWITH) {
+            TerminalType.clickedStartWithSlots.add(slot)
         }
     }
 
@@ -347,7 +347,7 @@ object TerminalSolver: Feature("Renders solutions for Floor 7 terminals.") {
                 fun fixName(name: String): String {
                     var fixedName = name
                     TerminalType.colorReplacements.forEach { (k, v) ->
-                        fixedName = fixedName.replace(Regex("^$k"), v)
+                        fixedName = fixedName.replace(k, v)
                     }
                     return fixedName
                 }
