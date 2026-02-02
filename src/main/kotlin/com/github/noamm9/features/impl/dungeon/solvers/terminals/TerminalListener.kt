@@ -18,6 +18,8 @@ import net.minecraft.world.item.ItemStack
 
 
 object TerminalListener {
+    const val FIRST_CLICK_DELAY = 7
+
     var inTerm = false
     var currentType: TerminalType? = null
     var currentTitle = ""
@@ -51,7 +53,9 @@ object TerminalListener {
                     currentTitle = title
                     lastWindowId = packet.containerId
                     currentItems.clear()
+
                     TerminalSolver.onTerminalOpen()
+                    AutoTerminal.reset()
                 }
                 else reset()
             }
@@ -64,6 +68,7 @@ object TerminalListener {
 
                 if (currentItems.size == currentType?.slotCount || currentType == TerminalType.MELODY) {
                     TerminalSolver.onItemsUpdated(packet.slot, packet.item)
+                    if (AutoTerminal.enabled) AutoTerminal.onItemsUpdated()
                 }
             }
 
@@ -78,7 +83,6 @@ object TerminalListener {
                 }
             }
 
-            // we use scheduled task to stop the real gui from drawing until the packet is prossed on the main thread
             is ClientboundContainerClosePacket -> if (inTerm) ThreadUtils.scheduledTask(1, ::reset)
         }
     }
@@ -111,8 +115,8 @@ object TerminalListener {
     }
 
     fun checkFcDelay(): Boolean {
-        return DungeonListener.currentTime - initialOpenTick < TerminalSolver.FIRST_CLICK_DELAY ||
-            System.currentTimeMillis() - initialOpenTime < (TerminalSolver.FIRST_CLICK_DELAY * 50)
+        return DungeonListener.currentTime - initialOpenTick < FIRST_CLICK_DELAY ||
+            System.currentTimeMillis() - initialOpenTime < (FIRST_CLICK_DELAY * 50)
     }
 
     private fun reset() {
@@ -123,6 +127,7 @@ object TerminalListener {
         lastWindowId = - 1
         HumanClickOrder.lastClickedSlot = null
         TerminalSolver.onTerminalClose()
+        AutoTerminal.reset()
         TerminalType.reset()
     }
 }

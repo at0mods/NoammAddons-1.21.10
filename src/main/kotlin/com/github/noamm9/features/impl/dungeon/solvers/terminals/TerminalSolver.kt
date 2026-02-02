@@ -3,13 +3,15 @@ package com.github.noamm9.features.impl.dungeon.solvers.terminals
 import com.github.noamm9.NoammAddons
 import com.github.noamm9.event.impl.ContainerEvent
 import com.github.noamm9.event.impl.ScreenEvent
-import com.github.noamm9.event.impl.TickEvent
 import com.github.noamm9.features.Feature
-import com.github.noamm9.ui.clickgui.componnents.*
+import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.ColorSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.DropdownSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
+import com.github.noamm9.ui.clickgui.componnents.provideDelegate
+import com.github.noamm9.ui.clickgui.componnents.section
+import com.github.noamm9.ui.clickgui.componnents.showIf
 import com.github.noamm9.ui.utils.Resolution
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.removeFormatting
@@ -26,44 +28,12 @@ import net.minecraft.world.item.Items
 import java.awt.Color
 import kotlin.math.abs
 import kotlin.math.floor
-import kotlin.random.Random
 
-
-object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
-    const val FIRST_CLICK_DELAY = 7 // 350ms
-
+object TerminalSolver: Feature("Renders solutions for Floor 7 terminals.") {
     val scale by SliderSetting("Custom Menu's Scale", 1f, 0.1f, 2f, 0.01f).section("General")
-        .withDescription("How big the Terminal Menu should be.")
-
     val slotStyle by DropdownSetting("Slot Style", 0, listOf("Rect", "Bordered-Rect", "Button"))
-        .withDescription("How the highlighted slots should be drawn.")
-
-    val mode by DropdownSetting("Mode", 0, listOf("Normal", "Q-Terms", "Auto"))
-        .withDescription("The Terminal mode to use.")
-
+    val mode by DropdownSetting("Mode", 0, listOf("Normal", "Q-Terms"))
     val resyncTimeout by SliderSetting<Long>("Resync Timeout", 800, 600, 1000, 1)
-        .withDescription("How long should the queue wait before clearing itself if the server doesn't update the terminal.")
-        .showIf { mode.value != 0 }
-
-    val randomDelay by ToggleSetting("Random Delay").section("Auto Terminal")
-        .withDescription("Should the delay between clicks be random?")
-        .showIf { mode.value == 2 }
-
-    val autoDelay by SliderSetting("Click Delay", 150.0, 0.0, 500.0, 10.0)
-        .withDescription("Fixed delay between clicks in milliseconds.")
-        .showIf { mode.value == 2 && ! randomDelay.value }
-
-    val minRandomDelay by SliderSetting("Min Random Delay", 50.0, 0.0, 500.0, 10.0)
-        .withDescription("The minimum possible delay")
-        .showIf { mode.value == 2 && randomDelay.value }
-
-    val maxRandomDelay by SliderSetting("Max Random Delay", 150.0, 0.0, 500.0, 10.0)
-        .withDescription("The maximum possible delay")
-        .showIf { mode.value == 2 && randomDelay.value }
-
-    val clickOrder by DropdownSetting("Click Order", 0, listOf("None", "Random", "Human", "Skizo"))
-        .withDescription("Human: Logic pathing. Skizo: Chaotic/Furthest.")
-        .showIf { mode.value == 2 }
 
     val backgroundColor by ColorSetting("Background Color", Color(0, 0, 0, 100)).section("Settings - UI")
     val borderColor by ColorSetting("Border Color", Color(255, 255, 255))
@@ -74,7 +44,8 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
     val solutionColor by ColorSetting("Generic Solution", Color(0, 255, 0, 130)).section("Colors - Terminals").showIf {
         melody.value || numbers.value || rubix.value || colors.value || startwith.value || redgreen.value
     }
-    val numbersNumbers by ToggleSetting("Numbers: Show Numbers").showIf { numbers.value }.withDescription("Should the numbers be shown on the slots?")
+
+    val numbersNumbers by ToggleSetting("Numbers: Show Numbers").showIf { numbers.value }
     val numbersFirstColor by ColorSetting("Numbers: 1st Click", Color(0, 255, 0, 130)).showIf { numbers.value }
     val numbersSecondColor by ColorSetting("Numbers: 2nd Click", Color(0, 200, 0, 130)).showIf { numbers.value }
     val numbersThirdColor by ColorSetting("Numbers: 3rd Click", Color(0, 150, 0, 130)).showIf { numbers.value }
@@ -91,52 +62,23 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
     val startwith by ToggleSetting("Start-With", true)
     val redgreen by ToggleSetting("Red-Green", true)
 
+    val solution = mutableListOf<TerminalClick>()
+    private val queue = mutableListOf<TerminalClick>()
+    private var isClicked = false
+
     override fun onEnable() {
         super.onEnable()
-        TerminalListener.packetRecivedListener.register()
-        TerminalListener.packetSentListener.register()
-        TerminalListener.tickListener.register()
-        TerminalListener.worldChangeListener.register()
-        Scheduler.tickListener.register()
-        Scheduler.timeListener.register()
+        AutoTerminal.registerSharedListeners()
     }
 
     override fun onDisable() {
         super.onDisable()
-        TerminalListener.packetRecivedListener.unregister()
-        TerminalListener.packetSentListener.unregister()
-        TerminalListener.tickListener.unregister()
-        TerminalListener.worldChangeListener.unregister()
-        Scheduler.timeListener.unregister()
-        Scheduler.tickListener.unregister()
+        if (! AutoTerminal.enabled) {
+            AutoTerminal.unregisterSharedListeners()
+        }
     }
 
-    private var solution = mutableListOf<TerminalClick>()
-    private val queue = mutableListOf<TerminalClick>()
-    private var isClicked = false
-    private var lastClickTime = 0L
-    private var lastClickedSlot: Int? = null
-
     override fun init() {
-        register<TickEvent.Server> {
-            if (mode.value != 2) return@register
-            if (! TerminalListener.inTerm) return@register
-            if (TerminalListener.checkFcDelay()) return@register
-            if (TerminalListener.currentType != TerminalType.MELODY) return@register
-            if (System.currentTimeMillis() - lastClickTime < 250) return@register
-
-            val current = TerminalType.melodyCurrent ?: return@register
-            val correct = TerminalType.melodyCorrect ?: return@register
-            val buttonRow = TerminalType.melodyButton ?: return@register
-            if (current != correct) return@register
-            val actualSlot = buttonRow * 9 + 16
-            if (lastClickedSlot == actualSlot) return@register
-
-            sendClickPacket(actualSlot, 0)
-            lastClickTime = System.currentTimeMillis()
-            lastClickedSlot = actualSlot
-        }
-
         register<ScreenEvent.PreRender> {
             if (! TerminalListener.inTerm) return@register
             val termType = TerminalListener.currentType ?: return@register
@@ -241,9 +183,9 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
 
         register<ContainerEvent.MouseClick> {
             if (! TerminalListener.inTerm) return@register
+            if (AutoTerminal.enabled) return@register
             val termType = TerminalListener.currentType ?: return@register
             event.isCanceled = true
-            if (mode.value == 2) return@register
             if (TerminalListener.checkFcDelay()) return@register
 
             val uiScale = 3f * scale.value
@@ -327,6 +269,28 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         }
     }
 
+    fun click(click: TerminalClick) {
+        isClicked = true
+        sendClickPacket(click.slotId, click.btn)
+
+        val initialWindowId = TerminalListener.lastWindowId
+
+        Scheduler.schedule(resyncTimeout.value.toInt(), resyncTimeout.value.toInt() / 50) {
+            if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@schedule
+
+            if (NoammAddons.debugFlags.contains("terminal")) {
+                ChatUtils.modMessage("Resync Timeout Triggered")
+            }
+
+            if (mode.value == 1) {
+                queue.clear()
+                solve()
+                isClicked = false
+                TerminalType.clickedStartWithSlots.clear()
+            }
+        }
+    }
+
     private fun sendClickPacket(slot: Int, btn: Int) {
         mc.gameMode?.handleInventoryMouseClick(
             TerminalListener.lastWindowId,
@@ -342,34 +306,6 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
 
         if (NoammAddons.debugFlags.contains("terminal")) {
             ChatUtils.modMessage("Clicked $slot on ${TerminalListener.currentType?.name}")
-        }
-    }
-
-    private fun click(click: TerminalClick) {
-        isClicked = true
-        lastClickedSlot = click.slotId
-        sendClickPacket(click.slotId, click.btn)
-        val initialWindowId = TerminalListener.lastWindowId
-        Scheduler.schedule(resyncTimeout.value.toInt(), resyncTimeout.value.toInt() / 50) {
-            if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@schedule
-            if (NoammAddons.debugFlags.contains("terminal")) {
-                ChatUtils.modMessage("Resync Timeout Triggered")
-            }
-
-            if (mode.value == 1) {
-                queue.clear()
-                solve()
-                isClicked = false
-                TerminalType.clickedStartWithSlots.clear()
-            }
-            else if (mode.value == 2) {
-                Scheduler.schedule(resyncTimeout.value.toInt(), resyncTimeout.value.toInt() / 50) {
-                    if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@schedule
-                    lastClickedSlot = null
-                    TerminalType.clickedStartWithSlots.clear()
-                    autoClick()
-                }
-            }
         }
     }
 
@@ -408,7 +344,6 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             TerminalType.COLORS -> {
                 val match = TerminalType.colorsRegex.matchEntire(TerminalListener.currentTitle)
                 val extra = match?.groupValues?.get(1)?.lowercase() ?: return
-
                 fun fixName(name: String): String {
                     var fixedName = name
                     TerminalType.colorReplacements.forEach { (k, v) ->
@@ -416,7 +351,6 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                     }
                     return fixedName
                 }
-
                 currentItems.filter {
                     it.value.item != Items.BLACK_STAINED_GLASS_PANE
                         && fixName(it.value.hoverName.unformattedText.lowercase()).startsWith(extra)
@@ -428,7 +362,6 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                 val allowedSlots = listOf(12, 13, 14, 21, 22, 23, 30, 31, 32)
                 val panes = currentItems.filter { it.key in allowedSlots && TerminalType.rubixOrder.contains(it.value.item) }
                 val costs = IntArray(5) { 0 }
-
                 for (i in 0 until 5) {
                     panes.forEach { (_, itemStack) ->
                         val itemIdx = TerminalType.rubixOrder.indexOf(itemStack.item)
@@ -439,9 +372,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                         }
                     }
                 }
-
                 val origin = costs.indices.minByOrNull { costs[it] } ?: 0
-
                 panes.forEach { (slotId, itemStack) ->
                     val currentIdx = TerminalType.rubixOrder.indexOf(itemStack.item)
                     if (currentIdx != - 1 && currentIdx != origin) {
@@ -461,7 +392,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                     if (correct != null) TerminalType.melodyCorrect = correct
                     TerminalType.melodyButton = button.toInt()
                     TerminalType.melodyCurrent = current
-                    lastClickedSlot = null
+                    AutoTerminal.reset()
                 }
             }
         }
@@ -470,7 +401,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
     fun onItemsUpdated(slot: Int = 0, item: ItemStack = ItemStack.EMPTY) {
         solve(slot, item)
 
-        if (mode.value == 1 && queue.isNotEmpty()) {
+        if (mode.value == 1 && queue.isNotEmpty() && enabled) {
             val nextClick = queue[0]
 
             val isValid = when (TerminalListener.currentType) {
@@ -493,62 +424,6 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             }
             else queue.clear()
         }
-        else autoClick()
-
-    }
-
-    private fun autoClick() {
-        if (mode.value != 2 || solution.isEmpty()) return
-
-        val rawClick = if (TerminalListener.currentType == TerminalType.NUMBERS) solution.first()
-        else when (clickOrder.value) {
-            1 -> solution.random()
-            2 -> HumanClickOrder.getBestClick(solution, TerminalListener.currentType !!)
-            3 -> HumanClickOrder.getWorstClick(solution, TerminalListener.currentType !!)
-            else -> solution.first()
-        }
-
-        if (lastClickedSlot == rawClick.slotId && TerminalListener.currentType != TerminalType.RUBIX) return
-
-        val finalClick = if (TerminalListener.currentType == TerminalType.RUBIX)
-            TerminalClick(rawClick.slotId, if (rawClick.btn > 0) 0 else 1)
-        else rawClick
-
-        val isFirstClick = TerminalListener.checkFcDelay()
-
-        val delayMs = when {
-            isFirstClick -> FIRST_CLICK_DELAY * 50
-
-            randomDelay.value -> {
-                val min = minRandomDelay.value.toInt().coerceAtLeast(0)
-                val max = maxRandomDelay.value.toInt().coerceAtLeast(0)
-                val delayMs = if (min == max) min else Random.nextInt(minOf(min, max), maxOf(min, max))
-                delayMs
-            }
-
-            else -> autoDelay.value.toInt()
-
-        }.coerceAtLeast(0)
-
-        val delayTicks = when {
-            isFirstClick -> FIRST_CLICK_DELAY
-
-            randomDelay.value -> {
-                val min = minRandomDelay.value.toInt().coerceAtLeast(0)
-                val max = maxRandomDelay.value.toInt().coerceAtLeast(0)
-                val delayMs = if (min == max) min else Random.nextInt(minOf(min, max), maxOf(min, max))
-                delayMs / 50
-            }
-
-            else -> autoDelay.value.toInt() / 50
-
-        }.coerceAtLeast(0)
-
-
-        if (delayMs == 0) click(finalClick)
-        else Scheduler.schedule(delayMs, delayTicks) {
-            if (TerminalListener.inTerm) click(finalClick)
-        }
     }
 
     fun onTerminalOpen() = ::isClicked.set(false)
@@ -556,7 +431,5 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
     fun onTerminalClose() {
         queue.clear()
         solution.clear()
-        lastClickTime = 0
-        lastClickedSlot = null
     }
 }
