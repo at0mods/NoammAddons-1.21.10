@@ -15,10 +15,8 @@ import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.removeFormatting
 import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.ColorUtils.withAlpha
-import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.Utils.uppercaseFirst
-import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.items.ItemUtils.hasGlint
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
@@ -64,7 +62,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         .showIf { mode.value == 2 && randomDelay.value }
 
     val clickOrder by DropdownSetting("Click Order", 0, listOf("None", "Random", "Human", "Skizo"))
-        .withDescription("Human: Logic pathing. Random: RNG. Skizo: Chaotic/Furthest.")
+        .withDescription("Human: Logic pathing. Skizo: Chaotic/Furthest.")
         .showIf { mode.value == 2 }
 
     val backgroundColor by ColorSetting("Background Color", Color(0, 0, 0, 100)).section("Settings - UI")
@@ -99,6 +97,8 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         TerminalListener.packetSentListener.register()
         TerminalListener.tickListener.register()
         TerminalListener.worldChangeListener.register()
+        Scheduler.tickListener.register()
+        Scheduler.timeListener.register()
     }
 
     override fun onDisable() {
@@ -107,6 +107,8 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         TerminalListener.packetSentListener.unregister()
         TerminalListener.tickListener.unregister()
         TerminalListener.worldChangeListener.unregister()
+        Scheduler.timeListener.unregister()
+        Scheduler.tickListener.unregister()
     }
 
     private var solution = mutableListOf<TerminalClick>()
@@ -119,9 +121,9 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         register<TickEvent.Server> {
             if (mode.value != 2) return@register
             if (! TerminalListener.inTerm) return@register
-            if (DungeonListener.currentTime - TerminalListener.initialOpen < FIRST_CLICK_DELAY) return@register
+            if (TerminalListener.checkFcDelay()) return@register
             if (TerminalListener.currentType != TerminalType.MELODY) return@register
-            if (DungeonListener.currentTime - lastClickTime < 5) return@register
+            if (System.currentTimeMillis() - lastClickTime < 250) return@register
 
             val current = TerminalType.melodyCurrent ?: return@register
             val correct = TerminalType.melodyCorrect ?: return@register
@@ -131,7 +133,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             if (lastClickedSlot == actualSlot) return@register
 
             sendClickPacket(actualSlot, 0)
-            lastClickTime = DungeonListener.currentTime
+            lastClickTime = System.currentTimeMillis()
             lastClickedSlot = actualSlot
         }
 
@@ -242,7 +244,7 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             val termType = TerminalListener.currentType ?: return@register
             event.isCanceled = true
             if (mode.value == 2) return@register
-            if (DungeonListener.currentTime - TerminalListener.initialOpen < FIRST_CLICK_DELAY) return@register
+            if (TerminalListener.checkFcDelay()) return@register
 
             val uiScale = 3f * scale.value
             val mx = Resolution.getMouseX() / uiScale
@@ -334,12 +336,12 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             mc.player
         )
 
-        if (NoammAddons.debugFlags.contains("terminal")) {
-            ChatUtils.modMessage("Clicked $slot on ${TerminalListener.currentType?.name}")
-        }
-
         if (TerminalListener.currentType == TerminalType.STARTWITH) {
             TerminalType.clickedStartWithSlots.add(slot)
+        }
+
+        if (NoammAddons.debugFlags.contains("terminal")) {
+            ChatUtils.modMessage("Clicked $slot on ${TerminalListener.currentType?.name}")
         }
     }
 
@@ -348,8 +350,8 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
         lastClickedSlot = click.slotId
         sendClickPacket(click.slotId, click.btn)
         val initialWindowId = TerminalListener.lastWindowId
-        ThreadUtils.setTimeout(resyncTimeout.value) {
-            if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@setTimeout
+        Scheduler.schedule(resyncTimeout.value.toInt(), resyncTimeout.value.toInt() / 50) {
+            if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@schedule
             if (NoammAddons.debugFlags.contains("terminal")) {
                 ChatUtils.modMessage("Resync Timeout Triggered")
             }
@@ -361,8 +363,8 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
                 TerminalType.clickedStartWithSlots.clear()
             }
             else if (mode.value == 2) {
-                ThreadUtils.scheduledTaskServer((resyncTimeout.value / 50).toInt()) {
-                    if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@scheduledTaskServer
+                Scheduler.schedule(resyncTimeout.value.toInt(), resyncTimeout.value.toInt() / 50) {
+                    if (! TerminalListener.inTerm || initialWindowId != TerminalListener.lastWindowId) return@schedule
                     lastClickedSlot = null
                     TerminalType.clickedStartWithSlots.clear()
                     autoClick()
@@ -512,23 +514,39 @@ object TerminalSolver: Feature("Terminal Solver for floor 7 terminals") {
             TerminalClick(rawClick.slotId, if (rawClick.btn > 0) 0 else 1)
         else rawClick
 
-        val delayTicks = when {
-            DungeonListener.currentTime - TerminalListener.initialOpen <= FIRST_CLICK_DELAY -> FIRST_CLICK_DELAY
+        val isFirstClick = TerminalListener.checkFcDelay()
+
+        val delayMs = when {
+            isFirstClick -> FIRST_CLICK_DELAY * 50
 
             randomDelay.value -> {
-                val min = minRandomDelay.value.toLong().coerceAtLeast(0)
-                val max = maxRandomDelay.value.toLong().coerceAtLeast(0)
-                val delayMs = if (min == max) min else Random.nextLong(minOf(min, max), maxOf(min, max))
-                (delayMs / 50).toInt()
+                val min = minRandomDelay.value.toInt().coerceAtLeast(0)
+                val max = maxRandomDelay.value.toInt().coerceAtLeast(0)
+                val delayMs = if (min == max) min else Random.nextInt(minOf(min, max), maxOf(min, max))
+                delayMs
             }
 
-            else -> (autoDelay.value.toLong() / 50).toInt()
+            else -> autoDelay.value.toInt()
+
+        }.coerceAtLeast(0)
+
+        val delayTicks = when {
+            isFirstClick -> FIRST_CLICK_DELAY
+
+            randomDelay.value -> {
+                val min = minRandomDelay.value.toInt().coerceAtLeast(0)
+                val max = maxRandomDelay.value.toInt().coerceAtLeast(0)
+                val delayMs = if (min == max) min else Random.nextInt(minOf(min, max), maxOf(min, max))
+                delayMs / 50
+            }
+
+            else -> autoDelay.value.toInt() / 50
 
         }.coerceAtLeast(0)
 
 
-        if (delayTicks == 0) click(finalClick)
-        else ThreadUtils.scheduledTaskServer(delayTicks) {
+        if (delayMs == 0) click(finalClick)
+        else Scheduler.schedule(delayMs, delayTicks) {
             if (TerminalListener.inTerm) click(finalClick)
         }
     }

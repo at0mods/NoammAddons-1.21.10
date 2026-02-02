@@ -21,7 +21,9 @@ object TerminalListener {
     var inTerm = false
     var currentType: TerminalType? = null
     var currentTitle = ""
-    var initialOpen = 0L
+    var initialOpenTick = 0L
+    var initialOpenTime = 0L
+
     var lastWindowId = - 1
 
     private var interactCooldown = 0
@@ -33,14 +35,17 @@ object TerminalListener {
     val tickListener = register<TickEvent.Server> { onTick() }.unregister()
     val worldChangeListener = register<WorldChangeEvent> { reset() }.unregister()
 
-    fun onPacketReceived(packet: Packet<*>) {
+    private fun onPacketReceived(packet: Packet<*>) {
         if (LocationUtils.F7Phase != 3) return
         when (packet) {
             is ClientboundOpenScreenPacket -> {
                 val title = packet.title.string
                 val type = TerminalType.fromName(title)
                 if (type != null) {
-                    if (! inTerm) initialOpen = DungeonListener.currentTime
+                    if (! inTerm) {
+                        initialOpenTick = DungeonListener.currentTime
+                        initialOpenTime = System.currentTimeMillis()
+                    }
                     inTerm = true
                     currentType = type
                     currentTitle = title
@@ -84,7 +89,7 @@ object TerminalListener {
             is ServerboundContainerClickPacket -> {
                 if (! inTerm) return
 
-                if (DungeonListener.currentTime - initialOpen < TerminalSolver.FIRST_CLICK_DELAY || packet.containerId != lastWindowId) {
+                if (checkFcDelay() || packet.containerId != lastWindowId) {
                     event.isCanceled = true
                 }
             }
@@ -103,6 +108,11 @@ object TerminalListener {
     private fun onTick() {
         if (LocationUtils.F7Phase != 3) return
         if (interactCooldown > 0) interactCooldown --
+    }
+
+    fun checkFcDelay(): Boolean {
+        return DungeonListener.currentTime - initialOpenTick < TerminalSolver.FIRST_CLICK_DELAY ||
+            System.currentTimeMillis() - initialOpenTime < (TerminalSolver.FIRST_CLICK_DELAY * 50)
     }
 
     private fun reset() {
