@@ -10,6 +10,7 @@ import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.ui.hud.HudElement
 import com.github.noamm9.utils.ChatUtils.formattedText
+import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.render.Render2D
 import com.github.noamm9.utils.render.Render2D.width
 import net.minecraft.client.gui.GuiGraphics
@@ -21,8 +22,8 @@ import java.awt.Color
 
 object Scoreboard: Feature("draws a custom scoreboard instead of the vanilla one.") {
     private val hideServerId by ToggleSetting("Hide Server ID").withDescription("Hides the 'm151AM' text from the scoreboard")
-    private val dateRegex = Regex("§7(\\d{2}/\\d{2}/\\d{2}) §8.+")
 
+    @Suppress("RemoveRedundantQualifierName")
     private val hud = object: HudElement() {
         override val toggle get() = Scoreboard.enabled
 
@@ -38,7 +39,12 @@ object Scoreboard: Feature("draws a custom scoreboard instead of the vanilla one
                 val name = score.ownerName().string
                 val team = scoreboard.getPlayersTeam(name)
                 val line = PlayerTeam.formatNameForTeam(team, Component.literal(name)).formattedText
-                if (hideServerId.value && line.matches(dateRegex)) "§7Date: " + line.substringBefore(" §8") else line
+
+                val formattedLine = if (LocationUtils.inSkyblock && hideServerId.value && scores.indexOf(score) == 0)
+                    "§7Date: " + line.substringBefore(" §8")
+                else line
+
+                formattedLine
             }
 
             var maxWidth = titleStr.width()
