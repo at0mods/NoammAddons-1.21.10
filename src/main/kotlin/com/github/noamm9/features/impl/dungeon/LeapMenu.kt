@@ -55,7 +55,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
 
     val players = MutableList<LeapMenuPlayer?>(4) { null }
     private val leapRegex = Regex("^You have teleported to (.+)!$")
-    private val playerPattern = Regex("(?:\\[.+?] )?(?<name>\\w+)")
+    private val playerRegex = Regex("(?:\\[.+?] )?(?<name>\\w+)")
     private var shouldHide: Long = 0
 
 
@@ -166,12 +166,12 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
                 Render2D.drawBorder(event.context, headX, headY, headSize, headSize, entry.player.clazz.color)
 
                 val textX = (x + 10 + headSize + 5).toInt()
-                val textY = (y + boxHeight / 2 - mc.font.lineHeight / 2).toInt()
+                val textY = (y + boxHeight / 2 - mc.font.lineHeight).toInt()
 
-                Render2D.drawString(event.context, entry.player.name, textX, textY, entry.player.clazz.color)
+                Render2D.drawString(event.context, entry.player.name, textX, textY + 2, entry.player.clazz.color)
 
-                val status = if (entry.player.isDead) "§cDEAD" else "§7${entry.player.clazz.name}"
-                event.context.drawString(mc.font, status, textX, textY + 12, 0xFFFFFF, true)
+                val status = if (entry.player.isDead) "§cDEAD" else entry.player.clazz.name
+                Render2D.drawString(event.context, status, textX, textY + 12, entry.player.clazz.color)
             }
 
             pose.popMatrix()
@@ -230,7 +230,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
             for (i in (menu.slots.indices - 36)) {
                 val stack = menu.slots[i].item
                 if (! stack.`is`(Items.PLAYER_HEAD)) continue
-                val headName = playerPattern.find(stack.hoverName.unformattedText)?.groups?.get("name")?.value ?: continue
+                val headName = playerRegex.find(stack.hoverName.unformattedText)?.groups?.get("name")?.value ?: continue
 
                 DungeonListener.leapTeammates.forEachIndexed { index, teammate ->
                     if (index > players.lastIndex) return@forEachIndexed
