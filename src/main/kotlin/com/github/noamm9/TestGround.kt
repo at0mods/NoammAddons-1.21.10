@@ -1,6 +1,5 @@
 package com.github.noamm9
 
-import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.impl.PacketEvent
 import com.github.noamm9.event.impl.TickEvent
@@ -42,9 +41,7 @@ object TestGround {
 
             NoammAddons.scope.launch {
                 repeat(tickDiff) {
-                    mc.execute {
-                        EventBus.post(TickEvent.Server)
-                    }
+                    EventBus.post(TickEvent.Server)
 
                     delay(instantTickDuration)
                 }

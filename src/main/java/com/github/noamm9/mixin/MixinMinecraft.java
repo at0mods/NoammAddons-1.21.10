@@ -5,7 +5,6 @@ import com.github.noamm9.event.impl.PlayerInteractEvent;
 import com.github.noamm9.features.impl.visual.CpsDisplay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
@@ -49,11 +48,6 @@ public abstract class MixinMinecraft {
     @Inject(method = "startUseItem", at = @At("HEAD"))
     private void onStartUseItem(CallbackInfo ci) {
         CpsDisplay.addRightClick();
-    }
-
-    @Inject(method = "setLevel", at = @At("HEAD"))
-    public void onSetcreenHead(ClientLevel clientLevel, CallbackInfo ci) {
-        System.gc();
     }
 
     @Inject(method = "startUseItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;interactAt(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/EntityHitResult;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"), cancellable = true)

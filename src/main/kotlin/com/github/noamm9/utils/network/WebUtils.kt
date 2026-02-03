@@ -1,5 +1,6 @@
 package com.github.noamm9.utils.network
 
+import com.github.noamm9.NoammAddons.mc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -14,6 +15,7 @@ object WebUtils {
 
 
     private fun prepareConnection(url: String): HttpURLConnection {
+        if (mc.isSameThread) throw Exception("Cannot make network request on main thread")
         val connection = URL(url).openConnection() as HttpURLConnection
         connection.setRequestProperty("User-Agent", USER_AGENT)
         connection.connectTimeout = TIMEOUT

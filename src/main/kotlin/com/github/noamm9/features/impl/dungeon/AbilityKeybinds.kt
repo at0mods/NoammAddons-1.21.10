@@ -25,12 +25,12 @@ object AbilityKeybinds: Feature("Allows you do use your dungeon class ult/abilit
             if (event.scanCode != GLFW.GLFW_PRESS) return@register
             if (mc.screen != null) return@register
 
-            if (classUltimate.value && ultKeybind.value == event.key) {
+            if (classUltimate.value && ultKeybind.isPressed()) {
                 event.isCanceled = true
                 return@register useDungeonClassAbility(true)
             }
 
-            if (classAbility.value && abilityKeybind.value == event.key) {
+            if (classAbility.value && abilityKeybind.isPressed()) {
                 event.isCanceled = true
                 return@register useDungeonClassAbility(false)
             }
