@@ -18,9 +18,9 @@ object Animations: Feature("Allows you to modify your hand viewmodel") {
     val mainHandPositiveY by SliderSetting("Rotation Y", 0f, - 50f, 50f, 1)
     val mainHandPositiveZ by SliderSetting("Rotation Z", 0f, - 50f, 50f, 1)
 
-    val swingX by SliderSetting("swingX", 1.0, 0.1, 2.0, 0.01)
-    val swingY by SliderSetting("swingY", 1.0, 0.1, 2.0, 0.01)
-    val swingZ by SliderSetting("swingZ", 1.0, 0.1, 2.0, 0.01)
+    val swingX by SliderSetting("swingX", 1.0, 0.0, 2.0, 0.01)
+    val swingY by SliderSetting("swingY", 1.0, 0.0, 2.0, 0.01)
+    val swingZ by SliderSetting("swingZ", 1.0, 0.0, 2.0, 0.01)
 
     val disableEquip by ToggleSetting("Disable equip animation").withDescription("Disables the equip animation when ur held item changes.")
     val disableSwingAnimation by ToggleSetting("Disable swing animation").withDescription("Disables the held item swing animation")
