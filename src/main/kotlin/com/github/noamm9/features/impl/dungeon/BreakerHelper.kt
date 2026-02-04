@@ -41,7 +41,6 @@ object BreakerHelper: Feature("Zero Ping Dungeon Breaker") {
     fun onHitBlock(pos: BlockPos) {
         if (! enabled) return
         if (! LocationUtils.inDungeon) return
-        if (LocationUtils.inBoss) return
         if (mc.player?.mainHandItem?.skyblockId != "DUNGEONBREAKER") return
         if (ScanUtils.currentRoom?.data?.type.equalsOneOf(RoomType.PUZZLE, RoomType.FAIRY)) return
         val state = WorldUtils.getStateAt(pos).takeUnless { it.block in blacklist } ?: return

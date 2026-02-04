@@ -7,6 +7,7 @@ import com.github.noamm9.ui.clickgui.componnents.impl.DropdownSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.section
+import com.github.noamm9.utils.NumbersUtils.toFixed
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.render.Render2D
@@ -159,7 +160,7 @@ object TickTimers: Feature("Shows various types of server tick timers for F7 bos
         }
 
         val timeDisplay = if (format.value == 1) time.toString()
-        else "%.2f".format(time / 20f)
+        else (time / 20f).toFixed(2)
 
         val prefix = if (showPrefix.value) "$prefixText " else ""
         val suffix = if (showSuffix.value) if (format.value == 1) "t" else "s" else ""

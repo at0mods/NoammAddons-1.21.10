@@ -4,6 +4,7 @@ import com.github.noamm9.config.Savable
 import com.github.noamm9.ui.clickgui.componnents.Setting
 import com.github.noamm9.ui.clickgui.componnents.Style
 import com.github.noamm9.ui.utils.Animation
+import com.github.noamm9.utils.NumbersUtils.toFixed
 import com.github.noamm9.utils.render.Render2D
 import com.github.noamm9.utils.render.Render2D.width
 import com.google.gson.JsonElement
@@ -150,12 +151,8 @@ open class SliderSetting<T: Number>(
             else -> {
                 val dVal = v.toDouble()
                 val stepD = step.toDouble()
-                if (stepD % 1.0 == 0.0) "%.0f".format(dVal)
-                else {
-                    val stepStr = stepD.toString()
-                    val decimalPlaces = stepStr.substringAfter('.', "").length
-                    "%.${decimalPlaces.coerceAtMost(2)}f".format(dVal)
-                }
+                if (stepD % 1.0 == 0.0) dVal.toFixed(0)
+                else dVal.toFixed(2)
             }
         }
     }

@@ -2,8 +2,6 @@ package com.github.noamm9.features.impl.dungeon
 
 import com.github.noamm9.event.impl.ChatMessageEvent
 import com.github.noamm9.event.impl.MainThreadPacketReceivedEvent
-import com.github.noamm9.event.impl.TickEvent
-import com.github.noamm9.event.impl.WorldChangeEvent
 import com.github.noamm9.features.Feature
 import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
@@ -24,12 +22,11 @@ object Ragnarock: Feature("Ragnarock alerts") {
     private val strengthGainedMessage by ToggleSetting("Strength Gained", true)
     private val m7Alert by ToggleSetting("M7 Dragon Alert")
 
+    private const val m7RagMessage = "[BOSS] Wither King: I no longer wish to fight, but I know that will not stop you."
     private val cancelRegex = Regex("Ragnarock was cancelled due to (?:being hit|taking damage)!")
     private val strengthRegex = Regex("Strength: \\+(\\d+)")
 
-    private var startTicks = 0
-
-    private val soundSequence = listOf(
+    private val sounds = listOf(
         0L to 1.22f, 120L to 1.13f, 240L to 1.29f,
         400L to 1.60f, 520L to 1.60f, 640L to 1.72f,
         780L to 1.89f
@@ -52,25 +49,16 @@ object Ragnarock: Feature("Ragnarock alerts") {
         register<ChatMessageEvent> {
             val msg = event.unformattedText
 
-            if (m7Alert.value && LocationUtils.F7Phase == 5 && msg == "[BOSS] Wither King: You... again?")
-                startTicks = 36
+            if (m7Alert.value && LocationUtils.F7Phase == 5 && msg == m7RagMessage) {
+                ChatUtils.showTitle("rag")
+                for ((delay, pitch) in sounds) ThreadUtils.setTimeout(delay) {
+                    SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_HARP, 0.3f, pitch)
+                }
+            }
             else if (alertCancelled.value && msg.matches(cancelRegex)) {
                 ChatUtils.showTitle(subtitle = "&cRagnarock Cancelled")
                 SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_PLING, 0.3f)
             }
         }
-
-        register<TickEvent.Server> {
-            if (startTicks <= 0) return@register
-            startTicks --
-            if (startTicks != 0) return@register
-            
-            ChatUtils.showTitle("rag")
-            for ((delay, pitch) in soundSequence) ThreadUtils.setTimeout(delay) {
-                SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_HARP, 0.3f, pitch)
-            }
-        }
-
-        register<WorldChangeEvent> { startTicks = 0 }
     }
 }

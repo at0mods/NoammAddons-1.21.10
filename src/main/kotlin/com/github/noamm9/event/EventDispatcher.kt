@@ -126,7 +126,6 @@ object EventDispatcher {
         register<PacketEvent.Sent> {
             if (event.packet is ServerboundUseItemOnPacket) {
                 if (! LocationUtils.inDungeon) return@register
-                if (LocationUtils.inBoss) return@register
                 val pos = event.packet.hitResult.blockPos
                 if (! isSecret(pos)) return@register
                 val block = WorldUtils.getBlockAt(pos)

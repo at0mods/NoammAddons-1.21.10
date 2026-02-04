@@ -11,6 +11,7 @@ import com.github.noamm9.ui.clickgui.componnents.showIf
 import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.MathUtils.toPos
+import com.github.noamm9.utils.NumbersUtils.toFixed
 import com.github.noamm9.utils.PlayerUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.dungeons.enums.WitherRelic
@@ -97,7 +98,7 @@ object M7Relics: Feature(name = "M7 Relics", description = "A bunch of M7 Relics
             val timeLeft = spawnTimerTicks - DungeonListener.currentTime
             if (timeLeft <= 0) return@register
 
-            val displayTime = "%.2f".format(timeLeft / 20.0)
+            val displayTime = (timeLeft / 20.0).toFixed(2)
             val width = mc.window.guiScaledWidth
             val height = mc.window.guiScaledHeight
 
@@ -133,7 +134,7 @@ object M7Relics: Feature(name = "M7 Relics", description = "A bunch of M7 Relics
                 for (entry in activeRelics) {
                     if (isEntityAtCauldron(entity.position(), entry.relic)) {
                         val currentTime = (DungeonListener.currentTime - p5StartTime) / 20.0
-                        entry.placeTimeSeconds = "%.2f".format(currentTime).toDouble()
+                        entry.placeTimeSeconds = currentTime.toFixed(2).toDouble()
                         entry.isPlaced = true
 
                         if (entry.player == mc.user.name) {
