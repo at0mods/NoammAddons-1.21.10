@@ -36,15 +36,6 @@ public abstract class MixinMinecraft {
         CpsDisplay.addLeftClick();
     }
 
-    /*
-    @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
-    private void onSetScreen(Screen screen, CallbackInfo ci) {
-        if (screen instanceof LevelLoadingScreen && !(this.screen instanceof DirectJoinServerScreen || this.screen instanceof JoinMultiplayerScreen)) {
-            setScreen(null);
-            ci.cancel();
-        }
-    }*/
-
     @Inject(method = "startUseItem", at = @At("HEAD"))
     private void onStartUseItem(CallbackInfo ci) {
         CpsDisplay.addRightClick();

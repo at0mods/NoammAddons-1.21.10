@@ -47,7 +47,6 @@ object TeammateESP: Feature("Highlights your dungeon party.") {
                     renderVec.y + entity.bbHeight + 0.7 + distance * 0.015f,
                     renderVec.z,
                     scale = scale,
-                    bgBox = false,
                     phase = true
                 )
             }

@@ -1,6 +1,6 @@
 package com.github.noamm9.features.impl.visual
 
-import com.github.noamm9.event.impl.PacketEvent
+import com.github.noamm9.event.impl.TickEvent
 import com.github.noamm9.event.impl.WorldChangeEvent
 import com.github.noamm9.features.Feature
 import com.github.noamm9.ui.clickgui.componnents.Style
@@ -24,6 +24,7 @@ object FreezeDisplay: Feature("Shows how long the server froze after a chosen th
 
     private var lastPacketTime = System.currentTimeMillis()
 
+    @Suppress("RemoveRedundantQualifierName")
     private val hud = object: HudElement() {
         override val toggle get() = FreezeDisplay.enabled
 
@@ -69,6 +70,6 @@ object FreezeDisplay: Feature("Shows how long the server froze after a chosen th
         hudElements.add(hud)
 
         register<WorldChangeEvent> { lastPacketTime = System.currentTimeMillis() }
-        register<PacketEvent.Received> { lastPacketTime = System.currentTimeMillis() }
+        register<TickEvent.Server> { lastPacketTime = System.currentTimeMillis() }
     }
 }

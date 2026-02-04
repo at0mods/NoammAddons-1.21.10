@@ -76,6 +76,7 @@ object M7Relics: Feature(name = "M7 Relics", description = "A bunch of M7 Relics
 
         register<MouseClickEvent> {
             if (! blockWrongRelic.value || LocationUtils.F7Phase != 5) return@register
+            if (mc.screen != null) return@register
             val item = mc.player?.inventory?.getItem(8) ?: return@register
             val relic = WitherRelic.fromName(item.hoverName.string) ?: return@register
             val pos = PlayerUtils.getSelectionBlock() ?: return@register

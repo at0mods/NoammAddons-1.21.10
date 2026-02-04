@@ -2,7 +2,6 @@ package com.github.noamm9.utils.render
 
 import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.utils.ChatUtils.addColor
-import com.github.noamm9.utils.NumbersUtils.times
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.gui.Font
 import net.minecraft.client.renderer.LightTexture
@@ -150,11 +149,11 @@ object Render3D {
     fun renderString(
         text: String,
         x: Number, y: Number, z: Number,
+        color: Color = Color.WHITE,
         scale: Number = 1f,
-        bgBox: Boolean = false,
         phase: Boolean = false
     ) {
-        val toScale = (scale * 0.025).toFloat()
+        val toScale = (scale.toFloat() * 0.025f)
         val matrices = Matrix4f()
         val textRenderer = mc.font
         val camera = mc.gameRenderer.mainCamera
@@ -167,29 +166,32 @@ object Render3D {
         val consumer = mc.renderBuffers().bufferSource()
         val textLayer = if (phase) Font.DisplayMode.SEE_THROUGH else Font.DisplayMode.NORMAL
         val lines = text.addColor().split("\n")
-        val maxWidth = lines.maxOf { textRenderer.width(it) }
-        val offset = - maxWidth / 2f
-
-        if (bgBox) {
-            val widestLine = lines.maxByOrNull { textRenderer.width(it) } ?: ""
-            for ((i, _) in lines.withIndex()) {
-                textRenderer.drawInBatch(widestLine, offset, i * 9f, 0x20FFFFFF, true, matrices, consumer, textLayer, (mc.options.getBackgroundOpacity(0.25f) * 255).toInt() shl 24, LightTexture.FULL_BLOCK)
-            }
-        }
 
         for ((i, line) in lines.withIndex()) {
-            textRenderer.drawInBatch(line, - textRenderer.width(line) / 2f, i * 9f, 0xFFFFFFFF.toInt(), true, matrices, consumer, textLayer, 0, LightTexture.FULL_BLOCK)
+            textRenderer.drawInBatch(
+                line,
+                - textRenderer.width(line) / 2f,
+                i * 9f,
+                color.rgb,
+                true,
+                matrices,
+                consumer,
+                textLayer,
+                0,
+                LightTexture.FULL_BLOCK
+            )
         }
+
         consumer.endBatch()
     }
 
     fun renderString(
         text: String,
         pos: Vec3,
+        color: Color = Color.WHITE,
         scale: Number = 1f,
-        bgBox: Boolean = false,
         phase: Boolean = false
-    ) = renderString(text, pos.x, pos.y, pos.z, scale, bgBox, phase)
+    ) = renderString(text, pos.x, pos.y, pos.z, color, scale, phase)
 
 
     fun renderLine(ctx: RenderContext, start: Vec3, finish: Vec3, thickness: Number, color: Color) {
@@ -235,7 +237,8 @@ object Render3D {
 
         RenderSystem.lineWidth(thickness.toFloat())
 
-        buffer.addVertex(entry, cameraPoint.x.toFloat(), cameraPoint.y.toFloat(), cameraPoint.z.toFloat()).setColor(color.red / 255f, color.green / 255f, color.blue / 255f, 1f).setNormal(entry, normal)
+        buffer.addVertex(entry, cameraPoint.x.toFloat(), cameraPoint.y.toFloat(), cameraPoint.z.toFloat()).setColor(color.red / 255f, color.green / 255f, color.blue / 255f, 1f)
+            .setNormal(entry, normal)
         buffer.addVertex(entry, point.x.toFloat(), point.y.toFloat(), point.z.toFloat()).setColor(color.red / 255f, color.green / 255f, color.blue / 255f, 1f).setNormal(entry, normal)
 
         consumers.endBatch(RenderType.lines())

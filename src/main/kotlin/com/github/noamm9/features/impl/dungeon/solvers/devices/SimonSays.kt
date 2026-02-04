@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.Blocks
 import org.lwjgl.glfw.GLFW
 import java.awt.Color
 
-object SimonSaysSolver: Feature() {
+object SimonSays: Feature() {
     private val blockWrongClicks by ToggleSetting("Block Wrong Clicks").withDescription("Blocks wrong clicks. &eSneak to Override and stop blocking.").section("Options")
     private val sendReset by ToggleSetting("Send Reset Message").withDescription("Sends a reset message to the party when the solver breaks.")
 

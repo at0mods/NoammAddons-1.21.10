@@ -34,7 +34,6 @@ object BlockOverlay: Feature() {
 
     fun render(ctx: WorldRenderContext, blockCtx: BlockOutlineRenderState): Boolean {
         if (mc.options.hideGui) return false
-        // if (WorldUtils.getStateAt(blockHitResult.blockPos).isAir) return
 
         Render3D.renderBlock(
             RenderContext.fromContext(ctx),
