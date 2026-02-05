@@ -13,8 +13,7 @@ import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.ui.hud.HudElement
 import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.ColorUtils
-import com.github.noamm9.utils.dungeons.DungeonListener
-import com.github.noamm9.utils.dungeons.enums.Classes
+import com.github.noamm9.utils.dungeons.DungeonPlayer
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.render.Render2D
 import com.github.noamm9.utils.render.Render2D.width
@@ -125,9 +124,7 @@ object TerminalTitles: Feature("Reformats the Terminal titles on P3.") {
             else -> ""
         }
 
-        val formattedName = (DungeonListener.dungeonTeammates.find {
-            it.name == name
-        }?.clazz?.let { Classes.getColorCode(it) } ?: "&7") + name
+        val formattedName = (DungeonPlayer.get(name)?.clazz?.code ?: "&7") + name
 
         return when (mode.value) {
             0 -> "$formattedName $formattedType &f${brackets[0]}$color$min&8/&a$max&f${brackets[1]}"

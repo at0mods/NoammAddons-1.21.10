@@ -7,13 +7,15 @@ import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.EventBus.register
 import com.github.noamm9.event.EventPriority
 import com.github.noamm9.event.impl.*
+import com.github.noamm9.features.impl.dungeon.LeapMenu
+import com.github.noamm9.features.impl.dungeon.LeapMenu.odinSorting
 import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.ChatUtils.removeFormatting
 import com.github.noamm9.utils.NumbersUtils.romanToDecimal
 import com.github.noamm9.utils.PlayerUtils
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.enums.Blessing
-import com.github.noamm9.utils.dungeons.enums.Classes
+import com.github.noamm9.utils.dungeons.enums.DungeonClass
 import com.github.noamm9.utils.dungeons.enums.Puzzle
 import com.github.noamm9.utils.dungeons.map.DungeonInfo
 import com.github.noamm9.utils.dungeons.map.core.RoomState
@@ -127,7 +129,7 @@ object DungeonListener {
 
                 text == "§cThe §c§lBLOOD DOOR§c has been opened!" -> doorKeys --
 
-                "§r§c ☠" in text && "reconnected" !in unformatted -> {
+                "§c ☠" in text && "reconnected" !in unformatted -> {
                     val match = deathRegex.find(unformatted) ?: return@register
                     val username = match.groups["username"]?.value?.takeUnless { it == "You" } ?: mc.user.name
                     val reason = match.groups["reason"]?.value ?: ""
@@ -210,10 +212,10 @@ object DungeonListener {
     private fun updateDungeonTeammates(tabName: String) {
         if (NoammAddons.debugFlags.contains("dev")) {
             listOf(
-                DungeonPlayer("Noamm", Classes.Mage, 50, isDead = false),
-                DungeonPlayer("Noamm9", Classes.Archer, 50, isDead = false),
-                DungeonPlayer("NoammALT", Classes.Healer, 50, isDead = true),
-                DungeonPlayer("NoamIsSad", Classes.Tank, 50, isDead = false),
+                DungeonPlayer("Noamm", DungeonClass.Mage, 50, isDead = false),
+                DungeonPlayer("Noamm9", DungeonClass.Archer, 50, isDead = false),
+                DungeonPlayer("NoammALT", DungeonClass.Healer, 50, isDead = true),
+                DungeonPlayer("NoamIsSad", DungeonClass.Tank, 50, isDead = false),
             ).let { list ->
                 dungeonTeammates.clear()
                 dungeonTeammates.addAll(list)
@@ -237,7 +239,7 @@ object DungeonListener {
         if (clazz == "EMPTY") return
 
         dungeonTeammates.find { it.name == name }?.let { currentTeammate ->
-            currentTeammate.clazz = if (clazz != "DEAD") Classes.getByName(clazz) else currentTeammate.clazz
+            currentTeammate.clazz = if (clazz != "DEAD") DungeonClass.fromName(clazz) else currentTeammate.clazz
             currentTeammate.clazzLvl = clazzLevel.romanToDecimal()
             currentTeammate.skin = skin
             currentTeammate.isDead = clazz == "DEAD"
@@ -245,7 +247,7 @@ object DungeonListener {
             dungeonTeammates.add(
                 DungeonPlayer(
                     name,
-                    Classes.getByName(clazz),
+                    DungeonClass.fromName(clazz),
                     clazzLevel.romanToDecimal(),
                     skin,
                     clazz == "DEAD",
@@ -255,6 +257,15 @@ object DungeonListener {
 
         thePlayer = dungeonTeammates.find { it.name == mc.user.name }
         dungeonTeammatesNoSelf = dungeonTeammates.filter { it != thePlayer }
+
+        leapTeammates = when (LeapMenu.sorting.value) {
+            0 -> dungeonTeammatesNoSelf.sortedWith(compareBy({ it.clazz.ordinal }, { it.name }))
+            1 -> dungeonTeammatesNoSelf.sortedBy { it.name }
+            2 -> odinSorting(dungeonTeammatesNoSelf.sortedBy { it.clazz.priority }).toList()
+            3 -> dungeonTeammatesNoSelf.sortedBy { LeapMenu.customLeapOrder.indexOf(it.name.lowercase()).takeIf { index -> index != - 1 } ?: Int.MAX_VALUE }
+            else -> dungeonTeammatesNoSelf
+        }
+
         leapTeammates = dungeonTeammatesNoSelf.sortedBy { it.clazz }
 
         dungeonTeammates.onEach { teammate ->

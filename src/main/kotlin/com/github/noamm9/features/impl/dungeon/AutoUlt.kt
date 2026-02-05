@@ -5,31 +5,31 @@ import com.github.noamm9.features.Feature
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.PlayerUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
-import com.github.noamm9.utils.dungeons.enums.Classes
+import com.github.noamm9.utils.dungeons.enums.DungeonClass
 import com.github.noamm9.utils.location.LocationUtils
 
 object AutoUlt: Feature("Automatically uses your dungeon class ultimate when needed") {
-    private class UltMessage(val msg: String, val classes: List<Classes>, val floor: Int)
+    private class UltMessage(val msg: String, val classes: List<DungeonClass>, val floor: Int)
 
     private val UltMessages = listOf(
         UltMessage(
             msg = "⚠ Maxor is enraged! ⚠",
-            classes = listOf(Classes.Healer, Classes.Tank),
+            classes = listOf(DungeonClass.Healer, DungeonClass.Tank),
             floor = 7
         ),
         UltMessage(
             msg = "[BOSS] Goldor: You have done it, you destroyed the factory…",
-            classes = listOf(Classes.Healer, Classes.Tank),
+            classes = listOf(DungeonClass.Healer, DungeonClass.Tank),
             floor = 7
         ),
         UltMessage(
             msg = "[BOSS] Sadan: My giants! Unleashed!",
-            classes = listOf(Classes.Healer, Classes.Tank, Classes.Archer, Classes.Berserk, Classes.Mage),
+            classes = listOf(DungeonClass.Healer, DungeonClass.Tank, DungeonClass.Archer, DungeonClass.Berserk, DungeonClass.Mage),
             floor = 6
         ),
         UltMessage(
             msg = "[BOSS] Livid: I respect you for making it to here, but I'll be your undoing.",
-            classes = listOf(Classes.Healer, Classes.Tank),
+            classes = listOf(DungeonClass.Healer, DungeonClass.Tank),
             floor = 5
         )
     )

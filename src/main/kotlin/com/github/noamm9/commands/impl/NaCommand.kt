@@ -6,22 +6,37 @@ import com.github.noamm9.commands.BaseCommand
 import com.github.noamm9.commands.CommandNodeBuilder
 import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.impl.ChatMessageEvent
+import com.github.noamm9.features.impl.dungeon.LeapMenu
 import com.github.noamm9.ui.clickgui.ClickGuiScreen
 import com.github.noamm9.ui.hud.HudEditorScreen
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.addColor
+import com.github.noamm9.utils.PartyUtils
 import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.context.CommandContext
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.network.chat.Component
 
 object NaCommand: BaseCommand("na") {
+    private val commands = mapOf(
+        "/na" to "config gui",
+        "/na hud" to "HUD editor",
+        "/na debug" to "debug flags",
+        "/na sim" to "simulate chat message",
+        "/na leaporder" to "configure custom leap sorting"
+    )
+
     override fun CommandNodeBuilder.build() {
         runs {
             screen = ClickGuiScreen
         }
 
+
         literal("help") {
             runs {
-                ChatUtils.chat("§6§lNoammAddons§r\n§e/na §7- config gui\n§e/na hud §7- HUD editor\n§e/na debug §7- debug flags\n§e/na sim §7- simulate chat message")
+                val helpMenu = StringBuilder("§6§lNoammAddons§r\n")
+                commands.forEach { (cmd, desc) -> helpMenu.append("§e$cmd §7- $desc\n") }
+                ChatUtils.chat(helpMenu.toString().trim())
             }
         }
 
@@ -59,6 +74,47 @@ object NaCommand: BaseCommand("na") {
                 }
             }
         }
+
+        literal("leaporder") {
+            argument("player1", StringArgumentType.word()) {
+                suggests(partyMembersSuggestion)
+                runs { ctx -> handleLeapOrder(ctx, 1) }
+
+                argument("player2", StringArgumentType.word()) {
+                    suggests(partyMembersSuggestion)
+                    runs { ctx -> handleLeapOrder(ctx, 2) }
+
+                    argument("player3", StringArgumentType.word()) {
+                        suggests(partyMembersSuggestion)
+                        runs { ctx -> handleLeapOrder(ctx, 3) }
+
+                        argument("player4", StringArgumentType.word()) {
+                            suggests(partyMembersSuggestion)
+                            runs { ctx -> handleLeapOrder(ctx, 4) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private val partyMembersSuggestion = { PartyUtils.members.map { it.lowercase() } }
+
+    private fun handleLeapOrder(ctx: CommandContext<FabricClientCommandSource>, count: Int) {
+        val validPlayers = mutableListOf<String>()
+
+        for (i in 1 .. count) {
+            val inputName = StringArgumentType.getString(ctx, "player$i")
+
+            if (PartyUtils.members.none { it.equals(inputName, ignoreCase = true) })
+                return ChatUtils.modMessage("§cError: Player '§e$inputName§c' is not in your party.")
+
+
+            validPlayers.add(inputName.lowercase())
+        }
+
+        LeapMenu.customLeapOrder = validPlayers
+        ChatUtils.modMessage("§aCustom leap order set to: §f${validPlayers.joinToString(", ")}")
     }
 }
 

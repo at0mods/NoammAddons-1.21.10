@@ -23,7 +23,7 @@ class UIButton(
         Render2D.drawRect(context, x, y, width, height, bgColor)
 
         val stateColor = colorProvider?.invoke() ?: overrideColor
-        val borderColor = if (isHovered) Style.accentColor else stateColor ?: Color(60, 60, 60)
+        val borderColor = stateColor ?: Color(60, 60, 60)
         val textColor = if (isHovered) Style.accentColor else stateColor ?: Color.WHITE
 
         Render2D.drawRect(context, x, y, width, 1, borderColor)

@@ -8,7 +8,6 @@ import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
-import com.github.noamm9.utils.dungeons.enums.Classes
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.render.Render3D
 import com.github.noamm9.utils.render.RenderHelper.renderVec
@@ -36,7 +35,7 @@ object TeammateESP: Feature("Highlights your dungeon party.") {
             if (! LocationUtils.inDungeon) return@register
             for (teammate in DungeonListener.dungeonTeammatesNoSelf) {
                 val entity = teammate.entity ?: continue
-                val color = Classes.getColorCode(teammate.clazz)
+                val color = teammate.clazz.code
                 val renderVec = entity.renderVec
                 val distance = MathUtils.distance3D(renderVec, mc.player !!.renderVec)
                 val scale = (distance * 0.12f).coerceAtLeast(1.0)

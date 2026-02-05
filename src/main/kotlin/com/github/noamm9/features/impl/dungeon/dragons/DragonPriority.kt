@@ -3,7 +3,7 @@ package com.github.noamm9.features.impl.dungeon.dragons
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.dungeons.enums.Blessing
-import com.github.noamm9.utils.dungeons.enums.Classes
+import com.github.noamm9.utils.dungeons.enums.DungeonClass
 
 object DragonPriority {
     fun findPriority(spawningDragons: MutableList<WitherDragonEnum>): WitherDragonEnum {
@@ -21,16 +21,16 @@ object DragonPriority {
         val dragonList = listOf(WitherDragonEnum.Orange, WitherDragonEnum.Green, WitherDragonEnum.Red, WitherDragonEnum.Blue, WitherDragonEnum.Purple)
         val priorityList =
             if (totalPower >= WitherDragons.normalPower.value || (spawningDragons.any { it == WitherDragonEnum.Purple } && totalPower >= WitherDragons.easyPower.value))
-                if (playerClass.equalsOneOf(Classes.Berserk, Classes.Mage)) dragonList else dragonList.reversed()
+                if (playerClass.equalsOneOf(DungeonClass.Berserk, DungeonClass.Mage)) dragonList else dragonList.reversed()
             else listOf(WitherDragonEnum.Red, WitherDragonEnum.Orange, WitherDragonEnum.Blue, WitherDragonEnum.Purple, WitherDragonEnum.Green)
 
         spawningDragons.sortBy { priorityList.indexOf(it) }
 
         if (totalPower >= WitherDragons.easyPower.value) {
-            if (WitherDragons.soloDebuff.value == 1 && playerClass == Classes.Tank && (spawningDragons.any { it == WitherDragonEnum.Purple } || WitherDragons.soloDebuffOnAll.value)) spawningDragons.sortByDescending {
+            if (WitherDragons.soloDebuff.value == 1 && playerClass == DungeonClass.Tank && (spawningDragons.any { it == WitherDragonEnum.Purple } || WitherDragons.soloDebuffOnAll.value)) spawningDragons.sortByDescending {
                 priorityList.indexOf(it)
             }
-            else if (playerClass == Classes.Healer && (spawningDragons.any { it == WitherDragonEnum.Purple } || WitherDragons.soloDebuffOnAll.value)) spawningDragons.sortByDescending {
+            else if (playerClass == DungeonClass.Healer && (spawningDragons.any { it == WitherDragonEnum.Purple } || WitherDragons.soloDebuffOnAll.value)) spawningDragons.sortByDescending {
                 priorityList.indexOf(it)
             }
         }

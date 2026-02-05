@@ -6,7 +6,6 @@ import com.github.noamm9.features.impl.dungeon.map.MapConfig
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.addColor
 import com.github.noamm9.utils.Utils.equalsOneOf
-import com.github.noamm9.utils.dungeons.enums.Classes
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.dungeons.DungeonPlayer
 import com.github.noamm9.utils.dungeons.map.core.RoomData
@@ -66,7 +65,7 @@ object ClearInfoUpdater {
             val before = teammate.secretsBeforeRun
             val secretsAfterRun = if (before != 0L) ProfileUtils.getSecrets(teammate.name).getOrDefault(before) else 0L
             if (cdebug) ChatUtils.modMessage("${teammate.name} has $secretsAfterRun after run")
-            val playerFormatted = "${Classes.getColorCode(teammate.clazz)}${teammate.name}"
+            val playerFormatted = "${teammate.clazz.code}${teammate.name}"
             val foundSecrets = secretsAfterRun - before
 
             val baseComp = createComponent("${NoammAddons.PREFIX} $playerFormatted&f:&r ")

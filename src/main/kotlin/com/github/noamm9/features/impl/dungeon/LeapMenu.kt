@@ -6,10 +6,7 @@ import com.github.noamm9.event.impl.EntityCheckRenderEvent
 import com.github.noamm9.event.impl.ScreenEvent
 import com.github.noamm9.features.Feature
 import com.github.noamm9.ui.clickgui.componnents.*
-import com.github.noamm9.ui.clickgui.componnents.impl.KeybindSetting
-import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
-import com.github.noamm9.ui.clickgui.componnents.impl.TextInputSetting
-import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
+import com.github.noamm9.ui.clickgui.componnents.impl.*
 import com.github.noamm9.ui.utils.Resolution
 import com.github.noamm9.utils.ButtonType
 import com.github.noamm9.utils.ChatUtils
@@ -35,6 +32,9 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
     val showLastDoorOpener by ToggleSetting("Show Last Door Opener", false).showIf { customLeapMenu.value }
     val tintDeadPlayers by ToggleSetting("Tint Dead Players", true).showIf { customLeapMenu.value }
 
+    val sorting by DropdownSetting("Leap Order", 0, arrayListOf("A-Z Class", "A-Z Name", "Odin Sorting", "Custom sorting", "No Sorting"))
+        .withDescription("How to sort the leap menu. /na leaporder to configure custom sorting.")
+
     val leapKeybinds by ToggleSetting("Leap Keybinds").showIf { customLeapMenu.value }.section("Leap Keybinds")
     val key1 by KeybindSetting("Slot 1", GLFW.GLFW_KEY_1).showIf { leapKeybinds.value }
     val key2 by KeybindSetting("Slot 2", GLFW.GLFW_KEY_2).showIf { leapKeybinds.value }
@@ -58,6 +58,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
     private val playerRegex = Regex("(?:\\[.+?] )?(?<name>\\w+)")
     private var shouldHide: Long = 0
 
+    var customLeapOrder = listOf<String>()
 
     override fun init() {
         register<ChatMessageEvent> {
@@ -248,5 +249,26 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
         mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1F))
         GuiUtils.clickSlot(entry.slotIndex, ButtonType.LEFT)
         mc.player !!.closeContainer()
+    }
+
+    fun odinSorting(players: List<DungeonPlayer>): List<DungeonPlayer> {
+        val result = mutableListOf<DungeonPlayer>()
+
+        val secondRound = mutableListOf<DungeonPlayer>()
+
+        for (player in players.sortedBy { it.clazz.priority }) {
+            val i = player.clazz.quadIndex
+            if (result.getOrNull(i) == null) result[i] = player
+            else secondRound.add(player)
+        }
+
+        if (secondRound.isEmpty()) return result
+
+        for (i in result.indices) if (result.getOrNull(i) == null) {
+            result[i] = secondRound.removeAt(0)
+            if (secondRound.isEmpty()) return result
+        }
+
+        return result
     }
 }

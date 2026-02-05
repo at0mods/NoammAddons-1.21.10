@@ -7,7 +7,7 @@ import com.github.noamm9.utils.ColorUtils.colorCodeByPresent
 import com.github.noamm9.utils.ColorUtils.colorizeScore
 import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
-import com.github.noamm9.utils.dungeons.enums.Classes
+import com.github.noamm9.utils.dungeons.enums.DungeonClass
 import com.github.noamm9.utils.dungeons.map.DungeonInfo
 import com.github.noamm9.utils.dungeons.map.core.*
 import com.github.noamm9.utils.dungeons.map.handlers.HotbarMapColorParser
@@ -291,7 +291,7 @@ object MapRenderer: HudElement() {
                 val borderColor = if (MapConfig.mapPlayerHeadColorClassBased.value) player.clazz.color
                 else MapConfig.mapPlayerHeadColor.value
 
-                val nameColor = if (MapConfig.mapPlayerNameClassColorBased.value && player.clazz != Classes.Empty) player.clazz.color
+                val nameColor = if (MapConfig.mapPlayerNameClassColorBased.value && player.clazz != DungeonClass.Empty) player.clazz.color
                 else Color.WHITE
 
                 drawPlayerHead(ctx, player.name, x, z, yaw, entity?.skin?.body?.id() ?: player.skin, borderColor, nameColor)
@@ -301,7 +301,7 @@ object MapRenderer: HudElement() {
             val borderColor = if (MapConfig.mapPlayerHeadColorClassBased.value) thePlayer.clazz.color
             else MapConfig.mapPlayerHeadColor.value
 
-            val nameColor = if (MapConfig.mapPlayerNameClassColorBased.value && thePlayer.clazz != Classes.Empty) thePlayer.clazz.color
+            val nameColor = if (MapConfig.mapPlayerNameClassColorBased.value && thePlayer.clazz != DungeonClass.Empty) thePlayer.clazz.color
             else Color.WHITE
 
             val (x, z) = MapUtils.coordsToMap(thePlayer.entity !!.renderVec)
@@ -314,7 +314,7 @@ object MapRenderer: HudElement() {
                 levelPlayers.find { it.name.string == name }?.let { entity ->
                     val (x, z) = MapUtils.coordsToMap(entity.renderVec)
 
-                    val borderColor = if (MapConfig.mapPlayerHeadColorClassBased.value) Classes.Empty.color
+                    val borderColor = if (MapConfig.mapPlayerHeadColorClassBased.value) DungeonClass.Empty.color
                     else MapConfig.mapPlayerHeadColor.value
 
                     drawPlayerHead(ctx, name, x, z, entity.yRot, entity.skin.body.id(), borderColor, Color.WHITE)
@@ -322,7 +322,7 @@ object MapRenderer: HudElement() {
             }
 
             val (x, z) = MapUtils.coordsToMap(mc.player !!.renderVec)
-            val borderColor = if (MapConfig.mapPlayerHeadColorClassBased.value) Classes.Empty.color
+            val borderColor = if (MapConfig.mapPlayerHeadColorClassBased.value) DungeonClass.Empty.color
             else MapConfig.mapPlayerHeadColor.value
 
             drawPlayerHead(ctx, mc.user.name, x, z, mc.player !!.yRot, mc.player !!.skin.body.id(), borderColor, Color.WHITE)
