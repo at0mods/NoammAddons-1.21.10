@@ -1,8 +1,8 @@
 package com.github.noamm9.utils
 
 import com.github.noamm9.NoammAddons
+import net.minecraft.Util
 import java.awt.Color
-import java.awt.Desktop
 import java.net.URI
 import kotlin.reflect.KClass
 
@@ -11,7 +11,7 @@ object Utils {
 
     fun openDiscordLink() {
         // to not false flag regex rat scanners
-        Desktop.getDesktop().browse(URI("h*#t#t~p*s:/#/*d*is#c~o~r*d.~g~~*g#*/*p~j9*#m*QG~x#*M*#xB~".remove("#").remove("~").remove("*")))
+        Util.getPlatform().openUri(URI("h*#t#t~p*s:/#/*d*is#c~o~r*d.~g~~*g#*/*p~j9*#m*QG~x#*M*#xB~".remove("#").remove("~").remove("*")))
     }
 
     fun Any?.equalsOneOf(vararg others: Any?): Boolean = others.any { this == it }

@@ -8,7 +8,7 @@ import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.GuiGraphics
 import java.awt.Color
 
-class ButtonSetting(name: String, val action: () -> Unit): Setting<Unit>(name, Unit) {
+class ButtonSetting(name: String, val playSound: Boolean = true, val action: () -> Unit): Setting<Unit>(name, Unit) {
     private val hoverAnim = Animation(200)
 
     override fun draw(ctx: GuiGraphics, mouseX: Int, mouseY: Int) {
@@ -38,7 +38,7 @@ class ButtonSetting(name: String, val action: () -> Unit): Setting<Unit>(name, U
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (button == 0 && mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
-            Style.playClickSound(1f)
+            if (playSound) Style.playClickSound(1f)
             action.invoke()
             return true
         }

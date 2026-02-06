@@ -30,8 +30,10 @@ abstract class Setting<T>(val name: String, val defaultValue: T) {
     abstract fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean
 
     open fun mouseReleased(button: Int) {}
-    open fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
-    open fun charTyped(codePoint: Char, modifiers: Int): Boolean = false
+    open fun mouseScrolled(mouseX: Int, mouseY: Int, delta: Double) = false
+
+    open fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int) = false
+    open fun charTyped(codePoint: Char, modifiers: Int) = false
 }
 
 fun <T: Setting<*>> T.section(name: String, showIf: () -> Boolean = { true }): T {

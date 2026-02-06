@@ -12,6 +12,7 @@ import com.github.noamm9.ui.hud.HudEditorScreen
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.addColor
 import com.github.noamm9.utils.PartyUtils
+import com.github.noamm9.utils.Utils
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
@@ -20,6 +21,7 @@ import net.minecraft.network.chat.Component
 object NaCommand: BaseCommand("na") {
     private val commands = mapOf(
         "/na" to "config gui",
+        "/na discord" to "opens the link to the disrod server",
         "/na hud" to "HUD editor",
         "/na debug" to "debug flags",
         "/na sim" to "simulate chat message",
@@ -31,6 +33,11 @@ object NaCommand: BaseCommand("na") {
             screen = ClickGuiScreen
         }
 
+        literal("discord") {
+            runs {
+                Utils.openDiscordLink()
+            }
+        }
 
         literal("help") {
             runs {

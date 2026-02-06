@@ -189,13 +189,17 @@ object ClickGuiScreen: Screen(Component.literal("ClickGUI")) {
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontal: Double, vertical: Double): Boolean {
+        val mx = Resolution.getMouseX(mouseX)
+        val my = Resolution.getMouseY(mouseY)
+
         if (selectedFeature != null) {
+            selectedFeature?.configSettings?.forEach {
+                if (it.mouseScrolled(mx, my, vertical)) return true
+            }
+
             scrollTarget += (vertical * 30).toFloat()
             return true
         }
-
-        val mx = Resolution.getMouseX(mouseX)
-        val my = Resolution.getMouseY(mouseY)
 
         panels.asReversed().find { it.isMouseOver(mx, my) }?.let { panel ->
             panel.handleScroll(vertical)

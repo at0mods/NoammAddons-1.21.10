@@ -11,7 +11,6 @@ import com.github.noamm9.features.annotations.Dev
 import com.github.noamm9.ui.clickgui.CategoryType
 import com.github.noamm9.ui.clickgui.componnents.Setting
 import com.github.noamm9.ui.hud.HudElement
-import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.Utils.spaceCaps
 import net.minecraft.client.gui.GuiGraphics
 
@@ -59,10 +58,6 @@ open class Feature(
         enabled = ! enabled
         if (enabled) onEnable()
         else onDisable()
-
-        if (mc.isOfflineDeveloperMode) {
-            ChatUtils.modMessage("$name: ${if (enabled) "&aEnabled" else "&cDisabled"}")
-        }
     }
 
     protected inline fun <reified T: Event> register(
