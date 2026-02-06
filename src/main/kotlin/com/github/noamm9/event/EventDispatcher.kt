@@ -7,6 +7,7 @@ import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.DungeonUtils
 import com.github.noamm9.utils.dungeons.DungeonUtils.isSecret
+import com.github.noamm9.utils.dungeons.enums.SecretType
 import com.github.noamm9.utils.dungeons.map.core.UniqueRoom
 import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
 import com.github.noamm9.utils.location.LocationUtils
@@ -25,6 +26,7 @@ import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.entity.SkullBlockEntity
 
 object EventDispatcher {
     private var invWindowId: Int = - 1
@@ -76,7 +78,7 @@ object EventDispatcher {
                 if (! event.packet.sound.value().equalsOneOf(SoundEvents.BAT_HURT, SoundEvents.BAT_DEATH)) return@register
 
                 EventBus.post(DungeonEvent.SecretEvent(
-                    DungeonEvent.SecretEvent.SecretType.BAT,
+                    SecretType.BAT,
                     BlockPos(event.packet.x.toInt(), event.packet.y.toInt(), event.packet.z.toInt())
                 ))
             }
@@ -87,7 +89,7 @@ object EventDispatcher {
                 if (mc.player !!.distanceTo(entity) > 6) return@register
 
                 EventBus.post(
-                    DungeonEvent.SecretEvent(DungeonEvent.SecretEvent.SecretType.ITEM, entity.blockPosition())
+                    DungeonEvent.SecretEvent(SecretType.ITEM, entity.blockPosition())
                 )
             }
             else if (event.packet is ClientboundContainerClosePacket) {
@@ -131,9 +133,16 @@ object EventDispatcher {
                 val block = WorldUtils.getBlockAt(pos)
 
                 val type = when (block) {
-                    Blocks.CHEST, Blocks.TRAPPED_CHEST -> DungeonEvent.SecretEvent.SecretType.CHEST
-                    Blocks.LEVER -> DungeonEvent.SecretEvent.SecretType.LEVER
-                    Blocks.PLAYER_HEAD, Blocks.SKELETON_SKULL, Blocks.WITHER_SKELETON_SKULL -> DungeonEvent.SecretEvent.SecretType.SKULL
+                    Blocks.CHEST, Blocks.TRAPPED_CHEST -> SecretType.CHEST
+                    Blocks.LEVER -> SecretType.LEVER
+                    Blocks.PLAYER_HEAD -> {
+                        when ((mc.level?.getBlockEntity(pos) as? SkullBlockEntity)?.ownerProfile?.partialProfile()?.id.toString()) {
+                            DungeonUtils.WITHER_ESSENCE_ID -> SecretType.WITHER_ESSANCE
+                            DungeonUtils.REDSTONE_KEY_ID -> SecretType.REDSTONE_KEY
+                            else -> return@register
+                        }
+                    }
+
                     else -> return@register
                 }
 

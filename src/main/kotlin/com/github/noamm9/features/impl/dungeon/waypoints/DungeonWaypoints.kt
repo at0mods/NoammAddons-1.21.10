@@ -53,6 +53,10 @@ object DungeonWaypoints: Feature("Add a custom waypoint with /ndw add while look
             waypoints["B" + LocationUtils.dungeonFloorNumber]?.let { currentRoomWaypoints.addAll(it) }
         }
 
+        register<DungeonEvent.SecretEvent> {
+            SecretsWaypoints.onSecret(event)
+        }
+
         register<RenderWorldEvent> {
             SecretsWaypoints.onRenderWorld(event.ctx)
             if (currentRoomWaypoints.isEmpty()) return@register

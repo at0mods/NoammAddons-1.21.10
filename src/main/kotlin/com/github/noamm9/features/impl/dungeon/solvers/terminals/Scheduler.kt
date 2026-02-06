@@ -9,17 +9,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 object Scheduler {
     private var currentTicks = 0L
 
-    private class Task(
-        val targetMs: Long,
-        val targetTicks: Long,
-        val action: Runnable
-    ) {
+    private class Task(val targetMs: Long, val targetTicks: Long, val action: Runnable) {
         @Volatile
         var msPassed = false
-
         @Volatile
         var ticksPassed = false
-
         @Volatile
         var executed = false
     }
