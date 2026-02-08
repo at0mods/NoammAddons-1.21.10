@@ -1,5 +1,6 @@
 package com.github.noamm9.features.impl.dungeon.waypoints
 
+import com.github.noamm9.NoammAddons
 import com.github.noamm9.NoammAddons.MOD_NAME
 import com.github.noamm9.event.impl.DungeonEvent
 import com.github.noamm9.event.impl.RenderWorldEvent
@@ -48,9 +49,10 @@ object DungeonWaypoints: Feature("Add a custom waypoint with /ndw add while look
         }
 
         register<DungeonEvent.BossEnterEvent> {
-            SecretsWaypoints.clear()
             currentRoomWaypoints.clear()
-            waypoints["B" + LocationUtils.dungeonFloorNumber]?.let { currentRoomWaypoints.addAll(it) }
+            waypoints["B" + LocationUtils.dungeonFloorNumber]?.let {
+                currentRoomWaypoints.addAll(it)
+            }
         }
 
         register<DungeonEvent.SecretEvent> {
@@ -73,22 +75,43 @@ object DungeonWaypoints: Feature("Add a custom waypoint with /ndw add while look
             currentRoomWaypoints.clear()
         }
 
-        configFile.takeIf(File::exists)?.let(::FileReader).use {
-            val type = object: TypeToken<MutableMap<String, List<DungeonWaypoint>>>() {}.type
-            val loadedData = runCatching { JsonUtils.gsonBuilder.fromJson<MutableMap<String, List<DungeonWaypoint>>?>(it, type) }.getOrNull()
+        loadConfig()
+    }
 
-            if (loadedData != null) {
-                waypoints.clear()
-                waypoints.putAll(loadedData)
+    private fun loadConfig() {
+        if (! configFile.exists()) return
+
+        try {
+            FileReader(configFile).use { reader ->
+                val type = object: TypeToken<MutableMap<String, List<DungeonWaypoint>>>() {}.type
+                val loadedData = JsonUtils.gsonBuilder.fromJson<MutableMap<String, List<DungeonWaypoint>>>(reader, type)
+
+                if (loadedData != null) {
+                    waypoints.clear()
+                    waypoints.putAll(loadedData)
+                    NoammAddons.logger.info("${this.javaClass.simpleName} Config loaded successfully: ${waypoints.size} entries")
+                }
             }
+        } catch (e: Exception) {
+            NoammAddons.logger.error("${this.javaClass.simpleName} Failed to load config!")
+            e.printStackTrace()
         }
     }
 
     fun saveConfig() {
-        configFile.parentFile.takeUnless(File::exists)?.let(File::mkdirs)
-        val writer = FileWriter(configFile)
-        JsonUtils.gsonBuilder.toJson(waypoints, writer)
-        writer.close()
+        try {
+            if (! configFile.parentFile.exists()) {
+                configFile.parentFile.mkdirs()
+            }
+
+            FileWriter(configFile).use { writer ->
+                JsonUtils.gsonBuilder.toJson(waypoints, writer)
+            }
+            NoammAddons.logger.info("${this.javaClass.simpleName} Config saved successfully.")
+        } catch (e: Exception) {
+            NoammAddons.logger.error("${this.javaClass.simpleName} Failed to save config!")
+            e.printStackTrace()
+        }
     }
 
     fun saveWaypoint(absPos: BlockPos, relPos: BlockPos, roomName: String, color: Color, filled: Boolean, outline: Boolean, phase: Boolean) {

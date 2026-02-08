@@ -1,7 +1,7 @@
 package com.github.noamm9.features.impl.dungeon.waypoints
 
+import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.impl.DungeonEvent
-import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.enums.SecretType
 import com.github.noamm9.utils.dungeons.map.core.UniqueRoom
 import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
@@ -22,7 +22,7 @@ object SecretsWaypoints {
         }
     }
 
-    private val waypoints by lazy { ScanUtils.roomList.associate { it.name to it.secretCoords } }
+    private val secretWaypoints by lazy { ScanUtils.roomList.associate { it.name to it.secretCoords } }
     private val currentRoomWaypoints: CopyOnWriteArrayList<SecretWaypoint> = CopyOnWriteArrayList()
 
     fun onRoomEnter(room: UniqueRoom) {
@@ -34,7 +34,7 @@ object SecretsWaypoints {
         val roomCorner = room.corner !!
         val roomName = room.name
 
-        waypoints[roomName]?.let { secretCoords ->
+        secretWaypoints[roomName]?.let { secretCoords ->
             val roomWaypoints = mutableListOf<SecretWaypoint>()
             secretCoords.redstoneKey.forEach { roomWaypoints.add(SecretWaypoint(ScanUtils.getRealCoord(it, roomCorner, roomRotation), SecretType.REDSTONE_KEY)) }
             secretCoords.wither.forEach { roomWaypoints.add(SecretWaypoint(ScanUtils.getRealCoord(it, roomCorner, roomRotation), SecretType.WITHER_ESSANCE)) }
@@ -58,9 +58,16 @@ object SecretsWaypoints {
     fun onSecret(event: DungeonEvent.SecretEvent) {
         if (! DungeonWaypoints.secretWaypoints.value) return
         if (currentRoomWaypoints.isEmpty()) return
-        val (batItems, others) = currentRoomWaypoints.partition { it.type.equalsOneOf(SecretType.BAT, SecretType.ITEM) }
-        val list = if (event.type.equalsOneOf(SecretType.BAT, SecretType.ITEM)) batItems else others
-        list.minByOrNull { it.pos.distSqr(event.pos) }?.let(currentRoomWaypoints::remove)
+        if (event.type == SecretType.LEVER) return
+        if (event.pos.distSqr(mc.player !!.blockPosition()) > 36) return
+        val estimate = listOf(SecretType.BAT, SecretType.ITEM)
+
+        val waypoint = if (event.type !in estimate) currentRoomWaypoints.find { it.pos == event.pos }
+        else currentRoomWaypoints.filter { it.type in estimate }.minByOrNull {
+            it.pos.distSqr(event.pos)
+        }
+
+        waypoint?.let(currentRoomWaypoints::remove)
     }
 
     fun clear() = currentRoomWaypoints.clear()
