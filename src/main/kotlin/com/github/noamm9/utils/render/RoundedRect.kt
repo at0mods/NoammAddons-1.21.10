@@ -76,11 +76,9 @@ class RoundedRect(buffers: MultiBufferSource.BufferSource): PictureInPictureRend
 
     val uniforms by lazy { DynamicUniformStorage<DynamicUniformStorage.DynamicUniform>("RoundRect UBO", 112, 4) }
 
-
     companion object {
         fun draw(c: GuiGraphics, x: Number, y: Number, w: Number, h: Number, r: Number, col: Color, col2: Color? = null, shadow: Float = 0f, edgeSoftness: Float = 1f) {
             val pose = c.pose()
-
             c.guiRenderState.submitPicturesInPictureState(RoundRectState(
                 x = pose.m20() + (x.toFloat() * pose.m00()), y = pose.m21() + (y.toFloat() * pose.m00()),
                 extentX = w.toFloat(), extentY = h.toFloat(), radius = r.toFloat(),
