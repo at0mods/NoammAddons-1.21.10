@@ -21,7 +21,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.sounds.SoundEvents
 
 object MelodyDisplay: Feature("Displays the current progress someone for melody on screen") {
-  private val leapMsg by TextInputSetting("Leap Message", "&d<{name} has {progress} melody")
+  private val leapMsg by TextInputSetting("Leap Message", "&d{name} has {progress} melody")
     .withDescription("replaces {name} with the player name and {progress} to the melody progress")
 
   private val alertDuration by SliderSetting("Alert Duration", 2.5f, 0f, 5f, 0.1f)
