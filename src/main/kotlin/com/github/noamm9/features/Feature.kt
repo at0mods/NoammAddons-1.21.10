@@ -20,7 +20,6 @@ import com.github.noamm9.utils.Utils.spaceCaps
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.sounds.SoundEvent
-import net.minecraft.sounds.SoundEvents
 
 open class Feature(
     val description: String? = null,
@@ -94,7 +93,7 @@ open class Feature(
     data class SoundSettings(val sound: SoundSetting, val volume: SliderSetting<Float>, val pitch: SliderSetting<Float>, val play: ButtonSetting)
 
     fun createSoundSettings(name: String, sound: SoundEvent, showIf: () -> Boolean = { true }): SoundSettings {
-        val sound = SoundSetting("Sound", SoundEvents.EXPERIENCE_ORB_PICKUP)
+        val sound = SoundSetting(name, sound)
             .withDescription("The internal Minecraft sound key to play.")
             .showIf(showIf)
 

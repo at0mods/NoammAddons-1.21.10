@@ -8,11 +8,8 @@ import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.showIf
 import com.github.noamm9.utils.PlayerUtils
-import com.github.noamm9.utils.items.ItemUtils.customData
-import com.github.noamm9.utils.items.ItemUtils.skyblockId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import net.minecraft.world.item.ItemStack
 import org.lwjgl.glfw.GLFW
 
 object LCEtherwarp: Feature(name = "LC Etherwarp", description = "Allows you to use the etherwarp ability with left-click") {
@@ -27,7 +24,7 @@ object LCEtherwarp: Feature(name = "LC Etherwarp", description = "Allows you to 
             if (mc.screen != null) return@register
             val player = mc.player ?: return@register
             if (! player.isCrouching && ! autoSneak.value) return@register
-            if (getEtherwarpDistance(player.mainHandItem) == null) return@register
+            if (EtherwarpHelper.getEtherwarpDistance(player.mainHandItem) == null) return@register
 
             event.isCanceled = true
 
@@ -50,14 +47,4 @@ object LCEtherwarp: Feature(name = "LC Etherwarp", description = "Allows you to 
             }
         }
     }
-
-    private fun getEtherwarpDistance(stack: ItemStack): Double? {
-        if (stack.isEmpty) return null
-        val id = stack.skyblockId
-        if (id != "ASPECT_OF_THE_VOID" && id != "ASPECT_OF_THE_END") return null
-        val nbt = stack.customData
-        if (nbt.getByte("ethermerge").orElse(0).toInt() != 1) return null
-        return 57.0 + nbt.getByte("tuned_transmission").orElse(0).toInt()
-    }
 }
-

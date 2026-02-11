@@ -1,11 +1,10 @@
 package com.github.noamm9
 
+import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.event.EventBus
-import com.github.noamm9.event.impl.PacketEvent
-import com.github.noamm9.event.impl.RenderWorldEvent
-import com.github.noamm9.event.impl.TickEvent
-import com.github.noamm9.event.impl.WorldChangeEvent
+import com.github.noamm9.event.impl.*
 import com.github.noamm9.utils.ColorUtils.withAlpha
+import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.MathUtils.add
 import com.github.noamm9.utils.dungeons.map.DungeonInfo
 import com.github.noamm9.utils.dungeons.map.handlers.DungeonScanner
@@ -14,6 +13,7 @@ import com.github.noamm9.utils.render.Render3D
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.minecraft.core.BlockPos
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket
 import java.awt.Color
 
@@ -24,7 +24,10 @@ class TestGround {
     companion object {
         val experimental get() = NoammAddons.debugFlags.contains("tick")
         val rotation get() = NoammAddons.debugFlags.contains("rotation")
+        val norotate get() = NoammAddons.debugFlags.contains("norotate")
     }
+
+    private var oldRot = MathUtils.Rotation(0f, 0f)
 
     init {
         EventBus.register<WorldChangeEvent> {
@@ -75,9 +78,25 @@ class TestGround {
                         (if (room.rotation?.div(90) == index) Color.GREEN else Color.red).withAlpha(60)
                     )
 
-
                     Render3D.renderString("$index", centerr.x + dx + 0.5, centerr.y, centerr.z + dz + 0.5, phase = true, scale = 3)
                 }
+            }
+        }
+
+
+        EventBus.register<MainThreadPacketReceivedEvent.Pre> {
+            if (! norotate) return@register
+            if (event.packet is ClientboundPlayerPositionPacket) {
+                oldRot.yaw = mc.player !!.yRot
+                oldRot.pitch = mc.player !!.xRot
+            }
+        }
+
+        EventBus.register<MainThreadPacketReceivedEvent.Post> {
+            if (! norotate) return@register
+            if (event.packet is ClientboundPlayerPositionPacket) {
+                mc.player !!.yRot = oldRot.yaw
+                mc.player !!.xRot = oldRot.pitch
             }
         }
     }

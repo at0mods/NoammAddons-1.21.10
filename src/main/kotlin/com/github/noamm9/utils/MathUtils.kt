@@ -12,15 +12,6 @@ import kotlin.math.*
 object MathUtils {
     data class Rotation(var yaw: Float, var pitch: Float)
 
-    /**
-     * Checks if a given coordinate is inside a specified 3D box.
-     * The box is defined by any two opposite corners, regardless of their order.
-     *
-     * @param coord The coordinate to check.
-     * @param corner1 One corner of the box.
-     * @param corner2 The opposite corner of the box.
-     * @return True if the coordinate is inside the box, false otherwise.
-     */
     fun isCoordinateInsideBox(coord: Vec3, corner1: Vec3i, corner2: Vec3i): Boolean {
         val minX = minOf(corner1.x, corner2.x)
         val maxX = maxOf(corner1.x, corner2.x)

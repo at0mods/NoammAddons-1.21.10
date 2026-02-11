@@ -50,5 +50,3 @@ object ScrollableTooltip: Feature("allows you to scroll through long tooltips") 
         }
     }
 }
-
-

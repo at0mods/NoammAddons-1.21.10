@@ -13,8 +13,8 @@ object CakeNumbers: Feature("Displays the year of a the cake in the New Year Cak
     override fun init() {
         register<ContainerEvent.Render.Slot.Post> {
             if (! LocationUtils.inSkyblock) return@register
-            if (event.slot.item.item != Items.CAKE) return@register
-            val year = cakeRegex.find(event.slot.item.displayName.unformattedText)?.destructured?.component1() ?: return@register
+            if (! event.slot.item.`is`(Items.CAKE)) return@register
+            val year = cakeRegex.find(event.slot.item.hoverName.unformattedText)?.destructured?.component1() ?: return@register
             Render2D.drawCenteredString(event.context, "&b$year", event.slot.x + 8, event.slot.y + 8, scale = 0.8)
         }
     }

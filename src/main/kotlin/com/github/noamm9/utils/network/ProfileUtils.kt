@@ -1,7 +1,9 @@
 package com.github.noamm9.utils.network
 
+import com.github.noamm9.utils.network.cache.ProfileCache
 import com.github.noamm9.utils.network.cache.UuidCache
 import com.github.noamm9.utils.network.data.MojangData
+import kotlinx.serialization.json.JsonObject
 
 object ProfileUtils {
     private const val API = "https://api.noammaddons.workers.dev"
@@ -16,5 +18,12 @@ object ProfileUtils {
         return getUUIDbyName(playerName).mapCatching { mojangData ->
             WebUtils.get<Long>("$API/secrets?uuid=${mojangData.uuid}").getOrThrow()
         }
+    }
+
+    suspend fun getProfile(playerName: String): Result<JsonObject> {
+        ProfileCache.getFromCache(playerName)?.let { return Result.success(it) }
+        return getUUIDbyName(playerName).mapCatching { mojangData ->
+            WebUtils.get<JsonObject>("$API/dungeonstats?uuid=${mojangData.uuid}").getOrThrow()
+        }.onSuccess { ProfileCache.addToCache(playerName, it) }
     }
 }
