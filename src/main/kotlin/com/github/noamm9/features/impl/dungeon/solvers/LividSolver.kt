@@ -7,9 +7,9 @@ import com.github.noamm9.ui.clickgui.componnents.impl.ColorSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.ui.clickgui.componnents.section
+import com.github.noamm9.ui.clickgui.componnents.showIf
 import com.github.noamm9.utils.*
 import com.github.noamm9.utils.ChatUtils.unformattedText
-import com.github.noamm9.utils.ColorUtils.withAlpha
 import com.github.noamm9.utils.MathUtils.add
 import com.github.noamm9.utils.Utils.favoriteColor
 import com.github.noamm9.utils.dungeons.DungeonListener.dungeonTeammates
@@ -28,8 +28,8 @@ object LividSolver: Feature() {
     private val tracer by ToggleSetting("Tracer", true)
     private val hideWrong by ToggleSetting("Hide Wrong")
     private val iceSprayTimer by ToggleSetting("Ice Spray Timer")
-    private val highlightColor by ColorSetting("Highlight Color", favoriteColor.withAlpha(0.3f), false).section("Colors")
-    private val tracerColor by ColorSetting("Tracer Color", favoriteColor, false)
+    private val highlightColor by ColorSetting("Highlight Color", favoriteColor, false).section("Colors")
+    private val tracerColor by ColorSetting("Tracer Color", favoriteColor, false).showIf { tracer.value }
 
     private val lividMap = mapOf(
         Blocks.GREEN_WOOL to "Frog Livid",

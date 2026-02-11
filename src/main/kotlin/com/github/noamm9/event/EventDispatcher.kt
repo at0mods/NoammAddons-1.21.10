@@ -54,11 +54,11 @@ object EventDispatcher {
             EventBus.post(WorldChangeEvent)
         }
 
-        ClientTickEvents.START_CLIENT_TICK.register { _ ->
+        ClientTickEvents.START_CLIENT_TICK.register { mc ->
             mc.level?.let { EventBus.post(TickEvent.Start) }
         }
 
-        ClientTickEvents.END_CLIENT_TICK.register { _ ->
+        ClientTickEvents.END_CLIENT_TICK.register { mc ->
             mc.level?.let { EventBus.post(TickEvent.End) }
         }
 

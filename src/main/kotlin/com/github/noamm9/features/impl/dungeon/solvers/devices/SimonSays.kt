@@ -7,20 +7,17 @@ import com.github.noamm9.ui.clickgui.componnents.*
 import com.github.noamm9.ui.clickgui.componnents.impl.ColorSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
-import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.PlayerUtils
+import com.github.noamm9.utils.PlayerUtils.rightClick
+import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.render.NoammRenderLayers
 import com.github.noamm9.utils.render.RenderContext
 import com.github.noamm9.utils.world.WorldUtils
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.core.BlockPos
-import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
-import net.minecraft.world.entity.decoration.ArmorStand
 import net.minecraft.world.level.block.Blocks
 import java.awt.Color
 
@@ -32,9 +29,13 @@ object SimonSays: Feature("Simon Says Solver") {
     private val color2 by ColorSetting("Second Color", Color.YELLOW).withDescription("Color of the second button.")
     private val color3 by ColorSetting("Other Color", Color.RED).withDescription("Color of the rest of the buttons.")
 
-    private val autoStart by ToggleSetting("Auto start").withDescription("Automatically start the device.").section("Auto")
-    private val autoStartDelay by SliderSetting("Auto start delay", 70, 50, 200, 1)
-        .withDescription("Delay in miliseconds between clicks.").showIf { autoStart.value }
+    private val autoStart by ToggleSetting("Auto Start", false).withDescription("Automatically starts the device when it can be started.").section("Auto")
+    private val startClicks by SliderSetting("Start Clicks", 3, 1, 10, 1).withDescription("Amount of clicks to start the device.").showIf { autoStart.value }
+    private val startClickDelay by SliderSetting("Start Click Delay", 3, 1, 25, 1).withDescription("Delay in ticks between each start click.").showIf { autoStart.value }
+
+    private val autoSS by ToggleSetting("Auto SS").withDescription("Automatically does the device.").showIf { NoammAddons.debugFlags.contains("autoss") }
+    private val autoSSDelay by SliderSetting("Auto SS delay", 3, 1, 10, 1)
+        .withDescription("Delay in Server ticks.").showIf { autoSS.value && NoammAddons.debugFlags.contains("autoss") }
 
     private val isSimonSaysActive get() = enabled && LocationUtils.F7Phase == 3
     private val solution = ArrayList<BlockPos>()
@@ -44,28 +45,24 @@ object SimonSays: Feature("Simon Says Solver") {
     private var lastClick = 0L
 
     private val startButton = BlockPos(110, 121, 91)
+    private val startRegex = Regex("^\\[BOSS] Goldor: Who dares trespass into my domain\\?$")
+
     private val buttonCheckPos = BlockPos(110, 120, 92)
     private val startPos = BlockPos(111, 120, 92)
-
-    private var job: Job? = null
 
 
     override fun init() {
         register<WorldChangeEvent> { reset() }
 
-        register<MainThreadPacketReceivedEvent.Post> {
+        register<ChatMessageEvent> {
             if (! isSimonSaysActive) return@register
             if (! autoStart.value) return@register
-            if (job?.isActive == true) return@register
-            val packet = event.packet as? ClientboundSetEntityDataPacket ?: return@register
             if (PlayerUtils.getSelectionBlock() != startButton) return@register
-            val armorstand = mc.level?.getEntity(packet.id) as? ArmorStand ?: return@register
-            if (armorstand.name.unformattedText != "Device") return@register
+            if (! event.unformattedText.matches(startRegex)) return@register
 
-            job = scope.launch {
-                repeat(3) {
-                    delay(autoStartDelay.value.toLong())
-                    PlayerUtils.rightClick()
+            repeat(startClicks.value) {
+                ThreadUtils.scheduledTask(it * startClickDelay.value) {
+                    rightClick()
                 }
             }
         }
@@ -90,15 +87,17 @@ object SimonSays: Feature("Simon Says Solver") {
                     lastExisted = true
                     skipOver = true
 
-                    if (NoammAddons.debugFlags.contains("autoss")) {
-                        val firstClick = solution[0]
-                        job = scope.launch {
-                            for (_pos in solution.toList()) {
-                                val pos = _pos.west()
-                                PlayerUtils.rotateSmoothly(pos.west().center, 200)
-                                PlayerUtils.rightClick()
+                    if (autoSS.value && NoammAddons.debugFlags.contains("autoss")) {
+                        scope.launch {
+                            val list = solution.toList()
+                            for (pos in solution.toList()) {
+                                val targetTick = DungeonListener.currentTime + autoSSDelay.value
+                                PlayerUtils.rotateSmoothly(pos.west().center, autoSSDelay.value * 50L)
+                                if (list.first() == pos) PlayerUtils.rightClick()
+
+                                while (DungeonListener.currentTime < targetTick) Thread.sleep(10)
+                                if (list.first() != pos) PlayerUtils.rightClick()
                             }
-                            PlayerUtils.rotateSmoothly(firstClick.west().center, 300)
                         }
                     }
                 }
@@ -139,35 +138,35 @@ object SimonSays: Feature("Simon Says Solver") {
             }
         }
 
+        fun handleClick(event: PlayerInteractEvent, clickedPos: BlockPos) {
+            if (! isSimonSaysActive) return
+
+            if (clickedPos.x == 110 && clickedPos.y == 121 && clickedPos.z == 91) {
+                solution.clear()
+                skipOver = false
+                return
+            }
+
+            if (solution.isEmpty()) return
+            if (WorldUtils.getBlockAt(clickedPos) != Blocks.STONE_BUTTON) return
+            if (lastClick == DungeonListener.currentTime) return event.cancel()
+            lastClick = DungeonListener.currentTime
+
+            val checkPos = clickedPos.east()
+            val expected = solution.firstOrNull() ?: return
+
+            if (checkPos != expected) {
+                if (blockWrongClicks.value && ! mc.player !!.isCrouching) return event.cancel()
+
+                if (solution.size == 3 && checkPos == solution[1]) {
+                    for (i in 1 downTo 0) solution.removeAt(i)
+                }
+            }
+            else solution.remove(expected)
+        }
+
         register<PlayerInteractEvent.RIGHT_CLICK.BLOCK> { handleClick(event, event.pos) }
         register<PlayerInteractEvent.LEFT_CLICK.BLOCK> { handleClick(event, event.pos) }
-    }
-
-    private fun handleClick(event: PlayerInteractEvent, clickedPos: BlockPos) {
-        if (! isSimonSaysActive) return
-
-        if (clickedPos.x == 110 && clickedPos.y == 121 && clickedPos.z == 91) {
-            solution.clear()
-            skipOver = false
-            return
-        }
-
-        if (solution.isEmpty()) return
-        if (WorldUtils.getBlockAt(clickedPos) != Blocks.STONE_BUTTON) return
-        if (lastClick == DungeonListener.currentTime) return event.cancel()
-        lastClick = DungeonListener.currentTime
-
-        val checkPos = clickedPos.east()
-        val expected = solution.firstOrNull() ?: return
-
-        if (checkPos != expected) {
-            if (blockWrongClicks.value && ! mc.player !!.isCrouching) return event.cancel()
-
-            if (solution.size == 3 && checkPos == solution[1]) {
-                for (i in 1 downTo 0) solution.removeAt(i)
-            }
-        }
-        else solution.remove(expected)
     }
 
     private fun reset() {

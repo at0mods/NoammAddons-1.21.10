@@ -252,7 +252,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
         leapTeammates.forEach { player ->
             if (player == null) players.add(null)
             else {
-                val slotIndex = loadedHeads[player.name.lowercase()]
+                val slotIndex = loadedHeads[player.name]
                 if (slotIndex != null) players.add(LeapMenuPlayer(slotIndex, player))
                 else players.add(null)
             }
@@ -277,7 +277,6 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
 
             if (i in 0 .. 3 && result[i] == null) result[i] = player
             else secondRound.add(player)
-
         }
 
         for (i in result.indices) {
