@@ -33,9 +33,7 @@ object NaCommand: BaseCommand("na") {
     )
 
     override fun CommandNodeBuilder.build() {
-        runs {
-            screen = ClickGuiScreen
-        }
+        runs { screen = ClickGuiScreen }
 
         literal("discord") {
             runs {
