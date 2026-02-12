@@ -1,0 +1,39 @@
+package com.github.noamm9.features.impl.dungeon
+
+import com.github.noamm9.event.impl.EntityCheckRenderEvent
+import com.github.noamm9.features.Feature
+import com.github.noamm9.ui.clickgui.componnents.getValue
+import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
+import com.github.noamm9.ui.clickgui.componnents.provideDelegate
+import com.github.noamm9.utils.DataDownloader
+import com.github.noamm9.utils.dungeons.map.DungeonInfo
+import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
+import com.github.noamm9.utils.location.LocationUtils
+import net.minecraft.client.player.AbstractClientPlayer
+import net.minecraft.world.entity.monster.EnderMan
+import net.minecraft.world.entity.monster.Giant
+
+object HiddenMobs: Feature("Reveals invisible mobs in dungeons") {
+    private val watcherMobs by lazy { DataDownloader.loadJson<List<String>>("watcherMobsNames.json") }
+
+    private val showFels by ToggleSetting("Show Fels")
+    private val showSa by ToggleSetting("Show Shadow Assassins")
+    private val showStealthy by ToggleSetting("Show Stealthy")
+
+    override fun init() {
+        register<EntityCheckRenderEvent> {
+            if (! showFels.value && ! showSa.value && ! showStealthy.value) return@register
+            if (! LocationUtils.inDungeon) return@register
+            if (! event.entity.isInvisible) return@register
+
+            val name = event.entity.name.string.trim()
+            val isFel = event.entity is EnderMan && showFels.value && name == "Dinnerbone"
+            val isSA = event.entity is AbstractClientPlayer && showSa.value && name.contains("Shadow Assassin")
+            val isWatcherMob = event.entity is AbstractClientPlayer && showStealthy.value && watcherMobs.any { name == it }
+            val isGiant = event.entity is Giant && showStealthy.value
+                && ScanUtils.getRoomFromPos(event.entity.position()) == DungeonInfo.uniqueRooms["Blood"]
+
+            if (isFel || isSA || isWatcherMob || isGiant) event.entity.isInvisible = false
+        }
+    }
+}

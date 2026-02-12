@@ -13,7 +13,7 @@ import com.github.noamm9.utils.render.Render2D
 import java.awt.Color
 import kotlin.jvm.optionals.getOrNull
 
-object SalvageOverlay: Feature() {
+object SalvageOverlay: Feature("highlights salvageable dungeon gear.") {
     private val under50 by ColorSetting("Hightlight Color", Color.cyan.withAlpha(160))
     private val base50 by ColorSetting("50% stats Color", Color.RED.withAlpha(160))
 
