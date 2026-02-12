@@ -22,6 +22,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.DROP_ALL_ITEMS
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.DROP_ITEM
 import net.minecraft.world.InteractionHand
+import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
@@ -100,6 +101,12 @@ object PlayerUtils {
         }
     }
 
+    fun getArmor(): List<ItemStack> {
+        return listOf(EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD).map {
+            mc.player?.getItemBySlot(it) ?: ItemStack.EMPTY
+        }
+    }
+
     suspend fun rotateSmoothly(rot: MathUtils.Rotation, time: Long, block: suspend () -> Unit = {}) {
         val currentYaw = MathUtils.normalizeYaw(mc.player?.yRot ?: return)
         val currentPitch = MathUtils.normalizePitch(mc.player?.xRot ?: return)
@@ -140,7 +147,7 @@ object PlayerUtils {
             item?.skyblockId?.takeIf { id ->
                 id.containsOneOf("SPIRIT_MASK", "BONZO_MASK")
             }
-        } ?: return
+        } ?: return modMessage("&cNo mask found in inventory!")
 
         quickSwapAction(maskId)
     }

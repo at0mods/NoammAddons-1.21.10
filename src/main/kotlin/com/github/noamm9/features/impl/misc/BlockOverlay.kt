@@ -32,8 +32,8 @@ object BlockOverlay: Feature() {
         }
     }
 
-    fun render(ctx: WorldRenderContext, blockCtx: BlockOutlineRenderState): Boolean {
-        if (mc.options.hideGui) return false
+    fun render(ctx: WorldRenderContext, blockCtx: BlockOutlineRenderState) {
+        if (mc.options.hideGui) return
 
         Render3D.renderBlock(
             RenderContext.fromContext(ctx),
@@ -45,6 +45,5 @@ object BlockOverlay: Feature() {
             phase = phase.value,
             lineWidth.value
         )
-        return true
     }
 }

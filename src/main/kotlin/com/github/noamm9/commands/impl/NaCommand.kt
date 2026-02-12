@@ -1,6 +1,7 @@
 package com.github.noamm9.commands.impl
 
 import com.github.noamm9.NoammAddons.debugFlags
+import com.github.noamm9.NoammAddons.scope
 import com.github.noamm9.NoammAddons.screen
 import com.github.noamm9.commands.BaseCommand
 import com.github.noamm9.commands.CommandNodeBuilder
@@ -12,9 +13,11 @@ import com.github.noamm9.ui.hud.HudEditorScreen
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.addColor
 import com.github.noamm9.utils.PartyUtils
+import com.github.noamm9.utils.PlayerUtils
 import com.github.noamm9.utils.Utils
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
+import kotlinx.coroutines.launch
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.network.chat.Component
 
@@ -25,7 +28,8 @@ object NaCommand: BaseCommand("na") {
         "/na hud" to "HUD editor",
         "/na debug" to "debug flags",
         "/na sim" to "simulate chat message",
-        "/na leaporder" to "configure custom leap sorting"
+        "/na leaporder" to "configure custom leap sorting",
+        "/na swapmask" to "equips either bonzo mask or spirit mask"
     )
 
     override fun CommandNodeBuilder.build() {
@@ -100,6 +104,14 @@ object NaCommand: BaseCommand("na") {
                             runs { ctx -> handleLeapOrder(ctx, 4) }
                         }
                     }
+                }
+            }
+        }
+
+        literal("swapmask") {
+            runs {
+                scope.launch {
+                    PlayerUtils.changeMaskAction()
                 }
             }
         }

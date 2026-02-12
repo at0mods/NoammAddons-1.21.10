@@ -13,4 +13,3 @@ object AutoSprint: Feature("Automatically sprint for you.") {
         }
     }
 }
-
