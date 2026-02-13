@@ -41,7 +41,6 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
     private val croesusKismetDisplay by ToggleSetting("Highlight Rerolled Chests", true)
 
     private val blackList by lazy { DataDownloader.loadJson<List<String>>("blacklistDrops.json") }
-    private val nameToIdMap by lazy { ItemUtils.idToNameLookup.entries.associate { (k, v) -> v to k } }
 
     private val essenceRegex = Regex("§d(?<type>\\w+) Essence §8x(?<count>\\d+)")
     private val croesusChestRegex = Regex("^(Master )?Catacombs - Flo(or (IV|V?I{0,3}))?\$")
@@ -58,15 +57,10 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
 
         register<ContainerFullyOpenedEvent> {
             if (! LocationUtils.world.equalsOneOf(WorldType.DungeonHub, WorldType.Catacombs)) return@register
-
             val chestName = event.title.unformattedText
-            val isCroesus = chestName.matches(croesusChestRegex)
 
-            if (isCroesus || chestName.endsWith(" Chest")) {
-                if (chestsToHighlight.isNotEmpty() && ! isCroesus) {
-                    chestsToHighlight.clear()
-                }
-            }
+            chestsToHighlight.clear()
+            sortedChestsCache = emptyList()
 
             when {
                 chestName.endsWith(" Chest") -> {
@@ -80,19 +74,20 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
 
                     event.items.forEach { (_, stack) ->
                         if (stack.item == Items.GRAY_STAINED_GLASS_PANE) return@forEach
-                        profit += calculateItemValue(stack)
+                        profit += getItemValue(stack)
                     }
 
                     chestType.profit = profit
                     chestType.openedInSequence = true
                 }
 
-                isCroesus && croesusChestsProfit.value -> {
+                chestName.matches(croesusChestRegex) && croesusChestsProfit.value -> {
                     for (i in 10 .. 16) {
                         val stack = event.items[i] ?: continue
                         if (stack.item == Items.GRAY_STAINED_GLASS_PANE) continue
                         val chestType = DungeonChest.getFromName(stack.hoverName.unformattedText) ?: continue
                         val lore = stack.lore
+                        if (lore.last() == "§aAlready opened!") continue
 
                         val contentIndex = lore.indexOfFirst { it.contains("Contents") }.takeUnless { it == - 1 } ?: continue
 
@@ -100,7 +95,7 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
                         var profit = - getChestCost(lore.map { it.removeFormatting() })
 
                         lore.drop(contentIndex + 1).takeWhile { it.isNotBlank() }.forEach { line ->
-                            profit += if (line.contains("Essence")) getEssenceValueFromText(line)
+                            profit += if (line.contains("Essence")) getEssenceValue(line)
                             else getIdFromName(line)?.let { getPrice(it) } ?: 0
                         }
 
@@ -150,10 +145,10 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
 
             if (titleName.matches(croesusChestRegex) && croesusChestsProfit.value) {
                 sortedChestsCache.take(2).forEachIndexed { index, chest ->
-                    if (chest.slot == event.slot.index) {
-                        val color = if (index == 0) Color.GREEN else Color.GREEN.darker().darker()
-                        event.slot.highlight(event.context, color)
-                    }
+                    if (chest.profit < 0) return@forEachIndexed
+                    if (chest.slot != event.slot.index) return@forEachIndexed
+                    val color = if (index == 0) Color.GREEN else Color.GREEN.darker().darker().darker()
+                    event.slot.highlight(event.context, color)
                 }
             }
             else if (titleName == "Croesus") {
@@ -168,57 +163,52 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
 
         val name = stack.hoverName.formattedText
         if (! name.equalsOneOf("§aThe Catacombs", "§aMaster Mode The Catacombs")) return
+        val lore = stack.lore
 
         if (croesusChestHighlight.value) {
-            val lore = stack.lore
             var highlightColor: Color? = null
 
-            for (line in lore) {
-                when {
-                    line == "§aNo more chests to open!" -> {
-                        if (hideRedChests.value) {
-                            event.isCanceled = true
-                            return
-                        }
-                        highlightColor = Color.RED
-                        break
+            for (line in lore) when {
+                line == "§aNo more chests to open!" -> {
+                    if (hideRedChests.value) {
+                        event.isCanceled = true
+                        return
                     }
+                    highlightColor = Color.RED
+                    break
+                }
 
-                    line == "§cNo chests opened yet!" -> {
-                        highlightColor = Color.GREEN
-                        break
-                    }
+                line == "§cNo chests opened yet!" -> {
+                    highlightColor = Color.GREEN
+                    break
+                }
 
-                    line.startsWith("§7Opened Chest: ") -> {
-                        highlightColor = Color.YELLOW
-                        break
-                    }
+                line.startsWith("§7Opened Chest: ") -> {
+                    highlightColor = Color.YELLOW
+                    break
                 }
             }
 
             highlightColor?.let { event.slot.highlight(event.context, it.withAlpha(100)) }
         }
 
-        if (croesusKismetDisplay.value) {
-            val lore = stack.lore
-            if (lore.size > 4 && lore[lore.size - 4] != " §9Kismet Feather") {
-                val pose = event.context.pose()
-                pose.pushMatrix()
-                pose.scale(0.7f)
-                pose.translate((event.slot.x + 7) / 0.7f, (event.slot.y + 7) / 0.7f)
-                event.context.renderFakeItem(ItemStack(Items.FEATHER), 0, 0)
-                pose.popMatrix()
-            }
+        if (croesusKismetDisplay.value && lore[lore.size - 4] != "§5 §9Kismet Feather") {
+            val pose = event.context.pose()
+            pose.pushMatrix()
+            pose.scale(0.7f)
+            pose.translate((event.slot.x + 7) / 0.7f, (event.slot.y + 7) / 0.7f)
+            event.context.renderFakeItem(ItemStack(Items.FEATHER), 0, 0)
+            pose.popMatrix()
         }
     }
 
-    private fun calculateItemValue(stack: ItemStack): Int {
+    private fun getItemValue(stack: ItemStack): Int {
         val itemName = stack.hoverName.formattedText
         val itemId = stack.skyblockId
         var value = 0
 
         if (itemId == "ENCHANTED_BOOK") value += getPrice(enchantNameToID(stack.lore.first()))
-        value += getEssenceValueFromText(itemName)
+        value += getEssenceValue(itemName)
         value += getPrice(itemId)
         if (itemName.contains("Shard")) {
             val cleanName = itemName.removeFormatting().uppercase().remove(" SHARD").replace(" ", "_").remove("_X1")
@@ -236,7 +226,7 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
         } ?: 0
     }
 
-    private fun getEssenceValueFromText(text: String): Int {
+    private fun getEssenceValue(text: String): Int {
         if (! includeEssence.value) return 0
         val match = essenceRegex.find(text) ?: return 0
         val type = match.groups["type"]?.value?.uppercase() ?: return 0
@@ -246,16 +236,16 @@ object ChestProfit: Feature("Dungeon Chest Profit Calculator") {
 
     private fun getIdFromName(name: String): String? {
         val cleanName = name.removeFormatting()
-        if (cleanName.startsWith("Enchanted Book (")) return enchantNameToID(cleanName.substringAfter("(").substringBefore(")"))
-        if (cleanName.endsWith("Shard")) return "SHARD_${cleanName.uppercase().remove(" SHARD").replace(" ", "_")}"
-        return nameToIdMap[cleanName.remove("Shiny ")]
+        if (cleanName.startsWith("Enchanted Book (")) return enchantNameToID(name.substringAfter("(").substringBefore(")"))
+        if (cleanName.contains("Shard")) return "SHARD_${cleanName.removeFormatting().uppercase().remove(" SHARD").replace(" ", "_").remove("_X1")}"
+        return ItemUtils.getIdByName(cleanName.remove("Shiny "))
     }
 
     private fun enchantNameToID(enchant: String): String {
         val enchantName = enchant.substringBeforeLast(" ")
         val name = enchantName.removeFormatting().uppercase().replace(" ", "_")
-        val isUltimate = enchantName.startsWithOneOf("§9§d§l", "§d§l", "§7§l")
 
+        val isUltimate = enchantName.startsWithOneOf("§9§d§l", "§d§l", "§7§l")
         val enchantId = if (isUltimate && ! name.contains("ULTIMATE_")) "ULTIMATE_$name" else name
 
         val levelStr = enchant.substringAfterLast(" ").removeFormatting()

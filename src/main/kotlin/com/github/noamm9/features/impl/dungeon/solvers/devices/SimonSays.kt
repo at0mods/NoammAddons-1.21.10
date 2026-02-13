@@ -8,7 +8,6 @@ import com.github.noamm9.ui.clickgui.componnents.impl.ColorSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.utils.PlayerUtils
-import com.github.noamm9.utils.PlayerUtils.rightClick
 import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.location.LocationUtils
@@ -62,7 +61,7 @@ object SimonSays: Feature("Simon Says Solver") {
 
             repeat(startClicks.value) {
                 ThreadUtils.scheduledTask(it * startClickDelay.value) {
-                    rightClick()
+                    PlayerUtils.rightClick()
                 }
             }
         }

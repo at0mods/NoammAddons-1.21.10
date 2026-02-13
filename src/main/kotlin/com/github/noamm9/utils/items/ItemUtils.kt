@@ -7,7 +7,12 @@ import com.github.noamm9.utils.items.ItemRarity.Companion.PET_PATTERN
 import com.github.noamm9.utils.items.ItemRarity.Companion.RARITY_PATTERN
 import com.github.noamm9.utils.items.ItemRarity.Companion.rarityCache
 import com.github.noamm9.utils.network.WebUtils
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.ItemStack
@@ -15,16 +20,24 @@ import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.item.component.ItemLore
 
 object ItemUtils {
-    val idToNameLookup = mutableMapOf<String, String>()
+    private var idToNameMap = mapOf<String, String>()
+    private var nameToIdMap = mapOf<String, String>()
 
-    init {
-        @Suppress("UNCHECKED_CAST")
-        NoammAddons.scope.launch {
-            WebUtils.get<Map<String, Any>>("https://api.noammaddons.workers.dev/items").onSuccess {
-                idToNameLookup.putAll(it["itemIdToName"] as Map<String, String>)
+    fun getNameById(id: String) = idToNameMap[id]
+    fun getIdByName(name: String) = nameToIdMap[name]
+
+    fun init() = NoammAddons.scope.launch {
+        while (isActive) {
+            WebUtils.get<JsonObject>("https://api.noammaddons.workers.dev/items").onSuccess { obj ->
+                idToNameMap = obj["itemIdToName"]?.jsonObject?.map { it.key to it.value.jsonPrimitive.content }?.associate { it } ?: return@onSuccess
+                nameToIdMap = idToNameMap.entries.associate { (k, v) -> v to k }
+                return@launch
             }
+
+            delay(600_000)
         }
     }
+
 
     val ItemStack.customData: CompoundTag get() = getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag()
 

@@ -8,6 +8,7 @@ import com.github.noamm9.event.impl.TickEvent
 import com.github.noamm9.features.FeatureManager
 import com.github.noamm9.utils.*
 import com.github.noamm9.utils.dungeons.DungeonListener
+import com.github.noamm9.utils.items.ItemUtils
 import com.github.noamm9.utils.network.WebUtils
 import com.github.noamm9.utils.network.data.ElectionData
 import com.github.noamm9.utils.render.RoundedRect
@@ -49,6 +50,7 @@ object NoammAddons: ClientModInitializer {
         ActionBarParser.init()
         PartyUtils.init()
         ChatUtils.init()
+        ItemUtils.init()
         TestGround()
 
         this.initNetworkLoop()
