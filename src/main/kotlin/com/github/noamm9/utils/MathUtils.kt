@@ -1,7 +1,10 @@
 package com.github.noamm9.utils
 
 import com.github.noamm9.NoammAddons.mc
+import com.github.noamm9.utils.NumbersUtils.div
 import com.github.noamm9.utils.render.RenderHelper.renderVec
+import com.github.noamm9.utils.world.WorldUtils
+import net.minecraft.client.player.LocalPlayer
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Vec3i
 import net.minecraft.world.phys.AABB
@@ -157,19 +160,20 @@ object MathUtils {
     @JvmName("Vec3")
     fun Vec3(x: Number, y: Number, z: Number): Vec3 = net.minecraft.world.phys.Vec3(x.toDouble(), y.toDouble(), z.toDouble())
 
-    fun getLook(yaw: Float, pitch: Float): Vec3 {
-        val f2 = - cos(- pitch * 0.017453292f).toDouble()
-        return Vec3(
-            sin(- yaw * 0.017453292f - 3.1415927f) * f2,
-            sin(- pitch * 0.017453292f).toDouble(),
-            cos(- yaw * 0.017453292f - 3.1415927f) * f2
-        )
-    }
+    fun raytrace(player: LocalPlayer, range: Number): BlockPos? {
+        var startVec = player.getEyePosition(1f)
+        val lookVec = player.getViewVector(1f).normalize()
 
-    fun getClosestYaw(current: Float, target: Float): Float {
-        var diff = (target - current) % 360f
-        if (diff < - 180f) diff += 360f
-        if (diff > 180f) diff -= 360f
-        return current + diff
+        val stepSize = 0.1
+        val steps = (range / stepSize).toInt()
+
+        repeat(steps) {
+            startVec = startVec.add(lookVec.scale(stepSize))
+            val pos = BlockPos.containing(startVec)
+            if (WorldUtils.getStateAt(pos).isAir) return@repeat
+            return pos
+        }
+
+        return null
     }
 }

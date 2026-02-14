@@ -12,7 +12,7 @@ object WorldUtils {
     fun getStateAt(x: Int, y: Int, z: Int) = this.getStateAt(BlockPos(x, y, z))
     fun getBlockAt(pos: BlockPos) = getStateAt(pos).block
     fun getBlockAt(vec3: Vec3) = getBlockAt(BlockPos(vec3.x.toInt(), vec3.y.toInt(), vec3.z.toInt()))
-    fun getBlockAt(x: Int, y: Int, z: Int) = getBlockAt(BlockPos(x, y, z))
+    fun getBlockAt(x: Number, y: Number, z: Number) = getBlockAt(BlockPos(x.toInt(), y.toInt(), z.toInt()))
 
     fun setBlockAt(pos: BlockPos, state: BlockState) = mc.level?.setBlock(pos, state, 19)
 
