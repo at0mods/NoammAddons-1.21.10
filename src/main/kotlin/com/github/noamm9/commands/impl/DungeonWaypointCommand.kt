@@ -16,7 +16,7 @@ object DungeonWaypointCommand: BaseCommand("ndw") {
     override fun CommandNodeBuilder.build() {
         literal("add") {
             runs {
-                val (roomName, roomCenter, rotation) = getRoomData() ?: return@runs
+                val (roomName, roomCorner, rotation) = getRoomData() ?: return@runs
 
                 val hit = NoammAddons.mc.hitResult
                 if (hit == null || hit.type != HitResult.Type.BLOCK) {
@@ -31,7 +31,7 @@ object DungeonWaypointCommand: BaseCommand("ndw") {
                     return@runs
                 }
 
-                val relativePos = ScanUtils.getRelativeCoord(lookingAt, roomCenter, rotation)
+                val relativePos = ScanUtils.getRelativeCoord(lookingAt, roomCorner, rotation)
 
                 NoammAddons.screen = WaypointEditorGui(roomName, lookingAt, relativePos)
             }
@@ -39,7 +39,7 @@ object DungeonWaypointCommand: BaseCommand("ndw") {
 
         literal("edit") {
             runs {
-                val (roomName, roomCenter, rotation) = getRoomData() ?: return@runs
+                val (roomName, roomCorner, rotation) = getRoomData() ?: return@runs
 
                 val hit = NoammAddons.mc.hitResult
                 if (hit == null || hit.type != HitResult.Type.BLOCK) {
@@ -55,14 +55,14 @@ object DungeonWaypointCommand: BaseCommand("ndw") {
                     return@runs
                 }
 
-                val relativePos = ScanUtils.getRelativeCoord(lookingAt, roomCenter, rotation)
+                val relativePos = ScanUtils.getRelativeCoord(lookingAt, roomCorner, rotation)
                 NoammAddons.mc.setScreen(WaypointEditorGui(roomName, lookingAt, relativePos, existing))
             }
         }
 
         literal("remove") {
             runs {
-                val (roomName, roomCenter, rotation) = getRoomData() ?: return@runs
+                val (roomName, roomCorner, rotation) = getRoomData() ?: return@runs
                 val playerPos = NoammAddons.mc.player?.position() ?: return@runs
 
                 val closest = DungeonWaypoints.currentRoomWaypoints.minByOrNull {
@@ -80,7 +80,7 @@ object DungeonWaypointCommand: BaseCommand("ndw") {
                     }
 
                     if (distSq < 25.0) {
-                        val relativePosToRemove = ScanUtils.getRelativeCoord(closest.pos, roomCenter, rotation)
+                        val relativePosToRemove = ScanUtils.getRelativeCoord(closest.pos, roomCorner, rotation)
 
                         val currentData = DungeonWaypoints.waypoints
                         val roomList = currentData.getOrDefault(roomName, emptyList()).toMutableList()
@@ -125,7 +125,7 @@ object DungeonWaypointCommand: BaseCommand("ndw") {
     }
 
 
-    private data class RoomInfo(val name: String, val center: BlockPos, val rotation: Int)
+    private data class RoomInfo(val name: String, val corner: BlockPos, val rotation: Int)
 
     private fun getRoomData(): RoomInfo? {
         val floor = LocationUtils.dungeonFloorNumber
@@ -143,13 +143,13 @@ object DungeonWaypointCommand: BaseCommand("ndw") {
 
             return RoomInfo(
                 name = currentRoom.data.name,
-                center = currentRoom.corner !!,
+                corner = currentRoom.corner !!,
                 rotation = 360 - currentRoom.rotation !!
             )
         }
         else return RoomInfo(
             name = "B$floor",
-            center = BlockPos.ZERO,
+            corner = BlockPos.ZERO,
             rotation = 0
         )
     }

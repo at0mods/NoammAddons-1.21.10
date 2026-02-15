@@ -20,8 +20,8 @@ import com.github.noamm9.utils.world.WorldUtils
 import net.minecraft.tags.BlockTags
 
 object GyroHelper: Feature("Renders a circle where your gyro will be located", "Gyro Helper") {
-    private val drawBox by ToggleSetting("Draw Box", true).withDescription("Draws a Box in the middle of the GyroKinetic wand sucking range")
-    private val drawRing by ToggleSetting("Draw Sucking Range", true).withDescription("Draws the sucking range of the GyroKinetic wand").section("Render")
+    private val drawBox by ToggleSetting("Draw Box", true).withDescription("Draws a Box in the middle of the GyroKinetic wand sucking range").section("Render")
+    private val drawRing by ToggleSetting("Draw Sucking Range", true).withDescription("Draws the sucking range of the GyroKinetic wand")
     private val lineWidth by SliderSetting("Ring Width", 2, 1, 10, 1).withDescription("Controls the Thinkness of the Ring")
 
     private val boxColor by ColorSetting("Box Color", Utils.favoriteColor.withAlpha(0.3f)).section("Color")

@@ -3,6 +3,7 @@ package com.github.noamm9.utils.items
 import com.github.noamm9.NoammAddons
 import com.github.noamm9.utils.ChatUtils.formattedText
 import com.github.noamm9.utils.ChatUtils.removeFormatting
+import com.github.noamm9.utils.JsonUtils
 import com.github.noamm9.utils.items.ItemRarity.Companion.PET_PATTERN
 import com.github.noamm9.utils.items.ItemRarity.Companion.RARITY_PATTERN
 import com.github.noamm9.utils.items.ItemRarity.Companion.rarityCache
@@ -18,6 +19,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.item.component.ItemLore
+import kotlin.jvm.optionals.getOrNull
+
 
 object ItemUtils {
     private var idToNameMap = mapOf<String, String>()
@@ -38,13 +41,28 @@ object ItemUtils {
         }
     }
 
-
     val ItemStack.customData: CompoundTag get() = getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag()
 
-    val ItemStack.skyblockId: String get() = customData.getString("id").orElse("")
+    val ItemStack?.skyblockId: String
+        get() {
+            if (this == null || this.isEmpty) return ""
+            val customData = this.customData
+            var sbItemID: String? = null
+
+            if (customData.contains("id")) sbItemID = customData.getString("id").getOrNull()?.replace(":", "-")
+            if (sbItemID == "PET") {
+                val petInfo = customData.getString("petInfo").getOrNull()?.takeIf { it.isNotEmpty() } ?: return sbItemID
+                val petInfoObject = JsonUtils.stringToJson(petInfo)
+                val type = petInfoObject["type"]?.jsonPrimitive?.content
+                val tier = petInfoObject["tier"]?.jsonPrimitive?.content
+                if (type != null && tier != null) sbItemID += "-$type-$tier"
+            }
+
+            return sbItemID.orEmpty()
+        }
+
     val ItemStack.itemUUID: String get() = customData.getString("uuid").orElse("")
     val ItemStack.lore: List<String> get() = getOrDefault(DataComponents.LORE, ItemLore.EMPTY).styledLines().map { it.formattedText }
-
 
     fun getSkullTexture(stack: ItemStack): String? {
         if (stack.isEmpty) return null

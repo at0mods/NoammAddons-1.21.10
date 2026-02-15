@@ -23,6 +23,7 @@ import com.github.noamm9.utils.render.Render2D
 import com.github.noamm9.utils.render.Render2D.width
 import kotlinx.coroutines.launch
 import net.minecraft.network.chat.Component
+import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
 import java.util.*
 
@@ -95,7 +96,7 @@ object PartyFinder: Feature() {
 
         register<ContainerEvent.Render.Tooltip> {
             if (event.screen.title.string != "Party Finder") return@register
-            if (event.screen.menu.items.indexOf(event.stack) !in headSlots) return@register
+            if (! event.stack.`is`(Items.PLAYER_HEAD)) return@register
 
             var floor = 0
             var type = 'F'
@@ -133,9 +134,7 @@ object PartyFinder: Feature() {
 
         register<ContainerFullyOpenedEvent> {
             if (event.title.string != "Catacombs Gate") return@register
-            event.items[45]?.lore?.takeIf { it.size > 3 }.takeIf {
-                it?.get(0)?.matches(selectDungeonClassRegex) == true
-            }?.run {
+            event.items[45]?.lore?.takeIf { it.size > 3 && it[0].matches(selectDungeonClassRegex) }?.run {
                 selectedClassRegex.matchEntire(get(2).removeFormatting())?.destructured?.run {
                     selectedClass = classNames[classNames.map { it.removeFormatting() }.indexOf(component1())]
                 }

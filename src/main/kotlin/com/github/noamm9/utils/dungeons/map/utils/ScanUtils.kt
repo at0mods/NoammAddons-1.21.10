@@ -109,8 +109,8 @@ object ScanUtils {
         return pos.rotate(rotation).add(cx, 0, cz)
     }
 
-    fun getRelativeCoord(realPos: BlockPos, roomCenter: BlockPos, rotation: Int): BlockPos {
-        val (cx, _, cz) = roomCenter.destructured()
+    fun getRelativeCoord(realPos: BlockPos, roomCorner: BlockPos, rotation: Int): BlockPos {
+        val (cx, _, cz) = roomCorner.destructured()
         val centeredPos = realPos.add(- cx, 0, - cz)
         return centeredPos.rotate(- rotation)
     }

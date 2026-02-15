@@ -19,14 +19,14 @@ import kotlin.io.path.*
 object DataDownloader {
     private const val DOWNLOAD_URL = "https://api.noammaddons.workers.dev/repo?type=zip"
     private const val HASH_URL = "https://api.noammaddons.workers.dev/repo?type=hash"
-    val LOGGER = LoggerFactory.getLogger("$MOD_NAME/DataDownloader")
+    val LOGGER = LoggerFactory.getLogger("$MOD_NAME - DataDownloader")
 
     private val modDataPath: Path = FabricLoader.getInstance().configDir.resolve(MOD_ID).resolve("data").also {
         if (! it.exists()) it.createDirectories()
     }
 
     fun downloadData() {
-        thread(start = true, isDaemon = true, name = "DataDownloader") {
+        thread(start = true, isDaemon = true, name = "$MOD_NAME - DataDownloader") {
             val versionFile = modDataPath.resolve("version.txt")
 
             try {
@@ -40,7 +40,8 @@ object DataDownloader {
                 }
                 else LOGGER.info("Data is up-to-date (Version: $localHash).")
 
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 LOGGER.error("Failed to check for data updates", e)
             }
         }
@@ -63,7 +64,8 @@ object DataDownloader {
             tempZipFile.deleteIfExists()
 
             LOGGER.info("Data update successful.")
-        } catch (e: IOException) {
+        }
+        catch (e: IOException) {
             LOGGER.error("Failed to update data files", e)
         }
     }
@@ -78,7 +80,9 @@ object DataDownloader {
                 connection.inputStream.bufferedReader().use { it.readText() }
             }
             else null
-        } catch (e: IOException) {
+        }
+        catch (e: IOException) {
+            LOGGER.error("Failed to fetch remote version hash", e)
             null
         }
     }

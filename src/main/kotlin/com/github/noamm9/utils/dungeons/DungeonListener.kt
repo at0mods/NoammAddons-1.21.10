@@ -226,8 +226,9 @@ object DungeonListener {
         }
 
         var (_, name, clazz, clazzLevel) = tablistRegex.find(tabName.removeFormatting())?.destructured ?: return
-        if (runPlayersNames.isEmpty()) name = mc.user.name
-        val skin = if (runPlayersNames.isEmpty()) mc.player !!.skin.body.texturePath() else mc.connection?.getPlayerInfo(name)?.skin?.body?.texturePath() ?: DefaultPlayerSkin.getDefaultTexture()
+        val isNicked = runPlayersNames.isEmpty() && name != mc.user.name
+        name = if (isNicked) mc.user.name else name
+        val skin = if (isNicked) mc.player !!.skin.body.texturePath() else mc.connection?.getPlayerInfo(name)?.skin?.body?.texturePath() ?: DefaultPlayerSkin.getDefaultTexture()
         runPlayersNames[name] = skin
         if (clazz == "EMPTY") return
 

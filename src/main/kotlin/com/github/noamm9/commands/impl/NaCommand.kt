@@ -10,11 +10,8 @@ import com.github.noamm9.event.impl.ChatMessageEvent
 import com.github.noamm9.features.impl.dungeon.LeapMenu
 import com.github.noamm9.ui.clickgui.ClickGuiScreen
 import com.github.noamm9.ui.hud.HudEditorScreen
-import com.github.noamm9.utils.ChatUtils
+import com.github.noamm9.utils.*
 import com.github.noamm9.utils.ChatUtils.addColor
-import com.github.noamm9.utils.PartyUtils
-import com.github.noamm9.utils.PlayerUtils
-import com.github.noamm9.utils.Utils
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import kotlinx.coroutines.launch
@@ -24,16 +21,23 @@ import net.minecraft.network.chat.Component
 object NaCommand: BaseCommand("na") {
     private val commands = mapOf(
         "/na" to "config gui",
-        "/na discord" to "opens the link to the disrod server",
         "/na hud" to "HUD editor",
+        "/na discord" to "opens the link to the disrod server",
         "/na debug" to "debug flags",
         "/na sim" to "simulate chat message",
         "/na leaporder" to "configure custom leap sorting",
-        "/na swapmask" to "equips either bonzo mask or spirit mask"
+        "/na swapmask" to "equips either bonzo mask or spirit mask",
+        "/na ping" to "Shows ur ping in chat"
     )
 
     override fun CommandNodeBuilder.build() {
         runs { screen = ClickGuiScreen }
+
+        literal("ping") {
+            runs {
+                ChatUtils.modMessage("§aPing: §f${ServerUtils.averagePing}ms")
+            }
+        }
 
         literal("discord") {
             runs {

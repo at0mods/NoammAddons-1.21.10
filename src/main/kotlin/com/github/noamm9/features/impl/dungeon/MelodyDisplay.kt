@@ -58,7 +58,7 @@ object MelodyDisplay: Feature("Displays the current progress someone for melody 
             if (LocationUtils.F7Phase != 3) return@register
             val message = event.unformattedText.takeIf { it.startsWith("Party > ") } ?: return@register
             val name = melodyRegex.find(message)?.groupValues?.get(1)?.takeUnless { it == mc.user.name } ?: return@register
-            val progress = (0 .. 4).find { i -> message.containsOneOf("$i/4", "${i * 25}%") } ?: return@register
+            val progress = (4 downTo 0).find { i -> message.containsOneOf("$i/4", "${i * 25}%") } ?: return@register
             val color = DungeonPlayer.get(name)?.clazz?.code ?: "&7"
 
             currentState = MelodyState("$color$name&r", progress, System.currentTimeMillis())

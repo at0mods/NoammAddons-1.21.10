@@ -23,21 +23,13 @@ import java.io.FileWriter
 import java.util.concurrent.CopyOnWriteArrayList
 
 object DungeonWaypoints: Feature("Add a custom waypoint with /ndw add while looking at a block") {
-    data class DungeonWaypoint(
-        val pos: BlockPos,
-        val color: Color,
-        val filled: Boolean,
-        val outline: Boolean,
-        val phase: Boolean
-    )
+    val secretWaypoints by ToggleSetting("Secret Waypoints")
+
+    data class DungeonWaypoint(val pos: BlockPos, val color: Color, val filled: Boolean, val outline: Boolean, val phase: Boolean)
 
     private val configFile = File("config/$MOD_NAME/dungeonWaypoints.json")
-
     val waypoints: MutableMap<String, List<DungeonWaypoint>> = mutableMapOf()
-
     val currentRoomWaypoints = CopyOnWriteArrayList<DungeonWaypoint>()
-
-    val secretWaypoints by ToggleSetting("Secret Waypoints")
 
     override fun init() {
         loadConfig()
@@ -55,22 +47,20 @@ object DungeonWaypoints: Feature("Add a custom waypoint with /ndw add while look
             }?.let { currentRoomWaypoints.addAll(it) }
         }
 
-        register<DungeonEvent.BossEnterEvent> {
-            currentRoomWaypoints.clear()
-            waypoints["B${LocationUtils.dungeonFloorNumber}"]?.let {
-                currentRoomWaypoints.addAll(it)
-            }
-        }
-
         register<DungeonEvent.SecretEvent> {
             SecretsWaypoints.onSecret(event)
         }
 
         register<RenderWorldEvent> {
             SecretsWaypoints.onRenderWorld(event.ctx)
-            if (currentRoomWaypoints.isEmpty()) return@register
+            val waypoints = if (LocationUtils.inBoss) {
+                currentRoomWaypoints.clear()
+                waypoints["B${LocationUtils.dungeonFloorNumber}"].orEmpty()
+            }
+            else currentRoomWaypoints
 
-            for (wp in currentRoomWaypoints) {
+            if (waypoints.isEmpty()) return@register
+            for (wp in waypoints) {
                 Render3D.renderBlock(
                     event.ctx, wp.pos, wp.color,
                     outline = wp.outline, fill = wp.filled, phase = wp.phase
