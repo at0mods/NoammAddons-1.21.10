@@ -1,12 +1,14 @@
 package com.github.noamm9.features.impl.dungeon.solvers.devices
 
 import com.github.noamm9.NoammAddons
+import com.github.noamm9.event.EventBus
 import com.github.noamm9.event.impl.*
 import com.github.noamm9.features.Feature
 import com.github.noamm9.ui.clickgui.componnents.*
 import com.github.noamm9.ui.clickgui.componnents.impl.ColorSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
+import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.PlayerUtils
 import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
@@ -17,6 +19,7 @@ import com.github.noamm9.utils.world.WorldUtils
 import kotlinx.coroutines.launch
 import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.core.BlockPos
+import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.level.block.Blocks
 import java.awt.Color
 
@@ -36,7 +39,12 @@ object SimonSays: Feature("Simon Says Solver") {
     private val autoSSDelay by SliderSetting("Auto SS delay", 3, 1, 10, 1)
         .withDescription("Delay in Server ticks.").showIf { autoSS.value && NoammAddons.debugFlags.contains("autoss") }
 
-    private val isSimonSaysActive get() = enabled && LocationUtils.F7Phase == 3
+    private val alertsEnabled by ToggleSetting("Alerts Enabled", true).section("Alerts")
+    private val sendChat by ToggleSetting("SS Break Alert", true).showIf { alertsEnabled.value }.withDescription("Sends in party chat when the device got reset")
+    private val sendRestartChat by ToggleSetting("Send Restart Chat", true).showIf { alertsEnabled.value }.withDescription("Sends a message in party chat when u restarted the device")
+    private val alertSound by ToggleSetting("Alert Sound", true).showIf { alertsEnabled.value }.withDescription("Plays a sound when the device fails")
+    private val showTitle by ToggleSetting("Show Title", true).showIf { alertsEnabled.value }.withDescription("Shows a Title when the device fails")
+
     private val solution = ArrayList<BlockPos>()
     private var lastExisted = false
     private var skipOver = false
@@ -49,17 +57,28 @@ object SimonSays: Feature("Simon Says Solver") {
     private val buttonCheckPos = BlockPos(110, 120, 92)
     private val startPos = BlockPos(111, 120, 92)
 
+    private var thingsDone = 0
+    private var ticks = 0
+    private var canBreak = false
+    private var wasBroken = false
+
+    private val obsidians = (120 .. 123).flatMap { y -> (92 .. 95).map { z -> BlockPos(111, y, z) } }
+    private val buttons = (120 .. 123).flatMap { y -> (92 .. 95).map { z -> BlockPos(110, y, z) } }
+
+    private val deviceRegex = Regex("(.+) (activated|completed) a (terminal|device|lever)! \\((\\d)/(\\d)\\)")
+
 
     override fun init() {
-        register<WorldChangeEvent> { reset() }
+        register<WorldChangeEvent> {
+            resetSolver()
+            reset()
+        }
 
         register<ChatMessageEvent> {
-            if (! isSimonSaysActive) return@register
             if (! autoStart.value) return@register
-            if (PlayerUtils.getSelectionBlock() != startButton) return@register
+            if (LocationUtils.F7Phase != 3) return@register
             if (! event.unformattedText.matches(startRegex)) return@register
-
-            repeat(startClicks.value) {
+            if (PlayerUtils.getSelectionBlock() == startButton) repeat(startClicks.value) {
                 ThreadUtils.scheduledTask(it * startClickDelay.value) {
                     PlayerUtils.rightClick()
                 }
@@ -67,36 +86,33 @@ object SimonSays: Feature("Simon Says Solver") {
         }
 
         register<TickEvent.Start> {
-            if (! isSimonSaysActive) return@register
+            if (LocationUtils.F7Phase != 3) return@register
             val buttonsExist = WorldUtils.getBlockAt(buttonCheckPos) == Blocks.STONE_BUTTON
 
             if (buttonsExist && ! lastExisted) {
                 allObi = true
 
-                for (dy in 0 .. 3) {
-                    for (dz in 0 .. 3) {
-                        val pos = startPos.offset(0, dy, dz)
-                        if (WorldUtils.getBlockAt(pos) != Blocks.OBSIDIAN) {
-                            allObi = false
-                        }
+                for (dy in 0 .. 3) for (dz in 0 .. 3) {
+                    val pos = startPos.offset(0, dy, dz)
+                    if (WorldUtils.getBlockAt(pos) != Blocks.OBSIDIAN) {
+                        allObi = false
                     }
                 }
+
 
                 if (allObi) {
                     lastExisted = true
                     skipOver = true
 
-                    if (autoSS.value && NoammAddons.debugFlags.contains("autoss")) {
-                        scope.launch {
-                            val list = solution.toList()
-                            for (pos in solution.toList()) {
-                                val targetTick = DungeonListener.currentTime + autoSSDelay.value
-                                PlayerUtils.rotateSmoothly(pos.west().center, autoSSDelay.value * 50L)
-                                if (list.first() == pos) PlayerUtils.rightClick()
+                    if (autoSS.value && NoammAddons.debugFlags.contains("autoss")) scope.launch {
+                        val list = solution.toList()
+                        for (pos in list) {
+                            val targetTick = DungeonListener.currentTime + autoSSDelay.value
+                            PlayerUtils.rotateSmoothly(pos.west().center, autoSSDelay.value * 50L)
+                            if (list.first() == pos) PlayerUtils.rightClick()
 
-                                while (DungeonListener.currentTime < targetTick) Thread.sleep(10)
-                                if (list.first() != pos) PlayerUtils.rightClick()
-                            }
+                            while (DungeonListener.currentTime < targetTick) Thread.sleep(10)
+                            if (list.first() != pos) PlayerUtils.rightClick()
                         }
                     }
                 }
@@ -107,23 +123,21 @@ object SimonSays: Feature("Simon Says Solver") {
                 solution.clear()
             }
 
-            for (dy in 0 .. 3) {
-                for (dz in 0 .. 3) {
-                    val pos = startPos.offset(0, dy, dz)
-                    val block = WorldUtils.getBlockAt(pos)
-                    if (block != Blocks.SEA_LANTERN || solution.contains(pos)) continue
+            for (dy in 0 .. 3) for (dz in 0 .. 3) {
+                val pos = startPos.offset(0, dy, dz)
+                val block = WorldUtils.getBlockAt(pos)
+                if (block != Blocks.SEA_LANTERN || solution.contains(pos)) continue
 
-                    solution.add(pos)
+                solution.add(pos)
 
-                    if (! skipOver && ssSkip.value && solution.size == 3) {
-                        solution.removeAt(0)
-                    }
+                if (! skipOver && ssSkip.value && solution.size == 3) {
+                    solution.removeAt(0)
                 }
             }
         }
 
         register<RenderWorldEvent> {
-            if (! isSimonSaysActive) return@register
+            if (LocationUtils.F7Phase != 3) return@register
             if (solution.isEmpty()) return@register
 
             for (i in solution.indices) {
@@ -138,7 +152,7 @@ object SimonSays: Feature("Simon Says Solver") {
         }
 
         fun handleClick(event: PlayerInteractEvent, clickedPos: BlockPos) {
-            if (! isSimonSaysActive) return
+            if (LocationUtils.F7Phase != 3) return
 
             if (clickedPos.x == 110 && clickedPos.y == 121 && clickedPos.z == 91) {
                 solution.clear()
@@ -166,13 +180,73 @@ object SimonSays: Feature("Simon Says Solver") {
 
         register<PlayerInteractEvent.RIGHT_CLICK.BLOCK> { handleClick(event, event.pos) }
         register<PlayerInteractEvent.LEFT_CLICK.BLOCK> { handleClick(event, event.pos) }
+
+        register<ChatMessageEvent> {
+            if (LocationUtils.F7Phase != 3) return@register
+            val msg = event.unformattedText
+
+            if (startRegex.matches(msg)) {
+                reset()
+                serverTickListener.register()
+                return@register
+            }
+
+            if (! serverTickListener.isRegistered()) return@register
+
+            val (_, _, type, completedStr, _) = deviceRegex.find(msg)?.destructured ?: return@register
+            val completed = completedStr.toIntOrNull() ?: 0
+
+            when (type) {
+                "terminal", "lever" -> thingsDone ++
+                "device" -> {
+                    if ((thingsDone + 1) >= completed) {
+                        serverTickListener.unregister()
+                    }
+                }
+            }
+        }
     }
 
-    private fun reset() {
+    val serverTickListener = EventBus.register<TickEvent.Server> {
+        ticks --
+
+        if (obsidians.any { WorldUtils.getBlockAt(it) != Blocks.OBSIDIAN }) {
+            ticks = 12
+            canBreak = true
+
+            if (wasBroken) {
+                wasBroken = false
+                if (sendRestartChat.value) ChatUtils.sendCommand("pc SS Started Again!")
+                if (showTitle.value) ChatUtils.showTitle("§a§l§nSS Started!")
+            }
+
+            return@register
+        }
+
+        if (ticks > 0 || ! canBreak) return@register
+        if (! buttons.all { pos -> WorldUtils.getBlockAt(pos) == Blocks.AIR }) return@register
+
+        canBreak = false
+        wasBroken = true
+
+        if (sendChat.value) ChatUtils.sendCommand("pc SS Broke!")
+        if (alertSound.value) mc.player?.playSound(SoundEvents.ANVIL_LAND, 5f, 0f)
+        if (showTitle.value) ChatUtils.showTitle("§c§l§nSS BROKE!")
+    }.unregister()
+
+    private fun resetSolver() {
         lastExisted = false
         skipOver = false
         solution.clear()
         allObi = true
+    }
+
+    private fun reset() {
+        serverTickListener.unregister()
+        thingsDone = 0
+        ticks = 0
+        canBreak = false
+        wasBroken = false
     }
 
     private fun renderSSBox(ctx: RenderContext, pos: BlockPos, color: Color) {
@@ -207,3 +281,104 @@ object SimonSays: Feature("Simon Says Solver") {
         matrices.popPose()
     }
 }
+
+/*
+object SimonSaysAlert: Feature("SS Alert") {
+    private val alertsEnabled by ToggleSetting("Alerts Enabled", true).section("Alerts")
+    private val sendChat by ToggleSetting("Send Party Chat", true).showIf { alertsEnabled.value }
+    private val sendRestartChat by ToggleSetting("Send Restart Chat", true).showIf { alertsEnabled.value }
+    private val alertSound by ToggleSetting("Alert Sound", true).showIf { alertsEnabled.value }
+    private val showTitle by ToggleSetting("Show Title", true).showIf { alertsEnabled.value }
+
+    private var thingsDone = 0
+    private var ticks = 0
+    private var allowBreak = false
+    private var hasBroken = false
+    private var isListening = false
+
+    private val obsidians = (120 .. 123).flatMap { y -> (92 .. 95).map { z -> BlockPos(111, y, z) } }
+    private val buttons = (120 .. 123).flatMap { y -> (92 .. 95).map { z -> BlockPos(110, y, z) } }
+
+    private val goldorStartRegex = Regex("\\[BOSS] Goldor: Who dares trespass into my domain\\?")
+    private val deviceRegex = Regex("(.+) (activated|completed) a (terminal|device|lever)! \\((\\d)/(\\d)\\)")
+
+    override fun init() {
+        register<WorldChangeEvent> { reset() }
+
+        register<ChatMessageEvent> {
+            val msg = event.unformattedText
+
+            if (goldorStartRegex.matches(msg)) {
+                reset()
+                isListening = true
+                return@register
+            }
+
+            if (! isListening) return@register
+
+            val (_, _, type, completedStr, _) = deviceRegex.find(msg)?.destructured ?: return@register
+            val completed = completedStr.toIntOrNull() ?: 0
+
+            when (type) {
+                "terminal", "lever" -> thingsDone ++
+                "device" -> {
+                    if ((thingsDone + 1) >= completed) {
+                        isListening = false
+                    }
+                }
+            }
+        }
+
+        register<TickEvent.Server> {
+            if (! isListening || mc.level == null) return@register
+            ticks --
+
+            val isGameActive = obsidians.any { pos ->
+                WorldUtils.getBlockAt(pos) != Blocks.OBSIDIAN
+            }
+
+            if (isGameActive) {
+                ticks = 12
+                allowBreak = true
+
+                if (hasBroken) {
+                    hasBroken = false
+                    if (sendRestartChat.value) ChatUtils.sendCommand("pc SS Started Again!")
+                    if (showTitle.value) {
+                        ChatUtils.showTitle("§a§l§nSS Started!")
+                    }
+                }
+                return@register
+            }
+
+            if (ticks > 0 || ! allowBreak) return@register
+
+            val allButtonsMissing = buttons.all { pos ->
+                WorldUtils.getBlockAt(pos) == Blocks.AIR
+            }
+
+            if (! allButtonsMissing) return@register
+
+            allowBreak = false
+            hasBroken = true
+
+            if (sendChat.value) ChatUtils.sendCommand("pc SS Broke!")
+
+            if (alertSound.value) {
+                mc.player?.playSound(SoundEvents.ANVIL_LAND, 5f, 0f)
+            }
+
+            if (showTitle.value) {
+                ChatUtils.showTitle("§c§l§nSS BROKE!")
+            }
+        }
+    }
+
+    private fun reset() {
+        isListening = false
+        thingsDone = 0
+        ticks = 0
+        allowBreak = false
+        hasBroken = false
+    }
+}*/

@@ -36,7 +36,7 @@ open class Feature(
     var enabled = toggled
 
     private val isDev = this::class.java.isAnnotationPresent(Dev::class.java)
-    val alwaysActive = this::class.java.isAnnotationPresent(AlwaysActive::class.java)
+    private val alwaysActive = this::class.java.isAnnotationPresent(AlwaysActive::class.java)
 
     open val category = if (isDev) CategoryType.DEV else initCategory()
 
@@ -45,9 +45,9 @@ open class Feature(
     protected inline val cacheData get() = NoammAddons.cacheData
 
     fun initialize() {
-        if (enabled || alwaysActive) onEnable() else onDisable()
-
         init()
+
+        if (enabled || alwaysActive) onEnable() else onDisable()
     }
 
     open fun init() {}
@@ -58,12 +58,13 @@ open class Feature(
     }
 
     open fun onDisable() {
+        if (alwaysActive) return
         listeners.forEach(EventListener<*>::unregister)
     }
 
     open fun toggle() {
         enabled = ! enabled
-        if (enabled) onEnable()
+        if (enabled || alwaysActive) onEnable()
         else onDisable()
     }
 
