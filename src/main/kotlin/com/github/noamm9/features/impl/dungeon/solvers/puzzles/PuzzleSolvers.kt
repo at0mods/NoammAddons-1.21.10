@@ -52,6 +52,9 @@ object PuzzleSolvers: Feature() {
     val currentClickColor by ColorSetting("Click Color", Color.GREEN).showIf { water.value }
     val nextColor by ColorSetting("Next Click Color", Color.YELLOW).showIf { water.value }
 
+    val icefill by ToggleSetting("Enabled        ").section("Ice Fill Solver")
+    val icefillColor by ColorSetting("Click Color", Color.GREEN).showIf { icefill.value }
+
     override fun init() {
         register<WorldChangeEvent> {
             if (blaze.value) BlazeSolver.reset()
@@ -62,6 +65,7 @@ object PuzzleSolvers: Feature() {
             if (weirdos.value) ThreeWeirdosSolver.reset()
             if (ttt.value) TicTacToeSolver.reset()
             if (water.value) WaterBoardSolver.reset()
+            if (icefill.value) IceFillSolver.reset()
         }
 
         register<DungeonEvent.RoomEvent.onExit> {
@@ -71,6 +75,7 @@ object PuzzleSolvers: Feature() {
             if (tpmaze.value) TeleportMazeSolver.reset()
             if (ttt.value) TicTacToeSolver.reset()
             if (water.value) WaterBoardSolver.reset()
+            if (icefill.value) IceFillSolver.reset()
         }
 
         register<DungeonEvent.RoomEvent.onStateChange> {
@@ -87,6 +92,7 @@ object PuzzleSolvers: Feature() {
             if (tpmaze.value) TeleportMazeSolver.onRoomEnter(event)
             if (ttt.value) TicTacToeSolver.onRoomEnter(event)
             if (weirdos.value) WaterBoardSolver.onRoomEnter(event)
+            if (icefill.value) IceFillSolver.onRoomEnter(event)
         }
 
         register<MainThreadPacketReceivedEvent.Pre> {
@@ -112,6 +118,7 @@ object PuzzleSolvers: Feature() {
             if (weirdos.value) ThreeWeirdosSolver.onRenderWorld(event.ctx)
             if (ttt.value) TicTacToeSolver.onRenderWorld(event.ctx)
             if (weirdos.value) WaterBoardSolver.onRenderWorld(event.ctx)
+            if (icefill.value) IceFillSolver.onRenderWorld(event.ctx)
         }
 
         register<RenderOverlayEvent> {

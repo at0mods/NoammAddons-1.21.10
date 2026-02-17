@@ -99,7 +99,7 @@ class UniqueRoom(arrX: Int, arrY: Int, room: Room) {
             if (tile.z > maxZ) maxZ = tile.z
         }
 
-        val h = DungeonScanner.halfRoomSize.toInt()
+        val h = DungeonScanner.halfRoomSize
 
         val primaryCornersX = intArrayOf(minX - h, maxX + h, maxX + h, minX - h)
         val primaryCornersZ = intArrayOf(minZ - h, minZ - h, maxZ + h, maxZ + h)
