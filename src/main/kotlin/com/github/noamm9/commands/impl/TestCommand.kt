@@ -14,10 +14,10 @@ object TestCommand: BaseCommand("test") {
         literal("relative") {
             runs {
                 val room = ScanUtils.currentRoom ?: return@runs
-                ChatUtils.chat(ScanUtils.getRelativeCoord(PlayerUtils.getSelectionBlock() !!, room.corner ?: return@runs, room.rotation ?: return@runs))
+                ChatUtils.chat(ScanUtils.getRelativeCoord(PlayerUtils.getSelectionBlock() !!, room.centerPos, room.rotation ?: return@runs))
             }
         }
-        
+
         runs {
             ChatUtils.chat("${mc.player?.mainHandItem.skyblockId}: ${priceData[mc.player?.mainHandItem.skyblockId]}")
         }
