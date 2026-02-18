@@ -33,6 +33,7 @@ object AuctionPriceInput: Feature("replaces the sign input with a proper textbox
         ScreenEvents.AFTER_INIT.register { _, screen, width, height ->
             if (! enabled) return@register
             if (screen !is AbstractSignEditScreen) return@register
+            val stack = stack ?: return@register
             val sign = (screen as IAbstractSignEditScreen).getSign() ?: return@register
 
             val line1 = sign.frontText.getMessage(1, false).string
@@ -41,10 +42,9 @@ object AuctionPriceInput: Feature("replaces the sign input with a proper textbox
 
             if (line1 == "^^^^^^^^^^^^^^^" && line2 == "Your auction" && line3 == "starting bid") mc.execute {
                 val existingText = Array(4) { i -> sign.frontText.getMessage(i, false).string }
-                if (stack == null) return@execute
 
                 // manually setting the screen so the sign gui wont close
-                val newscreen = AuctionInputScreen(sign, existingText, stack !!)
+                val newscreen = AuctionInputScreen(sign, existingText, stack)
                 newscreen.init(mc, width, height)
                 mc.screen = newscreen
             }
@@ -108,8 +108,7 @@ object AuctionPriceInput: Feature("replaces the sign input with a proper textbox
 
             guiGraphics.renderItem(stack, itemX, itemY)
             guiGraphics.renderItemDecorations(font, stack, itemX, itemY)
-            val lore = stack.getOrDefault(DataComponents.LORE, ItemLore.EMPTY).styledLines()
-            lore.removeAt(0)
+            val lore = stack.getOrDefault(DataComponents.LORE, ItemLore.EMPTY).styledLines().drop(1)
             guiGraphics.setTooltipForNextFrame(
                 mc.font,
                 lore,
