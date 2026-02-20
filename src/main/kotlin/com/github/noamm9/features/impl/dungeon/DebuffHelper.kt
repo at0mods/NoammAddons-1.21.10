@@ -54,7 +54,7 @@ object DebuffHelper: Feature(description = "Automatically pulls and fires bows b
         register<PacketEvent.Sent> {
             if (event.packet !is ServerboundUseItemPacket) return@register
             val item = mc.player?.mainHandItem ?: return@register
-            if (item.skyblockId != "LAST_BREATH") return@register
+            if (! item.skyblockId.contains("LAST_BREATH")) return@register
             lastSequence = event.packet.sequence
         }
 
@@ -70,7 +70,7 @@ object DebuffHelper: Feature(description = "Automatically pulls and fires bows b
             if (mc.screen != null) return@register resetCharge()
             if (! isCharging || ! holdingRC) return@register
             val item = mc.player?.mainHandItem ?: return@register resetCharge()
-            if (item.skyblockId != "LAST_BREATH") return@register resetCharge()
+            if (! item.skyblockId.contains("LAST_BREATH")) return@register resetCharge()
 
             ticksHeld ++
 

@@ -10,9 +10,9 @@ import net.minecraft.network.chat.Component
 import java.util.*
 
 object BossBarHealth: Feature(name = "BossBar Health", description = "Shows the health number of the bossbar boss") {
-    private val theWatcher by ToggleSetting("The Watcher")
-    private val f4Thorn by ToggleSetting("Thorn")
-    private val f7Withers by ToggleSetting("F7 Withers")
+    private val theWatcher by ToggleSetting("The Watcher", true)
+    private val f4Thorn by ToggleSetting("Thorn", true)
+    private val f7Withers by ToggleSetting("F7 Withers", true)
 
     @JvmStatic
     fun getMaxHealth(nameComponent: Component): Float {
