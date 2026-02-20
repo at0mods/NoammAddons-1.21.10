@@ -8,6 +8,7 @@ import com.github.noamm9.features.impl.dungeon.solvers.puzzles.PuzzleSolvers.col
 import com.github.noamm9.features.impl.dungeon.solvers.puzzles.PuzzleSolvers.colorWrong
 import com.github.noamm9.features.impl.dungeon.solvers.puzzles.PuzzleSolvers.removeChests
 import com.github.noamm9.utils.ChatUtils.unformattedText
+import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.dungeons.map.core.RoomState
 import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
 import com.github.noamm9.utils.dungeons.map.utils.ScanUtils.rotate
@@ -50,7 +51,7 @@ object ThreeWeirdosSolver {
             correctPos = chestPos
         }
         else {
-            if (removeChests.value) mc.execute {
+            if (removeChests.value) ThreadUtils.scheduledTask {
                 WorldUtils.setBlockAt(chestPos, Blocks.AIR.defaultBlockState())
             }
             wrongPositions.add(chestPos)
