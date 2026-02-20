@@ -17,6 +17,7 @@ import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.dungeons.DungeonListener.dungeonTeammatesNoSelf
 import com.github.noamm9.utils.dungeons.DungeonPlayer
+import com.github.noamm9.utils.dungeons.enums.DungeonClass
 import com.github.noamm9.utils.location.LocationUtils
 import com.github.noamm9.utils.render.Render2D
 import net.minecraft.client.gui.screens.Screen
@@ -241,7 +242,7 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
         val leapTeammates: List<DungeonPlayer?> = when (sorting.value) {
             0 -> dungeonTeammatesNoSelf.sortedWith(compareBy({ it.clazz.ordinal }, { it.name }))
             1 -> dungeonTeammatesNoSelf.sortedBy { it.name }
-            2 -> odinSorting(dungeonTeammatesNoSelf.sortedBy { it.clazz.priority }).toList()
+            2 -> odinSorting(dungeonTeammatesNoSelf).toList()
             3 -> dungeonTeammatesNoSelf.sortedBy {
                 customLeapOrder.indexOf(it.name.lowercase()).takeIf { i -> i != - 1 } ?: Int.MAX_VALUE
             }
@@ -268,22 +269,31 @@ object LeapMenu: Feature("Custom Leap Menu and leap message") {
         mc.player?.closeContainer()
     }
 
-    fun odinSorting(players: List<DungeonPlayer>): Array<DungeonPlayer?> {
-        val result = arrayOfNulls<DungeonPlayer>(4)
+    fun odinSorting(teammates: List<DungeonPlayer>): Array<out DungeonPlayer?> {
+        val neededSorting = mapOf(
+            DungeonClass.Archer to listOf(DungeonClass.Mage, DungeonClass.Berserk, DungeonClass.Healer, DungeonClass.Tank),
+            DungeonClass.Mage to listOf(DungeonClass.Archer, DungeonClass.Berserk, DungeonClass.Healer, DungeonClass.Tank),
+            DungeonClass.Berserk to listOf(DungeonClass.Archer, DungeonClass.Mage, DungeonClass.Healer, DungeonClass.Tank),
+            DungeonClass.Healer to listOf(DungeonClass.Archer, DungeonClass.Berserk, DungeonClass.Mage, DungeonClass.Tank),
+            DungeonClass.Tank to listOf(DungeonClass.Archer, DungeonClass.Berserk, DungeonClass.Healer, DungeonClass.Mage)
+        )[DungeonListener.thePlayer?.clazz] ?: return teammates.toTypedArray()
+
+        val quadrants = arrayOfNulls<DungeonPlayer>(4)
         val secondRound = mutableListOf<DungeonPlayer>()
 
-        for (player in players.sortedBy { it.clazz.priority }) {
-            val i = player.clazz.quadIndex
+        for (player in teammates) {
+            val preferredIndex = neededSorting.indexOf(player.clazz)
 
-            if (i in 0 .. 3 && result[i] == null) result[i] = player
+            if (preferredIndex != - 1) quadrants[preferredIndex] = player
             else secondRound.add(player)
         }
 
-        for (i in result.indices) {
-            if (result[i] == null && secondRound.isNotEmpty()) {
-                result[i] = secondRound.removeAt(0)
+        for (i in quadrants.indices) {
+            if (quadrants[i] == null && secondRound.isNotEmpty()) {
+                quadrants[i] = secondRound.removeFirst()
             }
         }
-        return result
+
+        return quadrants
     }
 }
