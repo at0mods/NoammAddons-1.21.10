@@ -4,9 +4,12 @@ import com.github.noamm9.event.impl.MouseClickEvent
 import com.github.noamm9.event.impl.PacketEvent
 import com.github.noamm9.event.impl.TickEvent
 import com.github.noamm9.features.Feature
-import com.github.noamm9.ui.clickgui.componnents.*
+import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
+import com.github.noamm9.ui.clickgui.componnents.provideDelegate
+import com.github.noamm9.ui.clickgui.componnents.section
+import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.MathUtils
 import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.items.ItemUtils.skyblockId
@@ -23,21 +26,16 @@ object DebuffHelper: Feature(description = "Automatically pulls and fires bows b
     private val soundEnabled by ToggleSetting("Play Sound", true).withDescription("Plays a sound when fully charged.")
     private val sound = createSoundSettings("Sound", SoundEvents.EXPERIENCE_ORB_PICKUP) { soundEnabled.value }
 
-    private val p1Enabled by ToggleSetting("P1 Enabled", true).withDescription("Enable Debuff Helper in Phase 1.").section("Phases")
-    private val p2Enabled by ToggleSetting("P2 Enabled", true).withDescription("Enable Debuff Helper in Phase 2.")
-    private val p3Enabled by ToggleSetting("P3 Enabled", true).withDescription("Enable Debuff Helper in Phase 3.")
-
-    private val defaultTicks by SliderSetting("Default Ticks", 8, 1, 20, 1).withDescription("How many ticks should the bow be charged before it shoots.").section("Ticks")
-    private val p1Ticks by SliderSetting("P1 Ticks", 8, 1, 20, 1).showIf { p1Enabled.value }
-    private val p2Ticks by SliderSetting("P2 Ticks", 8, 1, 20, 1).showIf { p2Enabled.value }
-    private val p3Ticks by SliderSetting("P3 Ticks", 8, 1, 20, 1).showIf { p3Enabled.value }
-
-    private val dragonsEnabled by ToggleSetting("Dragons Enabled", true).withDescription("Enable Debuff Helper during Dragons.").section("Dragon Settings")
-    private val purpleTicks by SliderSetting("Purple Dragon", 8, 1, 20, 1).showIf { dragonsEnabled.value }
-    private val greenTicks by SliderSetting("Green Dragon", 8, 1, 20, 1).showIf { dragonsEnabled.value }
-    private val redTicks by SliderSetting("Red Dragon", 8, 1, 20, 1).showIf { dragonsEnabled.value }
-    private val orangeTicks by SliderSetting("Orange Dragon", 8, 1, 20, 1).showIf { dragonsEnabled.value }
-    private val blueTicks by SliderSetting("Blue Dragon", 8, 1, 20, 1).showIf { dragonsEnabled.value }
+    private val defaultTicks by SliderSetting("Default Ticks", 8, 1, 20, 1).withDescription("How many ticks should the bow be charged before it shoots. &e(Set to 0 to disable)").section("Ticks")
+    private val p1Ticks by SliderSetting("P1 Ticks", 8, 0, 20, 1)
+    private val p2Ticks by SliderSetting("P2 Ticks", 8, 0, 20, 1)
+    private val p3Ticks by SliderSetting("P3 Ticks", 8, 0, 20, 1)
+    private val p4Ticks by SliderSetting("P3 Ticks", 8, 0, 20, 1)
+    private val purpleTicks by SliderSetting("Purple Dragon", 8, 0, 20, 1)
+    private val greenTicks by SliderSetting("Green Dragon", 8, 0, 20, 1)
+    private val redTicks by SliderSetting("Red Dragon", 8, 0, 20, 1)
+    private val orangeTicks by SliderSetting("Orange Dragon", 8, 0, 20, 1)
+    private val blueTicks by SliderSetting("Blue Dragon", 8, 0, 20, 1)
 
     private var isCharging = false
     private var ticksHeld = 0
@@ -50,7 +48,6 @@ object DebuffHelper: Feature(description = "Automatically pulls and fires bows b
             if (event.button != 1) return@register
             holdingRC = event.action == GLFW.GLFW_PRESS
             if (holdingRC) return@register
-
             resetCharge()
         }
 
@@ -58,7 +55,6 @@ object DebuffHelper: Feature(description = "Automatically pulls and fires bows b
             if (event.packet !is ServerboundUseItemPacket) return@register
             val item = mc.player?.mainHandItem ?: return@register
             if (item.skyblockId != "LAST_BREATH") return@register
-
             lastSequence = event.packet.sequence
         }
 
@@ -111,22 +107,19 @@ object DebuffHelper: Feature(description = "Automatically pulls and fires bows b
 
     private fun getTicks(): Int? {
         val player = mc.player?.position() ?: return null
-        val phase = LocationUtils.F7Phase ?: return null
+        val phase = LocationUtils.F7Phase ?: return defaultTicks.value
 
         return when (phase) {
-            1 -> if (p1Enabled.value) p1Ticks.value else null
-            2 -> if (p2Enabled.value) p2Ticks.value else null
-            3 -> if (p3Enabled.value) p3Ticks.value else null
-            5 -> {
-                if (! dragonsEnabled.value) return null
-
-                if (MathUtils.isCoordinateInsideBox(player, BlockPos(47, 28, 113), BlockPos(64, 8, 135))) purpleTicks.value
-                else if (MathUtils.isCoordinateInsideBox(player, BlockPos(40, 27, 85), BlockPos(13, 5, 103))) greenTicks.value
-                else if (MathUtils.isCoordinateInsideBox(player, BlockPos(40, 20, 68), BlockPos(13, 4, 47))) redTicks.value
-                else if (MathUtils.isCoordinateInsideBox(player, BlockPos(72, 31, 65), BlockPos(97, 3, 47))) orangeTicks.value
-                else if (MathUtils.isCoordinateInsideBox(player, BlockPos(72, 31, 85), BlockPos(97, 3, 107))) blueTicks.value
-                else defaultTicks.value
-            }
+            1 -> p1Ticks.value
+            2 -> p2Ticks.value
+            3 -> p3Ticks.value
+            4 -> p4Ticks.value
+            5 -> if (MathUtils.isCoordinateInsideBox(player, BlockPos(47, 28, 113), BlockPos(64, 8, 135))) purpleTicks.value
+            else if (MathUtils.isCoordinateInsideBox(player, BlockPos(40, 27, 85), BlockPos(13, 5, 103))) greenTicks.value
+            else if (MathUtils.isCoordinateInsideBox(player, BlockPos(40, 20, 68), BlockPos(13, 4, 47))) redTicks.value
+            else if (MathUtils.isCoordinateInsideBox(player, BlockPos(72, 31, 65), BlockPos(97, 3, 47))) orangeTicks.value
+            else if (MathUtils.isCoordinateInsideBox(player, BlockPos(72, 31, 85), BlockPos(97, 3, 107))) blueTicks.value
+            else defaultTicks.value
 
             else -> defaultTicks.value
         }
