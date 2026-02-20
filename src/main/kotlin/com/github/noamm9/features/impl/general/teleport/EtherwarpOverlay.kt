@@ -33,8 +33,7 @@ object EtherwarpOverlay: Feature() {
             if (! player.isCrouching) return@register
             val heldItem = player.mainHandItem.takeUnless { it.isEmpty } ?: return@register
             val distance = EtherwarpHelper.getEtherwarpDistance(heldItem) ?: return@register
-
-            val (valid, pos) = EtherwarpHelper.getEtherPos(player.position(), distance)
+            val (valid, pos) = EtherwarpHelper.getEtherPos(player.position(), distance, true)
 
             Render3D.renderBlock(
                 event.ctx, pos ?: return@register,
