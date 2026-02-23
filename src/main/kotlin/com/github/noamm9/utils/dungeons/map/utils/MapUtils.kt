@@ -32,37 +32,34 @@ object MapUtils {
         calibrated = false
     }
 
-    /**
-     * Calibrates map metrics based on the size and location of the entrance room.
-     */
+
     fun calibrateMap(): Boolean {
         val (start, size) = findEntranceCorner()
-        if (size.equalsOneOf(size, 16, 18)) {
-            mapRoomSize = size
-            startCorner = when (LocationUtils.dungeonFloorNumber) {
-                0 -> Pair(22, 22)
-                1 -> Pair(22, 11)
-                2, 3 -> Pair(11, 11)
-                else -> {
-                    val startX = start and 127
-                    val startZ = start shr 7
-                    Pair(startX % (mapRoomSize + 4), startZ % (mapRoomSize + 4))
-                }
-            }
-            coordMultiplier = (mapRoomSize + 4.0) / DungeonScanner.roomSize
+        if (! size.equalsOneOf(16, 18)) return false
 
-            HotbarMapColorParser.calibrate()
-            return true
+        mapRoomSize = size
+        startCorner = when (LocationUtils.dungeonFloorNumber) {
+            0 -> Pair(22, 22)
+            1 -> Pair(22, 11)
+            2, 3 -> Pair(11, 11)
+            else -> {
+                val startX = start and 127
+                val startZ = start shr 7
+                Pair(startX % (mapRoomSize + 4), startZ % (mapRoomSize + 4))
+            }
         }
-        return false
+
+        coordMultiplier = (mapRoomSize + 4.0) / DungeonScanner.roomSize
+
+        HotbarMapColorParser.calibrate()
+        return true
     }
 
-    /**
-     * Finds the starting index of the entrance room as well as the size of the room.
-     */
+
     private fun findEntranceCorner(): Pair<Int, Int> {
         var start = 0
         var currLength = 0
+
         DungeonInfo.mapData?.colors?.forEachIndexed { index, byte ->
             if (byte == 30.toByte()) {
                 if (currLength == 0) start = index
@@ -73,6 +70,7 @@ object MapUtils {
                 currLength = 0
             }
         }
+
         return Pair(start, currLength)
     }
 }
