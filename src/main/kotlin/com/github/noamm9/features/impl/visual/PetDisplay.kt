@@ -37,8 +37,8 @@ object PetDisplay: Feature("Pet Features") {
 
     override fun init() {
         hudElement("PetDisplay",
-            shouldDraw = { petDisplay.value },
-            enabled = { LocationUtils.inSkyblock && cacheData.getData()["pet"] != null }) { context, example ->
+            enabled = { petDisplay.value },
+            shouldDraw = { LocationUtils.inSkyblock && cacheData.getData()["pet"] != null }) { context, example ->
             val text = if (example) "&6Golden Dragon" else cacheData.getData()["pet"].toString()
             Render2D.drawString(context, text, 0, 0)
             return@hudElement text.width().toFloat() to text.height().toFloat()

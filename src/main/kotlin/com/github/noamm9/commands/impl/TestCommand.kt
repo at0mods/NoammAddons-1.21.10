@@ -4,6 +4,7 @@ import com.github.noamm9.NoammAddons.mc
 import com.github.noamm9.NoammAddons.priceData
 import com.github.noamm9.commands.BaseCommand
 import com.github.noamm9.commands.CommandNodeBuilder
+import com.github.noamm9.config.Config
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.PlayerUtils
 import com.github.noamm9.utils.dungeons.map.utils.ScanUtils
@@ -22,6 +23,13 @@ object TestCommand: BaseCommand("test") {
             runs {
                 mc.screen?.onClose()
                 //    NoammAddons.screen = KitchenSinkScreen()
+            }
+        }
+
+        literal("config") {
+            runs {
+                Config.save()
+                Config.load()
             }
         }
 

@@ -7,15 +7,16 @@ import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.SliderSetting
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
+import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.PartyUtils
 import com.github.noamm9.utils.ThreadUtils
 import com.github.noamm9.utils.location.LocationUtils
 
 object AutoRequeue: Feature() {
-    private val checkParty by ToggleSetting("Check Party", true)
-    private val delay by SliderSetting("Delay", 0L, 10L, 1L, 5L)
-    private val feedback by ToggleSetting("Feedback", true)
+    private val checkParty by ToggleSetting("Check Party", true).withDescription("Should the auto check the party state before running the command")
+    private val delay by SliderSetting("Delay", 5L, 1L, 10L, 1L).withDescription("Delay in Seconds")
+    private val feedback by ToggleSetting("Feedback", true).withDescription("Print feedback messages from auto in chat")
 
     private const val prefix = "&bAutoRequeue &f>"
     private val NUMBERS_TO_TEXT = mapOf(

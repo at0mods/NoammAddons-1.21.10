@@ -298,10 +298,7 @@ object MapRenderer: HudElement() {
         Render2D.drawTexture(ctx, checkmark, x, y, size, size)
     }
 
-    private fun drawPlayerHead(
-        ctx: GuiGraphics,
-        teammate: DungeonPlayer
-    ) {
+    private fun drawPlayerHead(ctx: GuiGraphics, teammate: DungeonPlayer) {
         val entity = teammate.entity
 
         val (x, z, yaw) = if (entity == null || ! entity.isAlive) {
@@ -326,7 +323,7 @@ object MapRenderer: HudElement() {
         ctx.pose().rotate(headYaw)
         ctx.pose().scale(MapConfig.playerHeadScale.value)
 
-        if (MapConfig.mapVanillaMarker.value && name == mc.user.name) {
+        if (MapConfig.mapVanillaMarker.value && teammate == DungeonListener.thePlayer) {
             Render2D.drawTexture(ctx, ownPlayerMarker, - 6, - 6, 12, 12)
         }
         else {
