@@ -9,11 +9,11 @@ import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.unformattedText
 import com.github.noamm9.utils.NumbersUtils.toFixed
-import com.github.noamm9.utils.SoundUtils
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.location.LocationUtils.dungeonFloorNumber
 import com.github.noamm9.utils.location.LocationUtils.inBoss
 import com.github.noamm9.utils.render.Render2D
+import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket
 import net.minecraft.sounds.SoundEvents
@@ -80,7 +80,7 @@ object F7Titles: Feature(name = "F7 Titles", description = "Custom Titles for F7
                     enragedRegex.find(text)?.destructured?.component1()?.let { boss ->
                         val color = when (boss) {
                             "Storm" -> {
-                                SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_PLING, 0.3f)
+                                mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING, 1f))
                                 "&b"
                             }
 
@@ -155,7 +155,7 @@ object F7Titles: Feature(name = "F7 Titles", description = "Custom Titles for F7
 
     private fun showTitle(subtitle: String) {
         ChatUtils.showTitle(subtitle = subtitle)
-        SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_PLING, 0.3f)
+        mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1f))
     }
 
     private fun formatProgress(current: Int, max: Int): String {

@@ -6,11 +6,11 @@ import com.github.noamm9.ui.clickgui.componnents.getValue
 import com.github.noamm9.ui.clickgui.componnents.impl.ToggleSetting
 import com.github.noamm9.ui.clickgui.componnents.provideDelegate
 import com.github.noamm9.utils.ChatUtils
-import com.github.noamm9.utils.SoundUtils
 import com.github.noamm9.utils.Utils.equalsOneOf
 import com.github.noamm9.utils.dungeons.DungeonListener
 import com.github.noamm9.utils.dungeons.map.core.RoomState
 import com.github.noamm9.utils.dungeons.map.core.RoomType
+import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.sounds.SoundEvents
 
 object RoomAlerts: Feature("Alerts when certain stuff happens in your current room") {
@@ -38,7 +38,7 @@ object RoomAlerts: Feature("Alerts when certain stuff happens in your current ro
     }
 
     private fun alert(msg: String) {
-        SoundUtils.playEvent(SoundEvents.NOTE_BLOCK_PLING, 0.3f)
+        mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING, 1f))
         ChatUtils.showTitle(msg)
     }
 }

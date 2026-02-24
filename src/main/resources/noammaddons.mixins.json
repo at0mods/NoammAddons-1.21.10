@@ -60,6 +60,7 @@
     "MixinMultiPlayerGameMode",
     "MixinOptions",
     "MixinScreenEffectRenderer",
+    "MixinSoundManager",
     "NameTagFeatureRendererMixin",
     "PlayerRendererMixin"
   ]

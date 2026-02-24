@@ -5,7 +5,6 @@ import com.github.noamm9.NoammAddons.mc
 import net.minecraft.client.resources.sounds.SoundInstance
 import net.minecraft.client.sounds.JOrbisAudioStream
 import net.minecraft.core.Holder
-import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.sounds.SoundEvent
 import org.lwjgl.openal.AL10
@@ -13,7 +12,6 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.concurrent.thread
-import kotlin.jvm.optionals.getOrNull
 
 object SoundUtils {
     private val SOUNDS_DIR = Paths.get("config", NoammAddons.MOD_NAME, "sounds")
@@ -563,17 +561,6 @@ object SoundUtils {
         "entity.wolf.shake" to "WOLF_SHAKE",
         "entity.wolf.whine" to "WOLF_WHINE",
     )
-
-    val SOUND_EVENT_MAP: Map<ResourceLocation, SoundEvent> by lazy {
-        val result = mutableMapOf<ResourceLocation, SoundEvent>()
-
-        MAP.keys.forEach { path ->
-            val location = ResourceLocation.fromNamespaceAndPath("minecraft", path)
-            val soundEvent = BuiltInRegistries.SOUND_EVENT.get(location).getOrNull()
-            if (soundEvent != null) result[location] = soundEvent.value()
-        }
-        result
-    }
 
     val REVERSE_MAP: Map<ResourceLocation, String> by lazy {
         val result = mutableMapOf<ResourceLocation, String>()

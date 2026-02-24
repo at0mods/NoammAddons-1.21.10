@@ -29,15 +29,15 @@ dependencies {
 
     mappings loom.layered() {
         officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-1.21.10:2025.10.12@zip")
+        parchment "org.parchmentmc.data:parchment-1.21.10:2025.10.12@zip"
     }
 
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
 
-    modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
+//    modImplementation "com.github.noamm9:noammaddons:master-SNAPSHOT"
+    modRuntimeOnly "me.djtheredstoner:DevAuth-fabric:1.2.2"
 
     implementation "io.github.classgraph:classgraph:4.8.174"
     include "io.github.classgraph:classgraph:4.8.174"
@@ -45,8 +45,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
     include "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
 
-    implementation("io.github.llamalad7:mixinextras-fabric:0.4.1")
-    annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")
+    implementation "io.github.llamalad7:mixinextras-fabric:0.4.1"
+    annotationProcessor "io.github.llamalad7:mixinextras-fabric:0.4.1"
 }
 
 processResources {
