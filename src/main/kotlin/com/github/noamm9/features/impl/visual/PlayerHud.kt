@@ -31,8 +31,8 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
 
     val healthDisplay by hudElement(
         this.name + " Health",
-        { LocationUtils.inSkyblock },
-        { elements.value["Health"] == true }
+        { elements.value["Health"] == true },
+        { LocationUtils.inSkyblock }
     ) { context, example ->
         val text = if (example) "§e3452§f/§c2452" else getHpFormatted()
         Render2D.drawString(context, text, 0, 0)
@@ -41,8 +41,8 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
 
     val defenseDisplay by hudElement(
         this.name + " Defense",
-        { LocationUtils.inSkyblock },
-        { elements.value["Defense"] == true }
+        { elements.value["Defense"] == true },
+        { LocationUtils.inSkyblock }
     ) { context, example ->
         val text = if (example) "§a5001" else "§a${ActionBarParser.currentDefense}"
         Render2D.drawString(context, text, 0, 0)
@@ -51,8 +51,8 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
 
     val manaDisplay by hudElement(
         this.name + " Mana",
-        { LocationUtils.inSkyblock },
-        { elements.value["Mana"] == true }
+        { elements.value["Mana"] == true },
+        { LocationUtils.inSkyblock }
     ) { context, example ->
         val text = if (example) "§b2452/2452" else "§b${ActionBarParser.currentMana}/${ActionBarParser.maxMana}"
         Render2D.drawString(context, text, 0, 0)
@@ -61,8 +61,8 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
 
     val overflowDisplay by hudElement(
         this.name + " Overflow Mana",
-        { LocationUtils.inSkyblock && ActionBarParser.overflowMana > 0 },
-        { elements.value["Overflow Mana"] == true }
+        { elements.value["Overflow Mana"] == true },
+        { LocationUtils.inSkyblock && ActionBarParser.overflowMana > 0 }
     ) { context, example ->
         val text = if (example) "§3600ʬ" else "§3${ActionBarParser.overflowMana}ʬ"
         Render2D.drawString(context, text, 0, 0)
@@ -71,8 +71,8 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
 
     val ehpDisplay by hudElement(
         this.name + " Effective HP",
-        { LocationUtils.inSkyblock },
-        { elements.value["Effective HP"] == true }
+        { elements.value["Effective HP"] == true },
+        { LocationUtils.inSkyblock }
     ) { context, example ->
         val text = if (example) "§27.3m" else "§2${NumbersUtils.format(ActionBarParser.effectiveHP)}"
         Render2D.drawString(context, text, 0, 0)
@@ -81,8 +81,8 @@ object PlayerHud: Feature(name = "Player HUD", description = "Displays your stat
 
     val speedDisplay by hudElement(
         this.name + " Speed",
-        { LocationUtils.inSkyblock },
-        { elements.value["Speed"] == true }
+        { elements.value["Speed"] == true },
+        { LocationUtils.inSkyblock }
     ) { context, example ->
         val text = if (example) "§f400✦" else "§f${ActionBarParser.currentSpeed}✦"
         Render2D.drawString(context, text, 0, 0)
