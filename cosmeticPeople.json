@@ -108,9 +108,16 @@
   "sizeX": 0.65,
   "sizeY": 0.65,
   "sizeZ": 0.65
-  }  
+  },
+  "31d6f68a-2a08-4dc7-815f-fbd678cf83ca": {
+  "name": "{\"text\":\"\",\"extra\":[{\"text\":\"o\",\"color\":\"#A8F5C2\",\"bold\":true},{\"text\":\"s\",\"color\":\"#BDF7B8\",\"bold\":true},{\"text\":\"k\",\"color\":\"#CFF9AD\",\"bold\":true},{\"text\":\"i\",\"color\":\"#BDF7B8\",\"bold\":true},{\"text\":\"s\",\"color\":\"#A8F5C2\",\"bold\":true},{\"text\":\"h\",\"color\":\"#8EF0B5\",\"bold\":true}]}",
+  "sizeX": 0.65,
+  "sizeY": 0.65,
+  "sizeZ": 0.65
+  }
 
 }
+
 
 
 
