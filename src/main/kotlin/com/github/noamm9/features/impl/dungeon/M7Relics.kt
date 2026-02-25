@@ -11,6 +11,7 @@ import com.github.noamm9.ui.clickgui.componnents.showIf
 import com.github.noamm9.ui.clickgui.componnents.withDescription
 import com.github.noamm9.utils.ChatUtils
 import com.github.noamm9.utils.ChatUtils.unformattedText
+import com.github.noamm9.utils.MathUtils.add
 import com.github.noamm9.utils.MathUtils.center
 import com.github.noamm9.utils.MathUtils.toPos
 import com.github.noamm9.utils.NumbersUtils.toFixed
@@ -23,6 +24,7 @@ import com.github.noamm9.utils.render.Render3D
 import kotlinx.coroutines.launch
 import net.minecraft.core.BlockPos
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket
+import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.decoration.ArmorStand
 import net.minecraft.world.phys.Vec3
@@ -35,6 +37,9 @@ object M7Relics: Feature(name = "M7 Relics", description = "A bunch of M7 Relics
     private val relicLook by ToggleSetting("Relic Look").withDescription("Automatically rotate to the relic cauldron after u pick it up")
     private val relicLookTime by SliderSetting("Relic Look Time", 150L, 10, 300, 1).showIf { relicLook.value }.withDescription("How fast should the auto rotate (in milliseconds)")
     private val blockWrongRelic by ToggleSetting("Block Wrong Relic").withDescription("Prevents you from placing your relic at the wrong cauldron")
+
+    private val relicAura by ToggleSetting("Relic Aura").withDescription("Automatically pick up the relic when it spawns")
+    private var lastClick = System.currentTimeMillis()
 
     private val relicPickUpRegex = Regex("^(\\w{3,16}) picked the Corrupted (\\w{3,6}) Relic!$")
     private val relicTimes = mutableListOf<RelicEntry>()
@@ -160,6 +165,25 @@ object M7Relics: Feature(name = "M7 Relics", description = "A bunch of M7 Relics
                 }
                 relicTimes.clear()
             }
+        }
+
+        register<TickEvent.Start> {
+            if (! relicAura.value) return@register
+            if (LocationUtils.F7Phase != 5) return@register
+            if (System.currentTimeMillis() - lastClick < 200) return@register
+
+            val armorStand = mc.level?.entitiesForRendering()?.filterIsInstance<ArmorStand>()?.firstOrNull {
+                val hasRelic = mc.player !!.inventory.getItem(8).displayName.string.contains("Relic")
+                val isRelic = it.getItemBySlot(EquipmentSlot.HEAD).displayName.string.contains("Relic")
+                val pos = mc.player !!.position().add(y = mc.player !!.eyeHeight)
+                val entitypos = it.position().add(y = it.eyeHeight)
+                val atCauldron = WitherRelic.entries.any { relic -> isEntityAtCauldron(entitypos, relic) }
+                ! hasRelic && isRelic && pos.distanceTo(entitypos) < 3 && ! atCauldron
+            } ?: return@register
+
+            PlayerUtils.interactEntity(armorStand, InteractionHand.MAIN_HAND)
+            PlayerUtils.swingArm()
+            lastClick = System.currentTimeMillis()
         }
     }
 
