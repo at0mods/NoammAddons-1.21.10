@@ -35,7 +35,8 @@ object BlockOverlay: Feature() {
 
     fun render(ctx: WorldRenderContext, blockCtx: BlockOutlineRenderState) {
         if (mc.options.hideGui) return
-
+        if (hideWhileEtherwarp.value && EtherwarpHelper.isEtherwarpOverlayVisible()) return
+        
         Render3D.renderBlock(
             RenderContext.fromContext(ctx),
             blockCtx.pos,
