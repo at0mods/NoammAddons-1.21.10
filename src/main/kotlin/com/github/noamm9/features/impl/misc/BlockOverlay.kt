@@ -16,6 +16,7 @@ import com.github.noamm9.utils.render.RenderContext
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents
 import net.minecraft.client.renderer.state.BlockOutlineRenderState
+import com.github.noamm9.features.impl.general.teleport.EtherwarpHelper
 
 object BlockOverlay: Feature() {
     private val mode by DropdownSetting("Mode", 2, listOf("Outline", "Fill", "Filled Outline"))
@@ -23,6 +24,7 @@ object BlockOverlay: Feature() {
     private val outlineColor by ColorSetting("Outline Color", Utils.favoriteColor, false).hideIf { mode.value == 1 }
     private val lineWidth by SliderSetting("Line Width", 2.5, 1, 10, 0.1).hideIf { mode.value == 1 }
     private val phase by ToggleSetting("Phase")
+    private val hideWhileEtherwarp by ToggleSetting("Hide While Etherwarp Active", true)
 
     override fun init() {
         WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register { context, blockOutlineContext ->
@@ -34,7 +36,8 @@ object BlockOverlay: Feature() {
 
     fun render(ctx: WorldRenderContext, blockCtx: BlockOutlineRenderState) {
         if (mc.options.hideGui) return
-
+        if (hideWhileEtherwarp.value && EtherwarpHelper.isEtherwarpOverlayVisible()) return
+        
         Render3D.renderBlock(
             RenderContext.fromContext(ctx),
             blockCtx.pos,

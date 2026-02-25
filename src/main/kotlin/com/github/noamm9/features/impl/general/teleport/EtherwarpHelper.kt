@@ -130,4 +130,8 @@ object EtherwarpHelper {
         FlowerPotBlock::class, LiquidBlock::class, PistonHeadBlock::class,
         ComparatorBlock::class, RedstoneTorchBlock::class, RepeaterBlock::class
     )
+
+    fun isEtherwarpOverlayVisible(): Boolean {
+        return EtherwarpOverlay.enabled
+    }
 }
